@@ -123,7 +123,20 @@
 </div>
       <a class="btn btn-outline login-open" href="#">Login</a>
     </div>
+    <button class="mobile-menu-btn" aria-label="Open Menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
   </header>
+  <div class="mobile-overlay"></div>
+
+<div class="mobile-menu">
+  <a href="/marketplace.html">Marketplace</a>
+  <a href="/index.html#projects">Projects</a>
+  <a href="/index.html#insights">Insights</a>
+  <a href="/index.html#early-access">Early Access</a>
+</div>
 <main>
   <section class="section marketplace-page-hero">
     <div class="container">
@@ -132,6 +145,27 @@
       <p class="hero-text">
         Explore carbon removal, renewable energy, methane avoidance and verified climate assets through CarbonAxis Exchange.
       </p>
+      <div class="marketplace-stats">
+  <div>
+    <h3>3</h3>
+    <p>Active Listings</p>
+  </div>
+
+  <div>
+    <h3>453K+</h3>
+    <p>tCO₂e Available</p>
+  </div>
+
+  <div>
+    <h3>3</h3>
+    <p>Regions Covered</p>
+  </div>
+
+  <div>
+    <h3>Verified</h3>
+    <p>Listing Status</p>
+  </div>
+</div>
     </div>
   </section>
    <section id="marketplace-listings" class="section marketplace-section">
@@ -179,9 +213,13 @@ data-volume="98,000 tCO₂e"
 data-description="This project focuses on biochar-based carbon removal and long-term carbon sequestration through sustainable biomass processing methodologies." >
 
         <div class="listing-top">
+            <span class="featured-ribbon">Featured</span>
           <span class="verified-tag">Verified</span>
           <span class="price">$38/t</span>
         </div>
+        <div class="listing-image">
+  <img src="/images/forest.png" alt="Biochar Carbon Removal Project">
+</div>
 
         <h3>Biochar Carbon Removal Project</h3>
 
@@ -194,6 +232,11 @@ data-description="This project focuses on biochar-based carbon removal and long-
           <span>SDG 13</span>
           <span>Removal</span>
         </div>
+        <div class="listing-specs">
+  <span>Registry: Verified</span>
+  <span>Methodology: Biochar</span>
+  <span>Vintage: 2026</span>
+</div>
 
         <div class="listing-footer">
           <span>98,000 tCO₂e</span>
@@ -219,6 +262,9 @@ data-volume="210,000 tCO₂e"
 data-description="Large-scale renewable energy certificates supporting clean electricity transition and corporate net zero strategies."
 >
 
+        <div class="listing-image">
+  <img src="/images/solar.png" alt="Solar Renewable Energy Credits">
+</div>
         <div class="listing-top">
           <span class="verified-tag">Verified</span>
           <span class="price">$12/t</span>
@@ -235,6 +281,11 @@ data-description="Large-scale renewable energy certificates supporting clean ele
           <span>REC</span>
           <span>Net Zero</span>
         </div>
+        <div class="listing-specs">
+  <span>Registry: REC</span>
+  <span>Methodology: Solar</span>
+  <span>Vintage: 2026</span>
+</div>
 
         <div class="listing-footer">
           <span>210,000 tCO₂e</span>
@@ -259,7 +310,9 @@ data-volume="145,000 tCO₂e"
 
 data-description="Methane capture and waste management initiative reducing greenhouse gas emissions through sustainable landfill operations."
 >
-
+<div class="listing-image">
+  <img src="/images/methane.png" alt="Methane Avoidance Initiative">
+</div>
         <div class="listing-top">
           <span class="verified-tag">Verified</span>
           <span class="price">$16/t</span>
@@ -276,6 +329,11 @@ data-description="Methane capture and waste management initiative reducing green
           <span>Waste</span>
           <span>ESG</span>
         </div>
+        <div class="listing-specs">
+  <span>Registry: Verified</span>
+  <span>Methodology: Methane</span>
+  <span>Vintage: 2026</span>
+</div>
 
         <div class="listing-footer">
           <span>145,000 tCO₂e</span>
@@ -784,6 +842,32 @@ marketSearch.addEventListener("input", function () {
 
   });
 
+});
+</script>
+<script>
+const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
+const mobileMenu = document.querySelector(".mobile-menu");
+const mobileOverlay = document.querySelector(".mobile-overlay");
+const mobileLinks = document.querySelectorAll(".mobile-menu a");
+
+function closeMobileMenu(){
+  mobileMenu.classList.remove("active");
+  mobileOverlay.classList.remove("active");
+  mobileMenuBtn.classList.remove("active");
+  document.body.classList.remove("menu-open");
+}
+
+mobileMenuBtn.addEventListener("click", function(){
+  mobileMenu.classList.toggle("active");
+  mobileOverlay.classList.toggle("active");
+  mobileMenuBtn.classList.toggle("active");
+  document.body.classList.toggle("menu-open");
+});
+
+mobileOverlay.addEventListener("click", closeMobileMenu);
+
+mobileLinks.forEach(link => {
+  link.addEventListener("click", closeMobileMenu);
 });
 </script>
 </body>
