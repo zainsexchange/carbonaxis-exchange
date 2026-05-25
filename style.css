@@ -185,7 +185,6 @@ nav a:hover{
   display:grid;
   grid-template-columns:1.05fr .95fr;
   gap:60px;
-  min-height:88vh;
   align-items:center;
 }
 
@@ -251,12 +250,17 @@ h2{
 
 /* MARKET PANEL */
 .market-panel{
+  position:relative;
+  z-index:2;
   border:1px solid var(--line);
   background:rgba(255,255,255,.04);
   backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
   border-radius:34px;
   padding:24px;
   box-shadow:0 35px 80px rgba(0,0,0,.35);
+  animation:panelFloat 6s ease-in-out infinite;
+  will-change:transform;
 }
 
 .panel-header{
@@ -645,8 +649,7 @@ footer p,
   }
 
   h1{
-    font-size:72px;
-    max-width:780px;
+    font-size:46px;
   }
 
   h2{
@@ -2647,9 +2650,7 @@ html{
   min-width:220px;
   height:58px;
 }
-.market-panel{
-  animation:panelFloat 6s ease-in-out infinite;
-}
+
 
 @keyframes panelFloat{
 
