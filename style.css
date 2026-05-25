@@ -2352,11 +2352,27 @@ html, body{
   transform:translateY(0);
 }
 
-.market-filter button{
-  appearance:none;
-  border:none;
+.profile-dropdown,
+.notification-dropdown{
+  opacity:0 !important;
+  visibility:hidden !important;
+  transform:translateY(10px);
 }
 
-.market-search input{
+.profile-menu.active .profile-dropdown,
+.notification-menu.active .notification-dropdown{
+  opacity:1 !important;
+  visibility:visible !important;
+  transform:translateY(0);
+}
+
+.market-filter button{
   appearance:none;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.10);
+  color:rgba(255,255,255,0.78);
+  border-radius:999px;
+  padding:12px 18px;
+  font-weight:700;
+  cursor:pointer;
 }
