@@ -122,11 +122,14 @@
 
 </div>
       <a class="btn btn-outline login-open" href="#">Login</a>
-      <button class="mobile-menu-btn">
-  ☰
+      <button class="mobile-menu-btn" aria-label="Open Menu">
+  <span></span>
+  <span></span>
+  <span></span>
 </button>
     </div>
   </header>
+  <div class="mobile-overlay"></div>
   <div class="mobile-menu">
   <a href="/marketplace.html">Marketplace</a>
   <a href="#projects">Projects</a>
@@ -1176,9 +1179,27 @@ marketSearch.addEventListener("input", function () {
 <script>
 const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
 const mobileMenu = document.querySelector(".mobile-menu");
+const mobileOverlay = document.querySelector(".mobile-overlay");
+const mobileLinks = document.querySelectorAll(".mobile-menu a");
+
+function closeMobileMenu(){
+  mobileMenu.classList.remove("active");
+  mobileOverlay.classList.remove("active");
+  mobileMenuBtn.classList.remove("active");
+  document.body.classList.remove("menu-open");
+}
 
 mobileMenuBtn.addEventListener("click", function(){
   mobileMenu.classList.toggle("active");
+  mobileOverlay.classList.toggle("active");
+  mobileMenuBtn.classList.toggle("active");
+  document.body.classList.toggle("menu-open");
+});
+
+mobileOverlay.addEventListener("click", closeMobileMenu);
+
+mobileLinks.forEach(link => {
+  link.addEventListener("click", closeMobileMenu);
 });
 </script>
 </body>
