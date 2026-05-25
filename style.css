@@ -185,6 +185,7 @@ nav a:hover{
   display:grid;
   grid-template-columns:1.05fr .95fr;
   gap:60px;
+  min-height:88vh;
   align-items:center;
 }
 
@@ -644,7 +645,8 @@ footer p,
   }
 
   h1{
-    font-size:46px;
+    font-size:72px;
+    max-width:780px;
   }
 
   h2{
@@ -735,31 +737,23 @@ body::before{
 
   pointer-events:none;
 
-  z-index:-1;
 }
-.hero::after{
+.hero::before{
   content:"";
-
   position:absolute;
-
-  width:700px;
-  height:700px;
-
-  right:-180px;
-  top:-180px;
-
+  inset:0;
   background:radial-gradient(
-    circle,
-    rgba(0,224,164,0.16) 0%,
-    rgba(0,224,164,0.08) 35%,
-    transparent 70%
+    circle at 70% 30%,
+    rgba(0,224,164,0.12),
+    transparent 45%
   );
+  pointer-events:none;
+  z-index:0;
+}
 
-  filter:blur(70px);
-
-  animation:floatGlow 8s ease-in-out infinite;
-
-  z-index:-1;
+.hero-grid{
+  position:relative;
+  z-index:1;
 }
 
 @keyframes floatGlow{
@@ -2647,4 +2641,28 @@ html{
   box-shadow:
     0 10px 30px rgba(0,0,0,0.18),
     inset 0 1px 1px rgba(255,255,255,0.04);
+}
+
+.hero-actions .btn{
+  min-width:220px;
+  height:58px;
+}
+.market-panel{
+  animation:panelFloat 6s ease-in-out infinite;
+}
+
+@keyframes panelFloat{
+
+  0%{
+    transform:translateY(0px);
+  }
+
+  50%{
+    transform:translateY(-8px);
+  }
+
+  100%{
+    transform:translateY(0px);
+  }
+
 }
