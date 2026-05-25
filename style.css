@@ -2590,3 +2590,61 @@ html, body{
     overflow:hidden;
   }
 }
+.section{
+  position:relative;
+}
+
+.section-head{
+  margin-bottom:56px;
+}
+
+.section-head h2{
+  max-width:720px;
+}
+
+.section-head p{
+  font-size:17px;
+}
+
+@media(max-width:768px){
+
+  .section-head{
+    margin-bottom:38px;
+  }
+
+}
+h1,h2,h3{
+  font-weight:800;
+}
+
+p{
+  letter-spacing:0.01em;
+}
+
+.hero-text,
+.section-head p,
+.insight-card p,
+.project-card p{
+  color:rgba(255,255,255,0.72);
+}
+.listing-card,
+.dash-card,
+.insight-card,
+.project-card,
+.watchlist-item,
+.ai-card{
+  will-change:transform;
+}
+html{
+  scroll-padding-top:120px;
+}
+.listing-card,
+.dash-card,
+.insight-card,
+.activity-panel,
+.watchlist-panel,
+.ai-insight-panel{
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.18),
+    inset 0 1px 1px rgba(255,255,255,0.04);
+}
