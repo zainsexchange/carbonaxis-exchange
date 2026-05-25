@@ -1,0 +1,790 @@
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="favicon.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CarbonAxis Exchange | Building Trusted Climate Markets</title>
+  <meta name="description" content="CarbonAxis Exchange is building institutional climate market infrastructure for transparent carbon trading, verified climate projects, and scalable climate finance." />
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="container nav-inner">
+     <a href="#" class="brand">
+  <img src="logo.png" alt="CarbonAxis Exchange Logo" class="site-logo">
+</a>
+      <nav>
+<a href="/marketplace.html">Marketplace</a>
+        <a href="#projects">Projects</a>
+        <a href="#how">How It Works</a>
+        <a href="#insights">Insights</a>
+        <a href="#early-access">Early Access</a>
+      </nav>
+      <a class="btn btn-primary nav-btn" href="#early-access">Request Access</a>
+     <div class="notification-menu">
+
+  <button class="notification-btn">
+
+    🔔
+
+    <span class="notification-count">
+      3
+    </span>
+
+  </button>
+
+  <div class="notification-dropdown">
+
+    <div class="notification-item">
+
+      <h4>
+        New Carbon Project Added
+      </h4>
+
+      <p>
+        Renewable energy credits listed.
+      </p>
+
+    </div>
+
+    <div class="notification-item">
+
+      <h4>
+        Verification Completed
+      </h4>
+
+      <p>
+        Biochar project verified successfully.
+      </p>
+
+    </div>
+
+    <div class="notification-item">
+
+      <h4>
+        Watchlist Updated
+      </h4>
+
+      <p>
+        Market activity changed on tracked assets.
+      </p>
+
+    </div>
+
+  </div>
+
+</div>
+      <div class="profile-menu">
+
+  <button class="profile-btn">
+
+    <span class="profile-avatar">
+      C
+    </span>
+
+    <span>
+      Account
+    </span>
+
+    <span class="profile-arrow">
+      ▼
+    </span>
+
+  </button>
+
+  <div class="profile-dropdown">
+
+    <a href="#dashboard">
+      Dashboard
+    </a>
+
+    <a href="#marketplace-listings">
+      Marketplace
+    </a>
+
+    <a href="#">
+      Watchlist
+    </a>
+
+    <a href="#">
+      Settings
+    </a>
+
+    <a href="#">
+      Logout
+    </a>
+
+  </div>
+
+</div>
+      <a class="btn btn-outline login-open" href="#">Login</a>
+    </div>
+  </header>
+<main>
+  <section class="section marketplace-page-hero">
+    <div class="container">
+      <p class="section-label">Carbon Marketplace</p>
+      <h1>Verified Carbon Credit Listings</h1>
+      <p class="hero-text">
+        Explore carbon removal, renewable energy, methane avoidance and verified climate assets through CarbonAxis Exchange.
+      </p>
+    </div>
+  </section>
+   <section id="marketplace-listings" class="section marketplace-section">
+
+  <div class="container">
+
+    <div class="section-head">
+      <div>
+        <p class="section-label">Marketplace</p>
+        <h2>Featured Carbon Listings</h2>
+      </div>
+
+      <p>
+        Discover verified climate projects, carbon removal opportunities,
+        renewable energy credits and sustainability-linked assets.
+      </p>
+    </div>
+    <div class="market-search">
+  <input
+    type="text"
+    id="marketSearch"
+    placeholder="Search carbon projects, countries, categories..."
+  >
+</div>
+    <div class="market-filter">
+  <button class="active" data-filter="all">All</button>
+  <button data-filter="carbon-removal">Carbon Removal</button>
+  <button data-filter="renewable-energy">Renewable Energy</button>
+  <button data-filter="methane">Methane</button>
+  <button data-filter="nature-based">Nature-Based</button>
+</div>
+
+    <div class="listing-grid">
+
+      <div class="listing-card" data-category="carbon-removal"
+data-image="images/forest.png"
+data-title="Biochar Carbon Removal Project"
+
+data-location="Pakistan · Carbon Removal"
+
+data-price="$38/t"
+
+data-volume="98,000 tCO₂e"
+
+data-description="This project focuses on biochar-based carbon removal and long-term carbon sequestration through sustainable biomass processing methodologies." >
+
+        <div class="listing-top">
+          <span class="verified-tag">Verified</span>
+          <span class="price">$38/t</span>
+        </div>
+
+        <h3>Biochar Carbon Removal Project</h3>
+
+        <p class="listing-location">
+          Pakistan · Carbon Removal
+        </p>
+
+        <div class="listing-tags">
+          <span>Biochar</span>
+          <span>SDG 13</span>
+          <span>Removal</span>
+        </div>
+
+        <div class="listing-footer">
+          <span>98,000 tCO₂e</span>
+
+          <button type="button" class="listing-btn">
+  View Details
+</button>
+        </div>
+
+      </div>
+
+      <div class="listing-card" data-category="renewable-energy"
+      data-image="images/solar.png"
+
+data-title="Solar Renewable Energy Credits"
+
+data-location="UAE · Renewable Energy"
+
+data-price="$12/t"
+
+data-volume="210,000 tCO₂e"
+
+data-description="Large-scale renewable energy certificates supporting clean electricity transition and corporate net zero strategies."
+>
+
+        <div class="listing-top">
+          <span class="verified-tag">Verified</span>
+          <span class="price">$12/t</span>
+        </div>
+
+        <h3>Solar Renewable Energy Credits</h3>
+
+        <p class="listing-location">
+          UAE · Renewable Energy
+        </p>
+
+        <div class="listing-tags">
+          <span>Solar</span>
+          <span>REC</span>
+          <span>Net Zero</span>
+        </div>
+
+        <div class="listing-footer">
+          <span>210,000 tCO₂e</span>
+
+          <button type="button" class="listing-btn">
+  View Details
+</button>
+        </div>
+
+      </div>
+
+      <div class="listing-card" data-category="methane"
+      data-image="images/methane.png"
+
+data-title="Methane Avoidance Initiative"
+
+data-location="Malaysia · Waste Management"
+
+data-price="$16/t"
+
+data-volume="145,000 tCO₂e"
+
+data-description="Methane capture and waste management initiative reducing greenhouse gas emissions through sustainable landfill operations."
+>
+
+        <div class="listing-top">
+          <span class="verified-tag">Verified</span>
+          <span class="price">$16/t</span>
+        </div>
+
+        <h3>Methane Avoidance Initiative</h3>
+
+        <p class="listing-location">
+          Malaysia · Waste Management
+        </p>
+
+        <div class="listing-tags">
+          <span>Methane</span>
+          <span>Waste</span>
+          <span>ESG</span>
+        </div>
+
+        <div class="listing-footer">
+          <span>145,000 tCO₂e</span>
+
+          <button type="button" class="listing-btn">
+  View Details
+</button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+</main>
+<div class="project-modal" id="projectModal">
+
+  <div class="modal-overlay"></div>
+
+  <div class="modal-content">
+      <div class="modal-image">
+
+  <img
+    id="modalImage"
+    src="images/forest.png"
+    alt="Project Image"
+  >
+
+</div>
+
+    <button class="close-modal">
+      ✕
+    </button>
+
+    <div class="modal-header">
+
+      <span class="verified-tag">
+        Verified Project
+      </span>
+
+      <h2 id="modalTitle">
+        Biochar Carbon Removal Project
+      </h2>
+
+     <p id="modalLocation">
+Pakistan · Carbon Removal
+</p>
+
+    </div>
+
+    <div class="modal-metrics">
+
+      <div>
+        <span>Price</span>
+       <h3 id="modalPrice">
+           $38/t</h3>
+      </div>
+
+      <div>
+        <span>Volume</span>
+        <h3 id="modalVolume">
+            98,000 tCO₂e</h3>
+      </div>
+
+      <div>
+        <span>Registry</span>
+        <h3>Verified</h3>
+      </div>
+
+    </div>
+
+    <div class="modal-body">
+
+      <h3>Project Overview</h3>
+
+     <p id="modalDescription">
+        This project focuses on biochar-based carbon removal
+        and long-term carbon sequestration through sustainable
+        biomass processing methodologies.
+      </p>
+
+      <div class="modal-tags">
+
+        <span>SDG 13</span>
+        <span>Carbon Removal</span>
+        <span>Biochar</span>
+
+      </div>
+
+    </div>
+
+    <div class="modal-actions">
+
+      <a href="#" class="btn btn-primary">
+        Request Access
+      </a>
+
+      <a href="#" class="btn btn-outline">
+        Contact Broker
+      </a>
+
+    </div>
+
+  </div>
+
+</div>
+
+  <footer>
+    <div class="container footer-inner">
+      <a href="#" class="footer-logo">
+  <img src="logo.png" alt="CarbonAxis Logo">
+</a>
+      <div class="footer-links"><a href="#marketplace">Marketplace</a><a href="#projects">Projects</a><a href="#how">How It Works</a><a href="#early-access">Early Access</a></div>
+      <div><p>Email: info@carbonaxisexchange.com</p><p>Domain: carbonaxisexchange.com</p></div>
+    </div>
+    <div class="footer-bottom">© 2026 CarbonAxis Exchange. All Rights Reserved.</div>
+  </footer>
+  <script>
+window.addEventListener("scroll", function () {
+
+  const navbar = document.querySelector(".navbar");
+
+  if (window.scrollY > 40) {
+    navbar.classList.add("scrolled");
+  } else {
+    navbar.classList.remove("scrolled");
+  }
+
+});
+</script>
+<script>
+const revealElements = document.querySelectorAll(".section, .stats-strip");
+
+const revealOnScroll = () => {
+  revealElements.forEach((el) => {
+    const top = el.getBoundingClientRect().top;
+    if (top < window.innerHeight - 100) {
+      el.classList.add("active");
+    }
+  });
+};
+
+revealElements.forEach((el) => el.classList.add("reveal"));
+window.addEventListener("scroll", revealOnScroll);
+revealOnScroll();
+</script>
+<canvas id="particles"></canvas>
+
+<script>
+const canvas = document.getElementById("particles");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let particles = [];
+
+for(let i = 0; i < 55; i++){
+  particles.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 2 + 1,
+    dx: (Math.random() - 0.5) * 0.4,
+    dy: (Math.random() - 0.5) * 0.4
+  });
+}
+
+function animate(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  particles.forEach(p => {
+
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+
+    ctx.fillStyle = "rgba(0,224,164,0.35)";
+    ctx.fill();
+
+    p.x += p.dx;
+    p.y += p.dy;
+
+    if(p.x < 0 || p.x > canvas.width) p.dx *= -1;
+    if(p.y < 0 || p.y > canvas.height) p.dy *= -1;
+  });
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+</script>
+<script>
+const counters = document.querySelectorAll(".counter");
+
+counters.forEach(counter => {
+
+  const updateCounter = () => {
+
+    const target = +counter.getAttribute("data-target");
+
+    const current = +counter.innerText.replace(/,/g,'');
+
+    const increment = target / 120;
+
+    if(current < target){
+
+      counter.innerText = Math.ceil(current + increment);
+
+      setTimeout(updateCounter, 18);
+
+    } else {
+
+      if(target >= 1000000){
+
+        counter.innerText =
+          (target / 1000000).toFixed(1) + "M+";
+
+      }
+
+      else{
+
+        counter.innerText = target + "+";
+      }
+    }
+  };
+
+  updateCounter();
+
+});
+</script>
+
+
+<div class="login-modal" id="loginModal">
+  <div class="login-overlay"></div>
+
+  <div class="login-box">
+    <button class="close-login">✕</button>
+
+    <p class="section-label">Member Access</p>
+    <h2>Access CarbonAxis</h2>
+    <p class="login-sub">Login access for buyers, project owners and market partners.</p>
+
+    <input type="email" placeholder="Business Email">
+    <input type="password" placeholder="Password">
+
+    <button class="btn btn-primary">Login</button>
+
+    <p class="login-note">
+      Early access only. Don’t have access?
+      <a href="#early-access">Request invitation</a>
+    </p>
+  </div>
+</div>
+
+<script>
+
+const loginOpen =
+document.querySelector(".login-open");
+
+const loginModal =
+document.getElementById("loginModal");
+
+const closeLogin =
+document.querySelector(".close-login");
+
+const loginOverlay =
+document.querySelector(".login-overlay");
+
+const loginInputs =
+document.querySelectorAll(".login-box input");
+
+function closeLoginModal(){
+
+  loginModal.classList.remove("active");
+
+  loginInputs.forEach(input => {
+    input.value = "";
+  });
+
+}
+
+loginOpen.addEventListener("click", function(e){
+
+  e.preventDefault();
+
+  loginModal.classList.add("active");
+
+});
+
+closeLogin.addEventListener("click", function(){
+
+  closeLoginModal();
+
+});
+
+loginOverlay.addEventListener("click", function(){
+
+  closeLoginModal();
+
+});
+
+</script>
+<script>
+
+const profileMenu =
+document.querySelector(".profile-menu");
+
+const profileBtn =
+document.querySelector(".profile-btn");
+
+profileBtn.addEventListener("click", () => {
+
+  profileMenu.classList.toggle("active");
+
+});
+
+document.addEventListener("click", (e) => {
+
+  if(!profileMenu.contains(e.target)){
+
+    profileMenu.classList.remove("active");
+
+  }
+
+});
+
+</script>
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+  const filterButtons =
+  document.querySelectorAll(".market-filter button");
+
+  const cards =
+  document.querySelectorAll(".listing-card");
+
+  filterButtons.forEach(button => {
+
+    button.addEventListener("click", () => {
+
+      filterButtons.forEach(btn =>
+        btn.classList.remove("active")
+      );
+
+      button.classList.add("active");
+
+      const filter =
+      button.getAttribute("data-filter");
+
+      cards.forEach(card => {
+
+        const category =
+        card.getAttribute("data-category");
+
+        if (
+          filter === "all" ||
+          category === filter
+        ) {
+
+          card.style.display = "block";
+
+        } else {
+
+          card.style.display = "none";
+
+        }
+
+      });
+
+    });
+
+  });
+
+  const modal =
+  document.getElementById("projectModal");
+
+  const closeModal =
+  document.querySelector(".close-modal");
+
+  const overlay =
+  document.querySelector(".modal-overlay");
+
+  const modalTitle =
+  document.getElementById("modalTitle");
+
+  const modalLocation =
+  document.getElementById("modalLocation");
+
+  const modalPrice =
+  document.getElementById("modalPrice");
+
+  const modalVolume =
+  document.getElementById("modalVolume");
+
+  const modalDescription =
+  document.getElementById("modalDescription");
+
+  const modalImage =
+  document.getElementById("modalImage");
+
+  cards.forEach(card => {
+
+    const button =
+    card.querySelector(".listing-btn");
+
+    if(button){
+
+      button.addEventListener("click", () => {
+
+        modalTitle.innerText =
+        card.dataset.title;
+
+        modalLocation.innerText =
+        card.dataset.location;
+
+        modalPrice.innerText =
+        card.dataset.price;
+
+        modalVolume.innerText =
+        card.dataset.volume;
+
+        modalDescription.innerText =
+        card.dataset.description;
+
+        modalImage.src =
+        card.dataset.image;
+
+        modal.classList.add("active");
+
+        const modalContent =
+        document.querySelector(".modal-content");
+
+        modalContent.scrollTop = 0;
+
+      });
+
+    }
+
+  });
+
+  closeModal.addEventListener("click", () => {
+
+    modal.classList.remove("active");
+
+  });
+
+  overlay.addEventListener("click", () => {
+
+    modal.classList.remove("active");
+
+  });
+
+});
+
+</script>
+<script>
+
+const notificationMenu =
+document.querySelector(".notification-menu");
+
+const notificationBtn =
+document.querySelector(".notification-btn");
+
+notificationBtn.addEventListener("click", () => {
+
+  notificationMenu.classList.toggle("active");
+
+});
+
+document.addEventListener("click", (e) => {
+
+  if(!notificationMenu.contains(e.target)){
+
+    notificationMenu.classList.remove("active");
+
+  }
+
+});
+
+</script>
+<script>
+const marketSearch = document.getElementById("marketSearch");
+const searchableCards = document.querySelectorAll(".listing-card");
+
+marketSearch.addEventListener("input", function () {
+
+  const searchValue =
+  marketSearch.value.toLowerCase();
+
+  searchableCards.forEach(card => {
+
+    const cardText =
+    card.innerText.toLowerCase();
+
+    card.style.display =
+    cardText.includes(searchValue)
+    ? "block"
+    : "none";
+
+  });
+
+});
+</script>
+</body>
+</html>
