@@ -1051,7 +1051,6 @@ body::before{
   display:flex;
   align-items:center;
   justify-content:space-between;
-
   margin-bottom:20px;
 }
 
@@ -2697,19 +2696,17 @@ html{
     grid-template-columns:1fr 1fr;
   }
 }
-.featured-ribbon{
-  position:absolute;
-  top:18px;
-  right:-42px;
-  transform:rotate(35deg);
-  background:var(--teal);
-  color:#04110d;
-  padding:8px 46px;
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:0.08em;
-  text-transform:uppercase;
-  z-index:4;
+
+.listing-image{
+  position:relative;
+}
+
+
+.listing-top{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
 }
 .listing-card{
   overflow:hidden;
@@ -2728,28 +2725,28 @@ html{
     0 0 0 1px rgba(0,224,164,0.08);
 }
 
-.listing-card::before{
+.listing-card::after{
   content:"";
-
   position:absolute;
-
   inset:0;
-
   background:linear-gradient(
     135deg,
     rgba(0,224,164,0.06),
     transparent 40%
   );
-
   opacity:0;
-
   transition:0.35s ease;
-
   pointer-events:none;
+  z-index:1;
 }
 
-.listing-card:hover::before{
+.listing-card:hover::after{
   opacity:1;
+}
+
+.listing-card > *{
+  position:relative;
+  z-index:2;
 }
 .listing-image{
   width:100%;
@@ -2781,4 +2778,69 @@ html{
   font-size:13px;
   border-left:2px solid rgba(0,224,164,0.45);
   padding-left:10px;
+}
+.market-status{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:7px 14px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+}
+
+.market-status::before{
+  content:"";
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:currentColor;
+}
+
+.active-status{
+  background:rgba(0,224,164,0.10);
+  color:var(--teal);
+}
+
+.demand-status{
+  background:rgba(255,184,77,0.12);
+  color:#ffb84d;
+}
+
+.new-status{
+  background:rgba(90,160,255,0.12);
+  color:#5aa0ff;
+}
+.listing-top{
+  display:grid;
+  grid-template-columns:auto auto 1fr;
+  align-items:center;
+  gap:12px;
+}
+
+.listing-top .price{
+  justify-self:end;
+  white-space:nowrap;
+}
+
+.market-status,
+.verified-tag{
+  white-space:nowrap;
+  padding:7px 12px;
+  font-size:11px;
+}
+.featured-ribbon{
+  position:absolute;
+  top:14px;
+  right:-42px;
+  transform:rotate(35deg);
+  background:#00e0a4;
+  color:#04110d;
+  padding:6px 50px;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.08em;
+  z-index:5;
 }
