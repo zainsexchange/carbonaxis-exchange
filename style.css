@@ -52,7 +52,7 @@ body{
 
   height:82px;
 
-  gap:38px;
+  gap:28px;
 }
 
 .brand{
@@ -86,7 +86,7 @@ body{
 .site-logo{
   width:180px;
 
-  height:auto;
+  height:68px;
 
   display:block;
 
@@ -118,7 +118,7 @@ nav a:hover{
   align-items:center;
   justify-content:center;
   border-radius:999px;
-  padding:15px 28px;
+  padding:12px 24px;
   text-decoration:none;
   font-weight:800;
   border:1px solid transparent;
@@ -140,9 +140,15 @@ nav a:hover{
 }
 
 .btn-outline{
+  padding:10px 12px;
+  height:38px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   color:#fff;
   border-color:rgba(255,255,255,.16);
   background:rgba(255,255,255,.05);
+ 
 }
 
 .btn-outline:hover{
@@ -570,6 +576,10 @@ footer{
   grid-template-columns:1.4fr .8fr 1fr;
   gap:30px;
 }
+.footer-inner > div:first-child p{
+  max-width:500px;
+  line-height:1.6;
+}
 
 footer h3{
   margin:0;
@@ -840,7 +850,7 @@ body::before{
 }
 
 .footer-logo img{
-  width:190px;
+  width:220px;
 
   height:auto;
 
@@ -1759,9 +1769,15 @@ body::before{
 
   gap:10px;
 
-  padding:12px 16px;
+  padding:12px 14px;
 
   border-radius:999px;
+  
+  height:42px;
+  display:flex;
+  align-items:center;
+  
+  gap:10px;
 
   border:1px solid rgba(255,255,255,0.08);
 
@@ -1996,9 +2012,9 @@ html, body{
 .notification-btn{
   position:relative;
 
-  width:58px;
-  height:58px;
-
+  width:38px;
+  height:38px;
+padding:0;
   display:flex;
 
   align-items:center;
@@ -2033,8 +2049,8 @@ html, body{
   top:8px;
   right:8px;
 
-  width:20px;
-  height:20px;
+  width:16px;
+  height:16px;
 
   display:flex;
 
@@ -2133,8 +2149,8 @@ nav{
 }
 
 .notification-btn{
-  width:52px;
-  height:52px;
+  width:46px;
+  height:46px;
   font-size:20px;
 }
 
@@ -2146,9 +2162,6 @@ nav{
   padding:14px 26px;
 }
 
-.site-logo{
-  width:150px;
-}
 
 @media(max-width:1200px){
   nav{
@@ -2843,4 +2856,164 @@ html{
   font-weight:800;
   letter-spacing:.08em;
   z-index:5;
+}
+.navbar nav a{
+  white-space: nowrap;
+}
+.nav-btn{
+  padding:10px 18px !important;
+  min-width:auto !important;
+}
+.brand{
+  width:190px !important;
+  height:70px !important;
+  padding:0 !important;
+  overflow:hidden !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+}
+
+.site-logo{
+  width:300px !important;
+  height:auto !important;
+}
+.nav-inner{
+  height:78px !important;
+  gap:18px !important;
+  justify-content:flex-start !important;
+}
+
+.brand{
+  width:120px !important;
+  height:54px !important;
+  flex-shrink:0 !important;
+}
+
+.site-logo{
+  width:115px !important;
+  height:auto !important;
+}
+
+nav{
+  margin-left:10px !important;
+  gap:24px !important;
+  flex:1 !important;
+}
+
+nav a{
+  font-size:14px !important;
+}
+
+.nav-btn{
+  padding:10px 20px !important;
+  height:46px !important;
+  min-width:auto !important;
+}
+
+.notification-btn{
+  width:46px !important;
+  height:46px !important;
+}
+
+.profile-btn{
+  height:46px !important;
+  padding:8px 14px !important;
+}
+
+.login-open{
+  height:46px !important;
+  padding:8px 22px !important;
+}
+.brand{
+  width:120px !important;
+}
+
+.site-logo{
+  width:120px !important;
+}
+
+nav{
+  margin-left:0 !important;
+  gap:22px !important;
+}
+nav a.active{
+  color:#12e0b5;
+  position:relative;
+}
+
+nav a.active::after{
+  content:'';
+  position:absolute;
+  left:0;
+  bottom:-8px;
+  width:100%;
+  height:2px;
+  background:#12e0b5;
+}
+.contact-form{
+  max-width:700px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+.contact-form input,
+.contact-form textarea{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  padding:14px 18px;
+  color:#fff;
+  font-size:15px;
+}
+
+.contact-form textarea{
+  resize:vertical;
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus{
+  outline:none;
+  border-color:#12e0b5;
+}
+footer h4{
+  margin:0 0 18px;
+  color:#ffffff;
+  font-size:18px;
+  font-weight:700;
+}
+
+.footer-links a{
+  transition:.3s ease;
+}
+
+.footer-links a:hover{
+  color:var(--teal);
+  transform:translateX(4px);
+}
+
+.footer-inner{
+  align-items:start;
+}
+.footer-links a{
+  transition:.3s ease;
+}
+
+.footer-links a:hover{
+  color:#12e0b5;
+  padding-left:6px;
+}
+.content-card{
+  max-width:900px;
+  margin:0 auto;
+}
+
+.content-card h2{
+  margin:40px 0 12px;
+}
+
+.content-card p{
+  color:rgba(255,255,255,.75);
+  line-height:1.8;
 }
