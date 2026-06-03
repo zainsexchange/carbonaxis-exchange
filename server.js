@@ -27,7 +27,18 @@ const earlyAccessSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+function requireAdmin(req, res, next) {
+  const adminKey = req.headers["x-admin-key"];
 
+  if (adminKey !== process.env.ADMIN_SECRET) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized access",
+    });
+  }
+
+  next();
+}
 const EarlyAccess = mongoose.model("EarlyAccess", earlyAccessSchema);
 
 app.get("/", (req, res) => {
@@ -104,7 +115,7 @@ app.post("/api/project-submission", async (req, res) => {
     });
   }
 });
-app.get("/api/early-access", async (req, res) => {
+app.get("/api/early-access", requireAdmin, async (req, res) => {
   try {
     const requests = await EarlyAccess.find().sort({ createdAt: -1 });
 
@@ -120,7 +131,7 @@ app.get("/api/early-access", async (req, res) => {
   }
 });
 
-app.get("/api/project-submissions", async (req, res) => {
+app.get("/api/project-submissions", requireAdmin, async (req, res) => {
   try {
     const projects = await ProjectSubmission.find().sort({ createdAt: -1 });
 
