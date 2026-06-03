@@ -3,7 +3,10 @@ import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config({ path: ".env" });
+console.log("Current Directory:", process.cwd());
+
+console.log("ENV TEST:", process.env.MONGO_URI);
 
 const app = express();
 
@@ -59,4 +62,45 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+const projectSubmissionSchema = new mongoose.Schema(
+  {
+    projectName: String,
+    country: String,
+    projectType: String,
+    credits: String,
+    description: String,
+  },
+  { timestamps: true }
+);
+
+const ProjectSubmission = mongoose.model(
+  "ProjectSubmission",
+  projectSubmissionSchema
+);
+app.post("/api/project-submission", async (req, res) => {
+  try {
+    const { projectName, country, projectType, credits, description } = req.body;
+
+    const submission = await ProjectSubmission.create({
+      projectName,
+      country,
+      projectType,
+      credits,
+      description,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Project submitted successfully",
+      data: submission,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
 });

@@ -672,14 +672,21 @@ data-description="Methane capture and waste management initiative reducing green
         </ul>
       </div>
 
-      <form class="submission-form">
-        <input type="text" placeholder="Project Name">
-        <input type="text" placeholder="Country / Region">
-        <input type="text" placeholder="Project Type">
-        <input type="text" placeholder="Estimated Credits">
-        <textarea placeholder="Short Project Description"></textarea>
-        <button type="button" class="btn btn-primary">Submit for Review</button>
-      </form>
+      <form class="submission-form" id="projectForm">
+    <input type="text" id="projectName" placeholder="Project Name" required>
+    
+    <input type="text" id="country" placeholder="Country / Region" required>
+    
+    <input type="text" id="projectType" placeholder="Project Type" required>
+    
+    <input type="text" id="credits" placeholder="Estimated Credits" required>
+    
+    <textarea id="description" placeholder="Short Project Description" required></textarea>
+    
+    <button type="submit" class="btn btn-primary">
+        Submit for Review
+    </button>
+</form>
     </div>
   </div>
 </section>
@@ -689,13 +696,22 @@ data-description="Methane capture and waste management initiative reducing green
           <p class="section-label">Early Access</p>
           <h2>Powering the Next Generation of Climate Finance</h2>
           <p>CarbonAxis Exchange is launching soon. Join early access as a buyer, project owner, broker, registry partner or climate-finance stakeholder.</p>
-          <form class="early-form" action="mailto:info@carbonaxisexchange.com" method="post" enctype="text/plain">
-            <input name="name" placeholder="Full Name" required>
-            <input name="email" placeholder="Business Email" required>
-            <select name="role"><option>Buyer / Corporate</option><option>Project Owner</option><option>Broker / Trading Partner</option><option>Investor / Strategic Partner</option></select>
-            <textarea name="message" placeholder="Tell us how you want to work with CarbonAxis"></textarea>
-            <button type="submit" class="btn btn-primary">Request Early Access</button>
-          </form>
+          <form class="early-form" id="earlyAccessForm">
+  <input id="name" name="name" placeholder="Full Name" required>
+
+  <input id="email" name="email" type="email" placeholder="Business Email" required>
+
+  <select id="role" name="role">
+    <option>Buyer / Corporate</option>
+    <option>Project Owner</option>
+    <option>Broker / Trading Partner</option>
+    <option>Investor / Strategic Partner</option>
+  </select>
+
+  <textarea id="message" name="message" placeholder="Tell us how you want to work with CarbonAxis"></textarea>
+
+  <button type="submit" class="btn btn-primary">Request Early Access</button>
+</form>
         </div>
       </div>
     </section>
@@ -1262,6 +1278,82 @@ mobileOverlay.addEventListener("click", closeMobileMenu);
 
 mobileLinks.forEach(link => {
   link.addEventListener("click", closeMobileMenu);
+});
+</script>
+<script>
+document.getElementById("earlyAccessForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const role = document.getElementById("role").value;
+    const message = document.getElementById("message").value;
+
+    try {
+        const response = await fetch("https://carbonaxis-exchange.onrender.com/api/early-access", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                name,
+                email,
+                role,
+                message
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert("Request submitted successfully!");
+        } else {
+            alert("Submission failed.");
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Error submitting form.");
+    }
+});
+</script>
+<script>
+document.getElementById("projectForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const projectName = document.getElementById("projectName").value;
+    const country = document.getElementById("country").value;
+    const projectType = document.getElementById("projectType").value;
+    const credits = document.getElementById("credits").value;
+    const description = document.getElementById("description").value;
+
+    try {
+        const response = await fetch("https://carbonaxis-exchange.onrender.com/api/project-submission", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                projectName,
+                country,
+                projectType,
+                credits,
+                description
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert("Project submitted successfully!");
+            document.getElementById("projectForm").reset();
+        } else {
+            alert("Submission failed.");
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert("Server error.");
+    }
 });
 </script>
 </body>
