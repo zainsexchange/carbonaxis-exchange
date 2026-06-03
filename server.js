@@ -146,3 +146,34 @@ app.get("/api/project-submissions", requireAdmin, async (req, res) => {
     });
   }
 });
+app.delete("/api/early-access/:id", requireAdmin, async (req, res) => {
+  try {
+    await EarlyAccess.findByIdAndDelete(req.params.id);
+
+    res.json({
+      success: true,
+      message: "Early access request deleted",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Delete failed",
+    });
+  }
+});
+
+app.delete("/api/project-submissions/:id", requireAdmin, async (req, res) => {
+  try {
+    await ProjectSubmission.findByIdAndDelete(req.params.id);
+
+    res.json({
+      success: true,
+      message: "Project submission deleted",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Delete failed",
+    });
+  }
+});
