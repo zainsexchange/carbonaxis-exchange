@@ -104,3 +104,34 @@ app.post("/api/project-submission", async (req, res) => {
     });
   }
 });
+app.get("/api/early-access", async (req, res) => {
+  try {
+    const requests = await EarlyAccess.find().sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: requests,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch early access requests",
+    });
+  }
+});
+
+app.get("/api/project-submissions", async (req, res) => {
+  try {
+    const projects = await ProjectSubmission.find().sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: projects,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch project submissions",
+    });
+  }
+});
