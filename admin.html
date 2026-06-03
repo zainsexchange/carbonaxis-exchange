@@ -1,80 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script>
-
-if(
- localStorage.getItem("adminLoggedIn")
- !== "true"
-){
-
- window.location.href =
- "login.html";
-
-}
-
-</script>
   <meta charset="UTF-8">
   <title>CarbonAxis Admin Dashboard</title>
   <link rel="stylesheet" href="style.css">
+
+  <script>
+    if (localStorage.getItem("adminLoggedIn") !== "true") {
+      window.location.href = "login.html";
+    }
+  </script>
+
   <style>
-    body { background:#06110e; color:white; font-family:Inter, Arial, sans-serif; padding:40px; }
-    h1 { color:#00e0a4; }
-    table { width:100%; border-collapse:collapse; margin-bottom:40px; background:#0d1c18; }
-    th, td { padding:14px; border-bottom:1px solid rgba(255,255,255,.1); text-align:left; }
-    th { color:#00e0a4; }
-    .card { margin-bottom:40px; }
+    body{
+      background:#06110e;
+      color:white;
+      font-family:Inter, Arial, sans-serif;
+      padding:30px;
+    }
+
+    .admin-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:30px;
+    }
+
+    h1{
+      color:#00e0a4;
+      margin:0;
+    }
+
+    .logout-btn{
+      padding:10px 18px;
+      background:#ff4d4d;
+      color:white;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:700;
+    }
+
+    .stats-grid{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:18px;
+      margin-bottom:30px;
+    }
+
+    .stat-card{
+      background:#0d1c18;
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:16px;
+      padding:22px;
+    }
+
+    .stat-card span{
+      color:rgba(255,255,255,.65);
+      font-size:14px;
+    }
+
+    .stat-card h2{
+      color:#00e0a4;
+      margin:10px 0 0;
+      font-size:34px;
+    }
+
+    .admin-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:24px;
+    }
+
+    .card{
+      background:#0d1c18;
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:18px;
+      padding:22px;
+      overflow:auto;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:14px;
+    }
+
+    th,td{
+      padding:12px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      text-align:left;
+      vertical-align:top;
+    }
+
+    th{
+      color:#00e0a4;
+      font-size:13px;
+    }
+
+    .delete-btn{
+      background:#ff4d4d;
+      color:white;
+      border:none;
+      padding:7px 12px;
+      border-radius:6px;
+      cursor:pointer;
+    }
+
+    @media(max-width:1100px){
+      .stats-grid,
+      .admin-grid{
+        grid-template-columns:1fr;
+      }
+    }
   </style>
 </head>
+
 <body>
 
-<h1>CarbonAxis Admin Dashboard</h1>
+  <div class="admin-top">
+    <h1>CarbonAxis Admin Dashboard</h1>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
 
-<button onclick="logout()" style="
-padding:10px 20px;
-background:red;
-color:white;
-border:none;
-cursor:pointer;
-float:right;
-">
-Logout
-</button>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span>Early Access Requests</span>
+      <h2 id="earlyCount">0</h2>
+    </div>
 
-<div class="card">
-  <h2>Early Access Requests</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Role</th>
-        <th>Message</th>
-        <th>Date</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody id="earlyAccessTable"></tbody>
-  </table>
-</div>
+    <div class="stat-card">
+      <span>Project Submissions</span>
+      <h2 id="projectCount">0</h2>
+    </div>
 
-<div class="card">
-  <h2>Project Submissions</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Project</th>
-        <th>Country</th>
-        <th>Type</th>
-        <th>Credits</th>
-        <th>Description</th>
-        <th>Date</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody id="projectTable"></tbody>
-  </table>
-</div>
+    <div class="stat-card">
+      <span>Marketplace Status</span>
+      <h2>Live</h2>
+    </div>
+
+    <div class="stat-card">
+      <span>Database</span>
+      <h2>Active</h2>
+    </div>
+  </div>
+
+  <div class="admin-grid">
+
+    <div class="card">
+      <h2>Early Access Requests</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Message</th>
+            <th>Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="earlyAccessTable"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Project Submissions</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Project</th>
+            <th>Country</th>
+            <th>Type</th>
+            <th>Credits</th>
+            <th>Description</th>
+            <th>Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="projectTable"></tbody>
+      </table>
+    </div>
+
+  </div>
 
 <script>
 const API_BASE = "https://carbonaxis-exchange.onrender.com";
@@ -110,6 +218,8 @@ async function loadEarlyAccess() {
   const data = await res.json();
   const table = document.getElementById("earlyAccessTable");
 
+  document.getElementById("earlyCount").innerText = data.data.length;
+
   data.data.forEach(item => {
     table.innerHTML += `
       <tr>
@@ -119,7 +229,9 @@ async function loadEarlyAccess() {
         <td>${item.message || "-"}</td>
         <td>${new Date(item.createdAt).toLocaleString()}</td>
         <td>
-          <button onclick="deleteEarlyAccess('${item._id}')">Delete</button>
+          <button class="delete-btn" onclick="deleteEarlyAccess('${item._id}')">
+            Delete
+          </button>
         </td>
       </tr>
     `;
@@ -134,6 +246,8 @@ async function loadProjects() {
   const data = await res.json();
   const table = document.getElementById("projectTable");
 
+  document.getElementById("projectCount").innerText = data.data.length;
+
   data.data.forEach(item => {
     table.innerHTML += `
       <tr>
@@ -144,21 +258,22 @@ async function loadProjects() {
         <td>${item.description || "-"}</td>
         <td>${new Date(item.createdAt).toLocaleString()}</td>
         <td>
-          <button onclick="deleteProject('${item._id}')">Delete</button>
+          <button class="delete-btn" onclick="deleteProject('${item._id}')">
+            Delete
+          </button>
         </td>
       </tr>
     `;
   });
 }
 
+function logout(){
+  localStorage.removeItem("adminLoggedIn");
+  window.location.href = "login.html";
+}
+
 loadEarlyAccess();
 loadProjects();
-function logout(){
-
-    localStorage.removeItem("adminLoggedIn");
-
-    window.location.href = "login.html";
-}
 </script>
 
 </body>
