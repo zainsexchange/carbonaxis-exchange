@@ -3041,3 +3041,17 @@ footer h4{
   background:rgba(255,77,77,.14);
   color:#ff6b6b;
 }
+.search-box{
+  width:100%;
+  padding:12px 15px;
+  margin:15px 0 20px;
+  border:none;
+  border-radius:10px;
+  background:#10231d;
+  color:white;
+  font-size:14px;
+}
+
+.search-box:focus{
+  outline:1px solid #00e0a4;
+}

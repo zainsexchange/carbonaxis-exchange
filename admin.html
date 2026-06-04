@@ -87,6 +87,7 @@
   border:1px solid rgba(255,255,255,.1);
   border-radius:18px;
   padding:22px;
+  min-height:auto;
   overflow:auto;
 }
 
@@ -160,6 +161,12 @@
 
     <div class="card">
       <h2>Early Access Requests</h2>
+      <input
+  type="text"
+  id="earlySearch"
+  class="search-box"
+  placeholder="Search by name, email, role or message..."
+>
       <table>
         <thead>
           <tr>
@@ -177,6 +184,12 @@
 
     <div class="card">
       <h2>Project Submissions</h2>
+      <input
+  type="text"
+  id="projectSearch"
+  class="search-box"
+  placeholder="Search by project, country or type..."
+>
       <table>
         <thead>
           <tr>
@@ -286,9 +299,48 @@ function logout(){
   localStorage.removeItem("adminLoggedIn");
   window.location.href = "login.html";
 }
+function searchTable(inputId, tableId) {
 
+  const input = document.getElementById(inputId);
+
+  input.addEventListener("keyup", function () {
+
+    const filter = this.value.toLowerCase();
+
+    const rows =
+      document.querySelectorAll(`#${tableId} tr`);
+
+    rows.forEach(row => {
+
+      const text =
+        row.textContent.toLowerCase();
+
+      row.style.display =
+        text.includes(filter)
+        ? ""
+        : "none";
+
+    });
+
+  });
+
+}
 loadEarlyAccess();
 loadProjects();
+
+setTimeout(() => {
+
+  searchTable(
+    "earlySearch",
+    "earlyAccessTable"
+  );
+
+  searchTable(
+    "projectSearch",
+    "projectTable"
+  );
+
+}, 1000);
 </script>
 <div class="footer">
   CarbonAxis Exchange Admin Panel © 2026
