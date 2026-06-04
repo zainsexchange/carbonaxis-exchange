@@ -264,7 +264,11 @@ async function loadProjects() {
       <tr>
         <td>${item.projectName || "-"}</td>
         <td>${item.country || "-"}</td>
-        <td>${item.projectType || "-"}</td>
+        <td>
+  <span class="status ${(item.projectType || "pending").toLowerCase()}">
+    ${item.projectType || "Pending"}
+  </span>
+</td>
         <td>${item.credits || "-"}</td>
         <td>${item.description || "-"}</td>
         <td>${new Date(item.createdAt).toLocaleString()}</td>

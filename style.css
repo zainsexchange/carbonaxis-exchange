@@ -3017,3 +3017,27 @@ footer h4{
   color:rgba(255,255,255,.75);
   line-height:1.8;
 }
+.status{
+  display:inline-block;
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+  text-transform:capitalize;
+}
+
+.status.verified,
+.status.approved{
+  background:rgba(0,224,164,.12);
+  color:#00e0a4;
+}
+
+.status.pending{
+  background:rgba(255,193,7,.14);
+  color:#ffcc33;
+}
+
+.status.rejected{
+  background:rgba(255,77,77,.14);
+  color:#ff6b6b;
+}
