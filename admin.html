@@ -77,9 +77,6 @@
   gap:24px;
 }
 
-.card{
-  width:100%;
-}
 
     .card{
   width:100%;
@@ -120,11 +117,18 @@
     }
 
     @media(max-width:1100px){
-      .stats-grid,
-      .admin-grid{
-        grid-template-columns:1fr;
-      }
-    }
+  .stats-grid{
+    grid-template-columns:1fr;
+  }
+}
+.footer{
+  margin-top:40px;
+  text-align:center;
+  color:rgba(255,255,255,.6);
+  font-size:14px;
+  padding:20px;
+  border-top:1px solid rgba(255,255,255,.08);
+}
   </style>
 </head>
 
@@ -161,6 +165,9 @@
 
     <div class="card">
       <h2>Early Access Requests</h2>
+      <button onclick="exportEarlyAccess()" class="export-btn">
+  Export CSV
+</button>
       <input
   type="text"
   id="earlySearch"
@@ -184,6 +191,9 @@
 
     <div class="card">
       <h2>Project Submissions</h2>
+      <button onclick="exportProjects()" class="export-btn">
+  Export CSV
+</button>
       <input
   type="text"
   id="projectSearch"
@@ -341,17 +351,96 @@ setTimeout(() => {
   );
 
 }, 1000);
+function downloadCSV(filename, rows) {
+  const csv = rows
+    .map(row => row.map(value => `"${value || ""}"`).join(","))
+    .join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const link = document.createElement("a");
+
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+}
+async function exportEarlyAccess(){
+
+  const res = await fetch(
+    `${API_BASE}/api/early-access`,
+    {
+      headers:{
+        "x-admin-key":ADMIN_KEY
+      }
+    }
+  );
+
+  const data = await res.json();
+
+  const rows = [
+    ["Name","Email","Role","Message","Date"]
+  ];
+
+  data.data.forEach(item=>{
+    rows.push([
+      item.name,
+      item.email,
+      item.role,
+      item.message,
+      new Date(item.createdAt)
+        .toLocaleString()
+    ]);
+  });
+
+  downloadCSV(
+    "early-access.csv",
+    rows
+  );
+}
+async function exportProjects(){
+
+  const res = await fetch(
+    `${API_BASE}/api/project-submissions`,
+    {
+      headers:{
+        "x-admin-key":ADMIN_KEY
+      }
+    }
+  );
+
+  const data = await res.json();
+
+  const rows = [
+    [
+      "Project",
+      "Country",
+      "Type",
+      "Credits",
+      "Description",
+      "Date"
+    ]
+  ];
+
+  data.data.forEach(item=>{
+    rows.push([
+      item.projectName,
+      item.country,
+      item.projectType,
+      item.credits,
+      item.description,
+      new Date(item.createdAt)
+        .toLocaleString()
+    ]);
+  });
+
+  downloadCSV(
+    "project-submissions.csv",
+    rows
+  );
+}
 </script>
 <div class="footer">
   CarbonAxis Exchange Admin Panel © 2026
-  <style>
-    .footer{
-      text-align:center;
-      color:rgba(255,255,255,.5);
-      font-size:13px;
-      margin-top:50px;
-    }
-    </style>
+  
 </div>
 
 </body>
