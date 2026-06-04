@@ -13,10 +13,14 @@
 
   <style>
     body{
-      background:#06110e;
-      color:white;
-      font-family:Inter, Arial, sans-serif;
-      padding:30px;
+      body{
+  background:#06110e;
+  color:white;
+  font-family:Inter, Arial, sans-serif;
+  padding:30px;
+  max-width:1600px;
+  margin:auto;
+}
     }
 
     .admin-top{
@@ -29,6 +33,7 @@
     h1{
       color:#00e0a4;
       margin:0;
+      font-size:56px;
     }
 
     .logout-btn{
@@ -105,11 +110,12 @@
 
     .delete-btn{
       background:#ff4d4d;
-      color:white;
-      border:none;
-      padding:7px 12px;
-      border-radius:6px;
-      cursor:pointer;
+  color:white;
+  border:none;
+  padding:6px 10px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:12px;
     }
 
     @media(max-width:1100px){
@@ -130,23 +136,23 @@
 
   <div class="stats-grid">
     <div class="stat-card">
-      <span>Early Access Requests</span>
+      <span>📩 Early Access Requests</span>
       <h2 id="earlyCount">0</h2>
     </div>
 
     <div class="stat-card">
-      <span>Project Submissions</span>
+      <span>📁 Project Submissions</span>
       <h2 id="projectCount">0</h2>
     </div>
 
     <div class="stat-card">
-      <span>Marketplace Status</span>
+      <span>🌐 Marketplace Status</span>
       <h2>Live</h2>
     </div>
 
     <div class="stat-card">
-      <span>Database</span>
-      <h2>Active</h2>
+      <span>🗄️ Database</span>
+      <h2 style="color:#00ff88">● Live</h2>
     </div>
   </div>
 
@@ -280,6 +286,14 @@ function logout(){
 loadEarlyAccess();
 loadProjects();
 </script>
-
+<div class="footer">
+  CarbonAxis Exchange Admin Panel © 2026
+</div>
+.footer{
+  text-align:center;
+  margin-top:40px;
+  color:rgba(255,255,255,.5);
+}
+  </style>
 </body>
 </html>
