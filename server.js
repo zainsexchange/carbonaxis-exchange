@@ -99,7 +99,12 @@ app.post("/api/project-submission", async (req, res) => {
       projectType,
       credits,
       description,
-    });
+      status: {
+  type: String,
+  default: "Pending",
+} },
+  { timestamps: true }
+);
 
     res.status(201).json({
       success: true,
