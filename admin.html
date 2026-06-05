@@ -129,6 +129,33 @@
   padding:20px;
   border-top:1px solid rgba(255,255,255,.08);
 }
+.export-btn{
+  background:#00e0a4;
+  color:#06110e;
+  border:none;
+  padding:10px 18px;
+  border-radius:8px;
+  font-weight:700;
+  cursor:pointer;
+  transition:.3s;
+}
+
+.export-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 0 15px rgba(0,224,164,.4);
+}
+
+.table-tools{
+  display:flex;
+  gap:15px;
+  align-items:center;
+  margin:18px 0 22px;
+}
+
+.table-tools .search-box{
+  flex:1;
+  margin:0;
+}
   </style>
 </head>
 
@@ -165,15 +192,18 @@
 
     <div class="card">
       <h2>Early Access Requests</h2>
-      <button onclick="exportEarlyAccess()" class="export-btn">
-  Export CSV
-</button>
-      <input
-  type="text"
-  id="earlySearch"
-  class="search-box"
-  placeholder="Search by name, email, role or message..."
->
+  <div class="table-tools">
+  <button onclick="exportEarlyAccess()" class="export-btn">
+    Export CSV
+  </button>
+
+  <input
+    type="text"
+    id="earlySearch"
+    class="search-box"
+    placeholder="Search by name, email, role or message..."
+  >
+</div>
       <table>
         <thead>
           <tr>
@@ -191,15 +221,18 @@
 
     <div class="card">
       <h2>Project Submissions</h2>
-      <button onclick="exportProjects()" class="export-btn">
-  Export CSV
-</button>
-      <input
-  type="text"
-  id="projectSearch"
-  class="search-box"
-  placeholder="Search by project, country or type..."
->
+      <div class="table-tools">
+  <button onclick="exportProjects()" class="export-btn">
+    Export CSV
+  </button>
+
+  <input
+    type="text"
+    id="projectSearch"
+    class="search-box"
+    placeholder="Search by project, country or type..."
+  >
+</div>
       <table>
         <thead>
           <tr>
