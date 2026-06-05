@@ -156,6 +156,11 @@
   flex:1;
   margin:0;
 }
+.last-updated{
+  color:rgba(255,255,255,.55);
+  font-size:14px;
+  margin:-10px 0 25px;
+}
   </style>
 </head>
 
@@ -187,11 +192,17 @@
       <h2 style="color:#00ff88">● Live</h2>
     </div>
   </div>
+  <p class="last-updated">
+  Last updated: <span id="lastUpdated">--</span>
+</p>
 
   <div class="admin-grid">
 
     <div class="card">
-      <h2>Early Access Requests</h2>
+      <h2>
+  Early Access Requests
+  (<span id="earlyCountText">0</span>)
+</h2>
   <div class="table-tools">
   <button onclick="exportEarlyAccess()" class="export-btn">
     Export CSV
@@ -220,7 +231,10 @@
     </div>
 
     <div class="card">
-      <h2>Project Submissions</h2>
+      <h2>
+  Project Submissions
+  (<span id="projectCountText">0</span>)
+</h2>
       <div class="table-tools">
   <button onclick="exportProjects()" class="export-btn">
     Export CSV
@@ -286,6 +300,7 @@ async function loadEarlyAccess() {
   const table = document.getElementById("earlyAccessTable");
 
   document.getElementById("earlyCount").innerText = data.data.length;
+document.getElementById("earlyCountText").innerText = data.data.length;
 
   data.data.forEach(item => {
     table.innerHTML += `
@@ -314,6 +329,7 @@ async function loadProjects() {
   const table = document.getElementById("projectTable");
 
   document.getElementById("projectCount").innerText = data.data.length;
+document.getElementById("projectCountText").innerText = data.data.length;
 
   data.data.forEach(item => {
     table.innerHTML += `
@@ -370,6 +386,8 @@ function searchTable(inputId, tableId) {
 }
 loadEarlyAccess();
 loadProjects();
+document.getElementById("lastUpdated").innerText =
+  new Date().toLocaleString();
 
 setTimeout(() => {
 
@@ -475,6 +493,7 @@ async function exportProjects(){
   CarbonAxis Exchange Admin Panel © 2026
   
 </div>
+
 
 </body>
 </html>
