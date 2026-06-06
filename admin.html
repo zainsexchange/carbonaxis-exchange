@@ -380,9 +380,9 @@ document.getElementById("projectCountText").innerText = data.data.length;
         <td>${item.projectName || "-"}</td>
         <td>${item.country || "-"}</td>
         <td>
-  <span class="status ${(item.projectType || "pending").toLowerCase()}">
-    ${item.projectType || "Pending"}
-  </span>
+  <span class="status ${(item.status || "Pending").toLowerCase()}">
+  ${item.status || "Pending"}
+</span>
 </td>
         <td>${item.credits || "-"}</td>
         <td>${item.description || "-"}</td>
