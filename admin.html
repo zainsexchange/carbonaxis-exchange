@@ -175,6 +175,27 @@
 .refresh-btn:hover{
   opacity:.9;
 }
+.approve-btn{
+  background:#00e0a4;
+  color:#06110e;
+  border:none;
+  padding:6px 10px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:12px;
+  margin-right:5px;
+}
+
+.reject-btn{
+  background:#ffcc33;
+  color:#06110e;
+  border:none;
+  padding:6px 10px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:12px;
+  margin-right:5px;
+}
   </style>
 </head>
 
@@ -366,11 +387,19 @@ document.getElementById("projectCountText").innerText = data.data.length;
         <td>${item.credits || "-"}</td>
         <td>${item.description || "-"}</td>
         <td>${new Date(item.createdAt).toLocaleString()}</td>
-        <td>
-          <button class="delete-btn" onclick="deleteProject('${item._id}')">
-            Delete
-          </button>
-        </td>
+       <td>
+  <button class="approve-btn" onclick="updateProjectStatus('${item._id}', 'Approved')">
+    Approve
+  </button>
+
+  <button class="reject-btn" onclick="updateProjectStatus('${item._id}', 'Rejected')">
+    Reject
+  </button>
+
+  <button class="delete-btn" onclick="deleteProject('${item._id}')">
+    Delete
+  </button>
+</td>
       </tr>
     `;
   });
@@ -405,6 +434,18 @@ function searchTable(inputId, tableId) {
 
   });
 
+}
+async function updateProjectStatus(id, status) {
+  await fetch(`${API_BASE}/api/project-submissions/${id}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-key": ADMIN_KEY
+    },
+    body: JSON.stringify({ status })
+  });
+
+  location.reload();
 }
 loadEarlyAccess();
 loadProjects();
