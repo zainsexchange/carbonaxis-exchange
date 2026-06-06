@@ -103,8 +103,33 @@ app.post("/api/project-submission", async (req, res) => {
   type: String,
   default: "Pending",
 } },
+
   { timestamps: true }
 );
+app.patch("/api/project-submissions/:id/status", requireAdmin, async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    const updatedProject = await ProjectSubmission.findByIdAndUpdate(
+      req.params.id,
+      { status: status },
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      message: "Project status updated",
+      data: updatedProject,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Status update failed",
+    });
+  }
+});
 
     res.status(201).json({
       success: true,
