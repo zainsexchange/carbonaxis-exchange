@@ -182,3 +182,25 @@ app.delete("/api/project-submissions/:id", requireAdmin, async (req, res) => {
     });
   }
 });
+app.patch("/api/project-submissions/:id/status", requireAdmin, async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    const updatedProject = await ProjectSubmission.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      message: "Project status updated",
+      data: updatedProject,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Status update failed",
+    });
+  }
+});
