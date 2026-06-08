@@ -214,7 +214,7 @@
   <button data-filter="nature-based">Nature-Based</button>
 </div>
 
-    <div class="listing-grid">
+    <div class="listing-grid" id="approvedProjectsGrid">
 
       <div class="listing-card" data-category="carbon-removal"
 data-image="/images/forest.png"
@@ -377,6 +377,16 @@ data-description="Methane capture and waste management initiative reducing green
 
     </div>
 
+<h2>Latest Approved Projects</h2>
+
+<h2 style="margin-top:60px;">
+Latest Approved Projects
+</h2>
+
+<div class="listing-grid" id="approvedProjectsGrid">
+</div>
+</div>
+</div>
   </div>
 
 </section>
@@ -930,6 +940,58 @@ mobileOverlay.addEventListener("click", closeMobileMenu);
 mobileLinks.forEach(link => {
   link.addEventListener("click", closeMobileMenu);
 });
+</script>
+<script>
+async function loadApprovedProjects() {
+  const grid = document.getElementById("approvedProjectsGrid");
+
+  try {
+    const res = await fetch("https://carbonaxis-exchange.onrender.com/api/approved-projects");
+    const data = await res.json();
+
+    grid.innerHTML = "";
+
+    data.data.forEach(project => {
+      grid.innerHTML += `
+        <div class="listing-card">
+          <div class="listing-top">
+            <span class="market-status active-status">Active</span>
+            <span class="verified-tag">Approved</span>
+            <span class="price">On Request</span>
+          </div>
+
+          <h3>${project.projectName || "Carbon Project"}</h3>
+
+          <p class="listing-location">
+            ${project.country || "Global"} · ${project.projectType || "Carbon Credits"}
+          </p>
+
+          <div class="listing-tags">
+            <span>${project.projectType || "Carbon"}</span>
+            <span>Verified</span>
+            <span>2026</span>
+          </div>
+
+          <div class="listing-specs">
+            <span>Registry: Approved</span>
+            <span>Methodology: ${project.projectType || "N/A"}</span>
+            <span>Status: ${project.status}</span>
+          </div>
+
+          <div class="listing-footer">
+            <span>${project.credits || "0"} tCO₂e</span>
+            <button type="button" class="listing-btn">View Details</button>
+          </div>
+        </div>
+      `;
+    });
+
+  } catch (error) {
+    grid.innerHTML = "<p>Unable to load marketplace projects.</p>";
+  }
+}
+
+loadApprovedProjects();
 </script>
 </body>
 </html>
