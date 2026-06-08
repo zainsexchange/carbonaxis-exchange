@@ -152,6 +152,27 @@ app.get("/api/project-submissions", requireAdmin, async (req, res) => {
     });
   }
 });
+app.get("/api/approved-projects", async (req, res) => {
+  try {
+
+    const projects = await ProjectSubmission.find({
+      status: "Approved"
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: projects
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch approved projects"
+    });
+
+  }
+});
 
 app.patch("/api/project-submissions/:id/status", requireAdmin, async (req, res) => {
   try {
