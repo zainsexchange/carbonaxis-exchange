@@ -214,7 +214,10 @@
   <button data-filter="nature-based">Nature-Based</button>
 </div>
 
-    <div class="listing-grid" id="approvedProjectsGrid">
+    <div class="listing-grid">
+      <h2 style="margin-top:60px;">
+Latest Approved Projects
+</h2>
 
       <div class="listing-card" data-category="carbon-removal"
 data-image="/images/forest.png"
@@ -376,14 +379,11 @@ data-description="Methane capture and waste management initiative reducing green
       </div>
 
     </div>
-
-<h2>Latest Approved Projects</h2>
-
 <h2 style="margin-top:60px;">
-Latest Approved Projects
+  Latest Approved Projects
 </h2>
 
-<div class="listing-grid" id="approvedProjectsGrid">
+<div class="listing-grid" id="approvedProjectsGrid"></div>
 </div>
 </div>
 </div>
@@ -942,6 +942,19 @@ mobileLinks.forEach(link => {
 });
 </script>
 <script>
+function openDynamicProjectModal(title, location, price, volume, description) {
+  document.getElementById("modalTitle").innerText = title;
+  document.getElementById("modalLocation").innerText = location;
+  document.getElementById("modalPrice").innerText = price;
+  document.getElementById("modalVolume").innerText = volume;
+  document.getElementById("modalDescription").innerText = description;
+
+  document.getElementById("modalImage").src = "/images/solar.png";
+
+  document.getElementById("projectModal").classList.add("active");
+}
+</script>
+<script>
 async function loadApprovedProjects() {
   const grid = document.getElementById("approvedProjectsGrid");
 
@@ -980,7 +993,18 @@ async function loadApprovedProjects() {
 
           <div class="listing-footer">
             <span>${project.credits || "0"} tCO₂e</span>
-            <button type="button" class="listing-btn">View Details</button>
+            <button 
+  type="button" 
+  class="listing-btn"
+  onclick="openDynamicProjectModal(
+    '${project.projectName || "Carbon Project"}',
+    '${project.country || "Global"} · ${project.projectType || "Carbon Credits"}',
+    'On Request',
+    '${project.credits || "0"} tCO₂e',
+    '${project.description || "No description available."}'
+  )">
+  View Details
+</button>
           </div>
         </div>
       `;
