@@ -969,11 +969,9 @@ async function loadApprovedProjects() {
           <div class="listing-top">
   <span class="market-status active-status">Active</span>
   <span class="verified-tag">Approved</span>
+  <span class="price">Request</span>
 </div>
 
-<div class="price-box">
-  On Request
-</div>
 
           <h3>${project.projectName || "Carbon Project"}</h3>
 
@@ -1004,7 +1002,7 @@ async function loadApprovedProjects() {
   onclick="openDynamicProjectModal(
     '${project.projectName || "Carbon Project"}',
     '${project.country || "Global"} · ${project.projectType || "Carbon Credits"}',
-    'On Request',
+    'Request',
     '${project.credits || "0"} tCO₂e',
     '${project.description || "No description available."}'
   )">
