@@ -1279,7 +1279,15 @@ body::before{
 }
 
 .modal-actions{
-  margin-top:24px;
+  display:flex;
+  gap:14px;
+  align-items:center;
+  margin-top:28px;
+}
+.modal-actions .btn{
+  flex:1;
+  height:54px;
+  white-space:nowrap;
 }
 
 @media(max-width:640px){
@@ -3084,5 +3092,27 @@ footer h4{
 @media(max-width:640px){
   #approvedProjectsGrid{
     grid-template-columns:1fr;
+  }
+}
+.project-modal .modal-actions{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:14px !important;
+  margin-top:28px !important;
+}
+
+.project-modal .modal-actions .btn{
+  width:100% !important;
+  height:54px !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  white-space:nowrap !important;
+}
+
+@media(max-width:640px){
+  .project-modal .modal-actions{
+    grid-template-columns:1fr !important;
   }
 }
