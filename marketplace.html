@@ -962,11 +962,11 @@ async function loadApprovedProjects() {
 
     data.data.forEach(project => {
       grid.innerHTML += `
-        <div class="listing-card">
-          <div class="listing-top">
-            <div class="listing-image">
+      <div class="listing-image">
               <img src="/images/solar.png" alt="${project.projectName}">
-            </div> 
+            </div>   
+      <div class="listing-card">
+          <div class="listing-top">
             <span class="market-status active-status">Active</span>
             <span class="verified-tag">Approved</span>
             <span class="price">On Request</span>
