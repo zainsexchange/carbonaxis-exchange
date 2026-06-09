@@ -379,11 +379,7 @@ data-description="Methane capture and waste management initiative reducing green
 <h2 style="margin-top:60px;">
 Latest Approved Projects
 </h2>
-<div class="listing-grid" id="approvedProjectsGrid">
-  <span class="price">
-  ${project.price || "On Request"}
-</span>
-</div>
+<div class="listing-grid" id="approvedProjectsGrid"></div>
 </div>
 </div>
 </div>
@@ -980,12 +976,14 @@ async function loadApprovedProjects() {
           </p>
 
           <div class="listing-tags">
+            <div class="listing-image">
+              <img src="/images/solar.png" alt="${project.projectName}">
+            </div> 
             <span>${project.projectType || "Carbon"}</span>
             <span>Verified</span>
             <span>2026</span>
           </div>
-          <div class="listing-image">
-  <img src="/images/solar.png" alt="${project.projectName}">
+          <div 
 </div>
 
           <div class="listing-specs">
