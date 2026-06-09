@@ -942,14 +942,13 @@ mobileLinks.forEach(link => {
 });
 </script>
 <script>
+  document.getElementById("modalImage").src = "/images/solar.png";
 function openDynamicProjectModal(title, location, price, volume, description) {
   document.getElementById("modalTitle").innerText = title;
   document.getElementById("modalLocation").innerText = location;
   document.getElementById("modalPrice").innerText = price;
   document.getElementById("modalVolume").innerText = volume;
   document.getElementById("modalDescription").innerText = description;
-
-  document.getElementById("modalImage").src = "/images/solar.png";
 
   document.getElementById("projectModal").classList.add("active");
 }
