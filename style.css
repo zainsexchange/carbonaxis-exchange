@@ -1971,18 +1971,6 @@ html, body{
   z-index:9999;
 }
 
-.profile-dropdown a{
-  padding:14px 16px;
-  border-radius:14px;
-  color:white;
-  text-decoration:none;
-}
-
-.profile-dropdown a:hover{
-  background:rgba(0,224,164,0.10);
-  color:var(--mint);
-}
-
 .profile-menu.active .profile-dropdown{
   opacity:1;
   visibility:visible;
@@ -2715,12 +2703,6 @@ html{
 }
 
 
-.listing-top{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  flex-wrap:wrap;
-}
 .listing-card{
   overflow:hidden;
   transition:
@@ -3092,9 +3074,13 @@ footer h4{
   max-height:90vh;
   overflow-y:auto;
 }
-.price-box{
-  color:#00e0a4;
-  font-weight:700;
-  margin:12px 0;
-  font-size:20px;
+.listing-top{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.price{
+  white-space:nowrap;
 }
