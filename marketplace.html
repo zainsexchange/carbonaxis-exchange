@@ -943,12 +943,13 @@ mobileLinks.forEach(link => {
 </script>
 <script>
 function openDynamicProjectModal(title, location, price, volume, description) {
-  document.getElementById("modalImage").src = "/images/solar.png";
   document.getElementById("modalTitle").innerText = title;
   document.getElementById("modalLocation").innerText = location;
   document.getElementById("modalPrice").innerText = price;
   document.getElementById("modalVolume").innerText = volume;
   document.getElementById("modalDescription").innerText = description;
+
+  document.getElementById("modalImage").src = "/images/solar.png";
 
   document.getElementById("projectModal").classList.add("active");
 }
@@ -967,13 +968,13 @@ async function loadApprovedProjects() {
       grid.innerHTML += `
         <div class="listing-card">
           <div class="listing-top">
-            <img src="/images/solar.png" alt="${project.projectName}">
             <span class="market-status active-status">Active</span>
             <span class="verified-tag">Approved</span>
             <span class="price">On Request</span>
           </div>
 
           <h3>${project.projectName || "Carbon Project"}</h3>
+
           <p class="listing-location">
             ${project.country || "Global"} · ${project.projectType || "Carbon Credits"}
           </p>
@@ -984,7 +985,7 @@ async function loadApprovedProjects() {
             <span>2026</span>
           </div>
           <div class="listing-image">
-
+  <img src="/images/solar.png" alt="${project.projectName}">
 </div>
 
           <div class="listing-specs">
