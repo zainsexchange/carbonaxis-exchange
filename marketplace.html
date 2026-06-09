@@ -213,11 +213,10 @@
   <button data-filter="methane">Methane</button>
   <button data-filter="nature-based">Nature-Based</button>
 </div>
-
-    <div class="listing-grid">
-      <h2 style="margin-top:60px;">
+  <h2 style="margin-top:60px;">
 Latest Approved Projects
 </h2>
+    <div class="listing-grid">
 
       <div class="listing-card" data-category="carbon-removal"
 data-image="/images/forest.png"
@@ -380,7 +379,11 @@ data-description="Methane capture and waste management initiative reducing green
 
     </div>
 
-<div class="listing-grid" id="approvedProjectsGrid"></div>
+<div class="listing-grid" id="approvedProjectsGrid">
+  <span class="price">
+  ${project.price || "On Request"}
+</span>
+</div>
 </div>
 </div>
 </div>
@@ -954,7 +957,7 @@ function openDynamicProjectModal(title, location, price, volume, description) {
 <script>
 async function loadApprovedProjects() {
   const grid = document.getElementById("approvedProjectsGrid");
-  
+
   try {
     const res = await fetch("https://carbonaxis-exchange.onrender.com/api/approved-projects");
     const data = await res.json();
