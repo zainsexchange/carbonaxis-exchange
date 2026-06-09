@@ -379,9 +379,6 @@ data-description="Methane capture and waste management initiative reducing green
       </div>
 
     </div>
-<h2 style="margin-top:60px;">
-  Latest Approved Projects
-</h2>
 
 <div class="listing-grid" id="approvedProjectsGrid"></div>
 </div>
@@ -957,7 +954,7 @@ function openDynamicProjectModal(title, location, price, volume, description) {
 <script>
 async function loadApprovedProjects() {
   const grid = document.getElementById("approvedProjectsGrid");
-
+  
   try {
     const res = await fetch("https://carbonaxis-exchange.onrender.com/api/approved-projects");
     const data = await res.json();
@@ -984,6 +981,9 @@ async function loadApprovedProjects() {
             <span>Verified</span>
             <span>2026</span>
           </div>
+          <div class="listing-image">
+  <img src="/images/solar.png" alt="${project.projectName}">
+</div>
 
           <div class="listing-specs">
             <span>Registry: Approved</span>
