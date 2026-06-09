@@ -213,9 +213,7 @@
   <button data-filter="methane">Methane</button>
   <button data-filter="nature-based">Nature-Based</button>
 </div>
-  <h2 style="margin-top:60px;">
-Latest Approved Projects
-</h2>
+  
     <div class="listing-grid">
 
       <div class="listing-card" data-category="carbon-removal"
@@ -378,7 +376,9 @@ data-description="Methane capture and waste management initiative reducing green
       </div>
 
     </div>
-
+<h2 style="margin-top:60px;">
+Latest Approved Projects
+</h2>
 <div class="listing-grid" id="approvedProjectsGrid">
   <span class="price">
   ${project.price || "On Request"}
@@ -391,18 +391,19 @@ data-description="Methane capture and waste management initiative reducing green
 
 </section>
 </main>
+
 <div class="project-modal" id="projectModal">
-
-  <div class="modal-overlay"></div>
-
-  <div class="modal-content">
-      <div class="modal-image">
+<div class="modal-image">
 
   <img
     id="modalImage"
     src="/images/forest.png"
     alt="Project Image"
   >
+  <div class="modal-overlay"></div>
+
+  <div class="modal-content">
+      
 
 </div>
 
