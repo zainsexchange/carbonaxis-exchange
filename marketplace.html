@@ -959,20 +959,30 @@ async function loadApprovedProjects() {
     grid.innerHTML = "";
 
     data.data.forEach(project => {
-      let projectImage = "/images/forest.png";
-      const type = (project.projectType || "").toLowerCase();
+      const name = (project.projectName || "").toLowerCase();
+const type = (project.projectType || "").toLowerCase();
+let projectImage = "/images/default.png";
 
-      if (type.includes("solar") || type.includes("renewable")) {
-        projectImage = "/images/solar.png";
-      } else if (type.includes("methane") || type.includes("waste")) {
-        projectImage = "/images/methane.png";
-      } else if (
-        type.includes("biochar") ||
-        type.includes("carbon removal") ||
-        type.includes("forest")
-      ) {
-        projectImage = "/images/forest.png";
-      }
+if (
+  name.includes("solar") ||
+  type.includes("solar") ||
+  type.includes("renewable")
+) {
+  projectImage = "/images/solar.png";
+} else if (
+  name.includes("methane") ||
+  type.includes("methane") ||
+  type.includes("waste")
+) {
+  projectImage = "/images/methane.png";
+} else if (
+  name.includes("biochar") ||
+  type.includes("biochar") ||
+  type.includes("carbon removal") ||
+  type.includes("forest")
+) {
+  projectImage = "/images/forest.png";
+}
 
       grid.innerHTML += `
         <div class="listing-card">
