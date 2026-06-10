@@ -673,19 +673,13 @@ data-description="Methane capture and waste management initiative reducing green
       </div>
 
       <form class="submission-form" id="projectForm">
-    <input type="text" id="projectName" placeholder="Project Name" required>
-    
-    <input type="text" id="country" placeholder="Country / Region" required>
-    
-    <input type="text" id="projectType" placeholder="Project Type" required>
-    
-    <input type="text" id="credits" placeholder="Estimated Credits" required>
-    
-    <textarea id="description" placeholder="Short Project Description" required></textarea>
-    
-    <button type="submit" class="btn btn-primary">
-        Submit for Review
-    </button>
+  <input type="text" id="projectName" placeholder="Project Name">
+  <input type="text" id="country" placeholder="Country / Region">
+  <input type="text" id="projectType" placeholder="Project Type">
+  <input type="text" id="credits" placeholder="Estimated Credits">
+  <input type="text" id="price" placeholder="Price per tCO₂e e.g. $18/t">
+  <textarea id="description" placeholder="Short Project Description"></textarea>
+  <button type="submit" class="btn btn-primary">Submit for Review</button>
 </form>
     </div>
   </div>
@@ -1338,7 +1332,7 @@ document.getElementById("projectForm").addEventListener("submit", async function
                 projectType,
                 credits,
                 description,
-                price: String
+                price
             })
         });
 
@@ -1355,6 +1349,47 @@ document.getElementById("projectForm").addEventListener("submit", async function
         console.error(error);
         alert("Server error.");
     }
+});
+</script>
+<script>
+document.getElementById("projectForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+
+  const projectName = document.getElementById("projectName").value;
+  const country = document.getElementById("country").value;
+  const projectType = document.getElementById("projectType").value;
+  const credits = document.getElementById("credits").value;
+  const price = document.getElementById("price").value;
+  const description = document.getElementById("description").value;
+
+  try {
+    const response = await fetch("https://carbonaxis-exchange.onrender.com/api/project-submission", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        projectName,
+        country,
+        projectType,
+        credits,
+        price,
+        description
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      alert("Project submitted successfully!");
+      document.getElementById("projectForm").reset();
+    } else {
+      alert("Submission failed.");
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Server error.");
+  }
 });
 </script>
 </body>
