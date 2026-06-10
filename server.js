@@ -118,6 +118,17 @@ app.post("/api/project-submission", async (req, res) => {
     });
   }
 });
+const brokerInquirySchema = new mongoose.Schema(
+  {
+    projectName: String,
+    name: String,
+    email: String,
+    message: String,
+  },
+  { timestamps: true }
+);
+
+const BrokerInquiry = mongoose.model("BrokerInquiry", brokerInquirySchema);
 
 app.get("/api/early-access", requireAdmin, async (req, res) => {
   try {
@@ -245,7 +256,31 @@ app.delete("/api/project-submissions/:id", requireAdmin, async (req, res) => {
     });
   }
 });
+app.post("/api/broker-inquiry", async (req, res) => {
+  try {
+    const { projectName, name, email, message } = req.body;
 
+    const inquiry = await BrokerInquiry.create({
+      projectName,
+      name,
+      email,
+      message,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Broker inquiry submitted",
+      data: inquiry,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Broker inquiry failed",
+    });
+  }
+});
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
