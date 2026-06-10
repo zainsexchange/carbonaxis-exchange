@@ -938,15 +938,13 @@ mobileLinks.forEach(link => {
 });
 </script>
 <script>
-function openDynamicProjectModal(title, location, price, volume, description) {
+function openDynamicProjectModal(title, location, price, volume, description, image) {
   document.getElementById("modalTitle").innerText = title;
   document.getElementById("modalLocation").innerText = location;
   document.getElementById("modalPrice").innerText = price;
   document.getElementById("modalVolume").innerText = volume;
   document.getElementById("modalDescription").innerText = description;
-
-  document.getElementById("modalImage").src = "/images/solar.png";
-
+  document.getElementById("modalImage").src = image;
   document.getElementById("projectModal").classList.add("active");
 }
 </script>
@@ -961,17 +959,32 @@ async function loadApprovedProjects() {
     grid.innerHTML = "";
 
     data.data.forEach(project => {
-      grid.innerHTML += `  
-      <div class="listing-card">
-        <div class="listing-image">
-              <img src="/images/solar.png" alt="${project.projectName}">
-            </div> 
-          <div class="listing-top">
-  <span class="market-status active-status">Active</span>
-  <span class="verified-tag">Approved</span>
-  <span class="price">Request</span>
-</div>
+      let projectImage = "/images/forest.png";
+      const type = (project.projectType || "").toLowerCase();
 
+      if (type.includes("solar") || type.includes("renewable")) {
+        projectImage = "/images/solar.png";
+      } else if (type.includes("methane") || type.includes("waste")) {
+        projectImage = "/images/methane.png";
+      } else if (
+        type.includes("biochar") ||
+        type.includes("carbon removal") ||
+        type.includes("forest")
+      ) {
+        projectImage = "/images/forest.png";
+      }
+
+      grid.innerHTML += `
+        <div class="listing-card">
+          <div class="listing-image">
+            <img src="${projectImage}" alt="${project.projectName || "Carbon Project"}">
+          </div>
+
+          <div class="listing-top">
+            <span class="market-status active-status">Active</span>
+            <span class="verified-tag">Approved</span>
+            <span class="price">${project.price || "Request"}</span>
+          </div>
 
           <h3>${project.projectName || "Carbon Project"}</h3>
 
@@ -980,13 +993,10 @@ async function loadApprovedProjects() {
           </p>
 
           <div class="listing-tags">
-            
             <span>${project.projectType || "Carbon"}</span>
             <span>Verified</span>
             <span>2026</span>
           </div>
-          <div 
-</div>
 
           <div class="listing-specs">
             <span>Registry: Approved</span>
@@ -996,18 +1006,20 @@ async function loadApprovedProjects() {
 
           <div class="listing-footer">
             <span>${project.credits || "0"} tCO₂e</span>
-            <button 
-  type="button" 
-  class="listing-btn"
-  onclick="openDynamicProjectModal(
-    '${project.projectName || "Carbon Project"}',
-    '${project.country || "Global"} · ${project.projectType || "Carbon Credits"}',
-    'Request',
-    '${project.credits || "0"} tCO₂e',
-    '${project.description || "No description available."}'
-  )">
-  View Details
-</button>
+
+            <button
+              type="button"
+              class="listing-btn"
+              onclick="openDynamicProjectModal(
+                '${project.projectName || "Carbon Project"}',
+                '${project.country || "Global"} · ${project.projectType || "Carbon Credits"}',
+                '${project.price || "Request"}',
+                '${project.credits || "0"} tCO₂e',
+                '${project.description || "No description available."}',
+                '${projectImage}'
+              )">
+              View Details
+            </button>
           </div>
         </div>
       `;
