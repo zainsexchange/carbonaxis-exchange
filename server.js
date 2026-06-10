@@ -46,6 +46,7 @@ const projectSubmissionSchema = new mongoose.Schema(
     country: String,
     projectType: String,
     credits: String,
+    price: String,
     description: String,
     status: {
       type: String,
@@ -92,13 +93,14 @@ app.post("/api/early-access", async (req, res) => {
 
 app.post("/api/project-submission", async (req, res) => {
   try {
-    const { projectName, country, projectType, credits, description } = req.body;
+    const { projectName, country, projectType, credits, price, description } = req.body;
 
     const submission = await ProjectSubmission.create({
       projectName,
       country,
       projectType,
       credits,
+      price,
       description,
     });
 
