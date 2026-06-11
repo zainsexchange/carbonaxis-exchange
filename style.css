@@ -3116,3 +3116,71 @@ footer h4{
     grid-template-columns:1fr !important;
   }
 }
+.broker-modal{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  opacity:0;
+  visibility:hidden;
+  z-index:10000;
+  transition:.3s ease;
+}
+
+.broker-modal.active{
+  opacity:1;
+  visibility:visible;
+}
+
+.broker-overlay{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.68);
+  backdrop-filter:blur(12px);
+}
+
+.broker-box{
+  position:relative;
+  z-index:2;
+  width:min(520px,92%);
+  padding:36px;
+  border-radius:32px;
+  background:linear-gradient(145deg,rgba(255,255,255,.09),rgba(255,255,255,.035));
+  border:1px solid rgba(255,255,255,.12);
+  backdrop-filter:blur(24px);
+}
+
+.broker-box input,
+.broker-box textarea{
+  width:100%;
+  margin-top:14px;
+  border:1px solid var(--line);
+  background:rgba(0,0,0,.25);
+  color:white;
+  border-radius:18px;
+  padding:16px;
+  font:inherit;
+}
+
+.broker-box textarea{
+  min-height:120px;
+  resize:vertical;
+}
+
+.broker-box .btn{
+  width:100%;
+  margin-top:18px;
+}
+.broker-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+
+.broker-modal.active {
+  display: flex;
+}

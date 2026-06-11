@@ -387,24 +387,7 @@ Latest Approved Projects
 
 </section>
 </main>
-<div class="broker-modal" id="brokerModal">
-  <div class="broker-overlay" onclick="closeBrokerForm()"></div>
 
-  <div class="broker-box">
-    <button class="close-login" onclick="closeBrokerForm()">✕</button>
-
-    <p class="section-label">Broker Inquiry</p>
-    <h2>Contact Broker</h2>
-
-    <input type="text" id="brokerName" placeholder="Your Name">
-    <input type="email" id="brokerEmail" placeholder="Your Email">
-    <textarea id="brokerMessage" placeholder="Your Message"></textarea>
-
-    <button class="btn btn-primary" onclick="submitBrokerInquiry()">
-      Send Inquiry
-    </button>
-  </div>
-</div>
 <div class="project-modal" id="projectModal">
 
   <div class="modal-overlay"></div>
@@ -1074,5 +1057,23 @@ function submitBrokerInquiry(){
   closeBrokerForm();
 }
 </script>
+<div class="broker-modal" id="brokerModal">
+  <div class="broker-overlay" onclick="closeBrokerForm()"></div>
+
+  <div class="broker-box">
+    <button class="close-login" onclick="closeBrokerForm()">✕</button>
+
+    <p class="section-label">Broker Inquiry</p>
+    <h2>Contact Broker</h2>
+
+    <input type="text" id="brokerName" placeholder="Your Name">
+    <input type="email" id="brokerEmail" placeholder="Your Email">
+    <textarea id="brokerMessage" placeholder="Your Message"></textarea>
+
+    <button class="btn btn-primary" onclick="submitBrokerInquiry()">
+      Send Inquiry
+    </button>
+  </div>
+</div>
 </body>
 </html>
