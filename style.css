@@ -3184,3 +3184,23 @@ footer h4{
 .broker-modal.active {
   display: flex;
 }
+.close-broker {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.close-broker:hover {
+  background: #00e0a4;
+  color: #000;
+  transform: rotate(90deg);
+}
