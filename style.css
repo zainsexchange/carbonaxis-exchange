@@ -3204,3 +3204,62 @@ footer h4{
   color: #000;
   transform: rotate(90deg);
 }
+#projectTable td{
+  vertical-align:top;
+}
+
+#projectTable td:nth-child(5){
+  max-width:420px;
+  white-space:normal;
+  line-height:1.4;
+}
+
+#projectTable td:last-child{
+  min-width:170px;
+}
+
+#projectTable .action-buttons{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.login-card{
+  max-width:520px;
+  margin:120px auto;
+  padding:42px;
+  border-radius:24px;
+  background:linear-gradient(145deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 30px 80px rgba(0,0,0,.35);
+}
+
+.login-card input{
+  width:100%;
+  padding:18px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.08);
+  color:white;
+}
+
+.login-card button{
+  width:100%;
+  margin-top:16px;
+  border-radius:14px;
+}
+#projectTable td:nth-child(5){
+  max-width:420px;
+  white-space:normal;
+  line-height:1.4;
+}
+
+#projectTable td:last-child{
+  min-width:190px;
+}
+
+.action-buttons{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:flex-start;
+}
