@@ -4,6 +4,15 @@ import cors from "cors";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 dotenv.config();
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST,
+  port: Number(process.env.EMAIL_PORT),
+  secure: true, // true for port 465
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 const app = express();
 
@@ -267,11 +276,32 @@ app.post("/api/broker-inquiry", async (req, res) => {
       message,
     });
 
+    try {
+      await transporter.sendMail({
+        from: `"CarbonAxis Exchange" <${process.env.EMAIL_USER}>`,
+        to: process.env.EMAIL_USER,
+        subject: `New Broker Inquiry - ${projectName}`,
+        html: `
+          <h2>New Broker Inquiry</h2>
+          <p><b>Project:</b> ${projectName}</p>
+          <p><b>Name:</b> ${name}</p>
+          <p><b>Email:</b> ${email}</p>
+          <p><b>Message:</b></p>
+          <p>${message}</p>
+        `,
+      });
+
+      console.log("Broker inquiry email sent");
+    } catch (emailError) {
+      console.error("Broker email failed:", emailError);
+    }
+
     res.status(201).json({
       success: true,
       message: "Broker inquiry submitted",
       data: inquiry,
     });
+
   } catch (error) {
     console.error(error);
 
@@ -280,18 +310,4 @@ app.post("/api/broker-inquiry", async (req, res) => {
       message: "Broker inquiry failed",
     });
   }
-});
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: Number(process.env.EMAIL_PORT),
-  secure: true, // true for port 465
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
 });
