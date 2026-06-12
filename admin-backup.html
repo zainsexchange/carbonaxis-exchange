@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+
+if(
+ localStorage.getItem("adminLoggedIn")
+ !== "true"
+){
+
+ window.location.href =
+ "login.html";
+
+}
+
+</script>
+  <meta charset="UTF-8">
+  <title>CarbonAxis Admin Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { background:#06110e; color:white; font-family:Inter, Arial, sans-serif; padding:40px; }
+    h1 { color:#00e0a4; }
+    table { width:100%; border-collapse:collapse; margin-bottom:40px; background:#0d1c18; }
+    th, td { padding:14px; border-bottom:1px solid rgba(255,255,255,.1); text-align:left; }
+    th { color:#00e0a4; }
+    .card { margin-bottom:40px; }
+  </style>
+</head>
+<body>
+
+<h1>CarbonAxis Admin Dashboard</h1>
+
+<button onclick="logout()" style="
+padding:10px 20px;
+background:red;
+color:white;
+border:none;
+cursor:pointer;
+float:right;
+">
+Logout
+</button>
+
+<div class="card">
+  <h2>Early Access Requests</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Message</th>
+        <th>Date</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="earlyAccessTable"></tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Project Submissions</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Project</th>
+        <th>Country</th>
+        <th>Type</th>
+        <th>Credits</th>
+        <th>Description</th>
+        <th>Date</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="projectTable"></tbody>
+  </table>
+</div>
+
+<script>
+const API_BASE = "https://carbonaxis-exchange.onrender.com";
+const ADMIN_KEY = "CarbonAxisAdmin2026";
+
+async function deleteEarlyAccess(id) {
+  if (!confirm("Delete this early access request?")) return;
+
+  await fetch(`${API_BASE}/api/early-access/${id}`, {
+    method: "DELETE",
+    headers: { "x-admin-key": ADMIN_KEY }
+  });
+
+  location.reload();
+}
+
+async function deleteProject(id) {
+  if (!confirm("Delete this project submission?")) return;
+
+  await fetch(`${API_BASE}/api/project-submissions/${id}`, {
+    method: "DELETE",
+    headers: { "x-admin-key": ADMIN_KEY }
+  });
+
+  location.reload();
+}
+
+async function loadEarlyAccess() {
+  const res = await fetch(`${API_BASE}/api/early-access`, {
+    headers: { "x-admin-key": ADMIN_KEY }
+  });
+
+  const data = await res.json();
+  const table = document.getElementById("earlyAccessTable");
+
+  data.data.forEach(item => {
+    table.innerHTML += `
+      <tr>
+        <td>${item.name || "-"}</td>
+        <td>${item.email || "-"}</td>
+        <td>${item.role || "-"}</td>
+        <td>${item.message || "-"}</td>
+        <td>${new Date(item.createdAt).toLocaleString()}</td>
+        <td>
+          <button onclick="deleteEarlyAccess('${item._id}')">Delete</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+async function loadProjects() {
+  const res = await fetch(`${API_BASE}/api/project-submissions`, {
+    headers: { "x-admin-key": ADMIN_KEY }
+  });
+
+  const data = await res.json();
+  const table = document.getElementById("projectTable");
+
+  data.data.forEach(item => {
+    table.innerHTML += `
+      <tr>
+        <td>${item.projectName || "-"}</td>
+        <td>${item.country || "-"}</td>
+        <td>${item.projectType || "-"}</td>
+        <td>${item.credits || "-"}</td>
+        <td>${item.description || "-"}</td>
+        <td>${new Date(item.createdAt).toLocaleString()}</td>
+        <td>
+          <button onclick="deleteProject('${item._id}')">Delete</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+loadEarlyAccess();
+loadProjects();
+function logout(){
+
+    localStorage.removeItem("adminLoggedIn");
+
+    window.location.href = "login.html";
+}
+</script>
+
+</body>
+</html>
