@@ -992,9 +992,9 @@ Pakistan · Carbon Removal
     <button class="btn btn-primary">Login</button>
 
     <p class="login-note">
-      Early access only. Don’t have access?
-      <a href="#early-access">Request invitation</a>
-    </p>
+  Don't have an account?
+  <a href="#early-access" id="requestInviteLink">Request invitation</a>
+</p>
   </div>
 </div>
 
@@ -1391,6 +1391,17 @@ document.getElementById("projectForm").addEventListener("submit", async function
     alert("Server error.");
   }
 });
+const requestInviteLink = document.getElementById("requestInviteLink");
+
+if (requestInviteLink) {
+  requestInviteLink.addEventListener("click", function (e) {
+    // Close the login modal
+    document.querySelector(".login-modal")?.classList.remove("active");
+
+    // Optional: remove page scroll lock if you use it
+    document.body.classList.remove("modal-open");
+  });
+}
 </script>
 </body>
 </html>

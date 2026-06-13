@@ -3326,3 +3326,14 @@ table{
     background: rgba(255,77,77,.15);
     color: #ff4d4d;
 }
+@media(max-width:768px){
+  .market-ticker{
+    display:block;
+    top:70px;
+    z-index:90;
+  }
+
+  .hero{
+    padding-top:190px;
+  }
+}
