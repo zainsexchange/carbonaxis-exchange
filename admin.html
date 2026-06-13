@@ -301,6 +301,11 @@
     </div>
 
     <div class="stat-card">
+  <span>📬 Broker Inquiries</span>
+  <h2 id="brokerCount">0</h2>
+</div>
+
+    <div class="stat-card">
       <span>🌐 Marketplace Status</span>
       <h2>Live</h2>
     </div>
@@ -388,7 +393,40 @@
     </div>
 
   </div>
+<div class="card">
+  <h2>
+    Broker Inquiries
+    (<span id="brokerCountText">0</span>)
+  </h2>
 
+  <div class="table-tools">
+    <button onclick="exportBrokerInquiries()" class="export-btn">
+      Export CSV
+    </button>
+
+    <input
+      type="text"
+      id="brokerSearch"
+      class="search-box"
+      placeholder="Search by project, name, email or message..."
+    >
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Project</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Message</th>
+        <th>Date</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+
+    <tbody id="brokerTable"></tbody>
+  </table>
+</div>
 <script>
 const API_BASE = "https://carbonaxis-exchange.onrender.com";
 const ADMIN_KEY = "CarbonAxisAdmin2026";
@@ -414,7 +452,47 @@ async function deleteProject(id) {
 
   location.reload();
 }
+async function loadBrokerInquiries() {
+  const res = await fetch(`${API_BASE}/api/broker-inquiries`, {
+    headers: { "x-admin-key": ADMIN_KEY }
+  });
 
+  const data = await res.json();
+  const table = document.getElementById("brokerTable");
+
+  document.getElementById("brokerCount").innerText = data.data.length;
+  document.getElementById("brokerCountText").innerText = data.data.length;
+
+  table.innerHTML = "";
+
+  data.data.forEach(item => {
+    table.innerHTML += `
+      <tr>
+        <td>${item.projectName || "-"}</td>
+        <td>${item.name || "-"}</td>
+        <td>${item.email || "-"}</td>
+        <td>${item.message || "-"}</td>
+        <td>${new Date(item.createdAt).toLocaleString()}</td>
+        <td>
+          <button class="delete-btn" onclick="deleteBrokerInquiry('${item._id}')">
+            Delete
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+async function deleteBrokerInquiry(id) {
+  if (!confirm("Delete this broker inquiry?")) return;
+
+  await fetch(`${API_BASE}/api/broker-inquiries/${id}`, {
+    method: "DELETE",
+    headers: { "x-admin-key": ADMIN_KEY }
+  });
+
+  location.reload();
+}
 async function loadEarlyAccess() {
   const res = await fetch(`${API_BASE}/api/early-access`, {
     headers: { "x-admin-key": ADMIN_KEY }
@@ -532,6 +610,7 @@ async function updateProjectStatus(id, status) {
 }
 loadEarlyAccess();
 loadProjects();
+loadBrokerInquiries();
 document.getElementById("lastUpdated").innerText =
   new Date().toLocaleString();
 
@@ -545,6 +624,10 @@ setTimeout(() => {
   searchTable(
     "projectSearch",
     "projectTable"
+  );
+  searchTable(
+  "brokerSearch", 
+  "brokerTable"
   );
 
 }, 1000);
@@ -603,7 +686,38 @@ async function exportProjects(){
       }
     }
   );
+async function exportBrokerInquiries(){
 
+  const res = await fetch(
+    `${API_BASE}/api/broker-inquiries`,
+    {
+      headers:{
+        "x-admin-key": ADMIN_KEY
+      }
+    }
+  );
+
+  const data = await res.json();
+
+  const rows = [
+    ["Project","Name","Email","Message","Date"]
+  ];
+
+  data.data.forEach(item=>{
+    rows.push([
+      item.projectName,
+      item.name,
+      item.email,
+      item.message,
+      new Date(item.createdAt).toLocaleString()
+    ]);
+  });
+
+  downloadCSV(
+    "broker-inquiries.csv",
+    rows
+  );
+}
   const data = await res.json();
 
   const rows = [
