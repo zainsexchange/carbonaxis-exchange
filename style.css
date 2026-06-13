@@ -2866,16 +2866,22 @@ html{
 }
 
 .brand{
-  width:120px !important;
-  height:54px !important;
-  flex-shrink:0 !important;
+  width:110px !important;
+  height:40px !important;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
 }
 
 .site-logo{
-  width:115px !important;
+  width:100px !important;
   height:auto !important;
 }
-
+.mobile-menu-btn{
+  position:absolute !important;
+  right:15px !important;
+  top:14px !important;
+}
 nav{
   margin-left:10px !important;
   gap:24px !important;
@@ -3333,9 +3339,10 @@ table{
 @media(max-width:768px){
 
   .navbar{
-    height:72px !important;
-    z-index:10000 !important;
-  }
+  min-height:72px !important;
+  height:auto !important;
+  padding:0 !important;
+}
 
   .nav-inner{
     height:72px !important;
@@ -3406,11 +3413,11 @@ table{
   }
 
   .hero{
-    padding-top:190px !important;
+    padding-top:120px !important;
   }
 
   .marketplace-page-hero,
-  main > .section:first-child{
-    padding-top:155px !important;
-  }
+.section:first-of-type{
+    padding-top:100px !important;
+}
 }
