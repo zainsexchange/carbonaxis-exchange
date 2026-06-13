@@ -453,7 +453,7 @@ counters.forEach(counter => {
 
     <p class="login-note">
       Early access only. Don’t have access?
-      <a href="#early-access">Request invitation</a>
+      <a href="/index.html#early-access" id="requestInviteLink">Request invitation</a>
     </p>
   </div>
 </div>
@@ -483,6 +483,14 @@ function closeLoginModal(){
     input.value = "";
   });
 
+  const requestInviteLink = document.getElementById("requestInviteLink");
+
+if (requestInviteLink) {
+  requestInviteLink.addEventListener("click", function () {
+    document.querySelector(".login-modal")?.classList.remove("active");
+    document.body.classList.remove("modal-open");
+  });
+}
 }
 
 loginOpen.addEventListener("click", function(e){

@@ -411,6 +411,14 @@ function closeLoginModal(){
   loginInputs.forEach(input => {
     input.value = "";
   });
+  const requestInviteLink = document.getElementById("requestInviteLink");
+
+if (requestInviteLink) {
+  requestInviteLink.addEventListener("click", function () {
+    document.querySelector(".login-modal")?.classList.remove("active");
+    document.body.classList.remove("modal-open");
+  });
+}
 
 }
 
