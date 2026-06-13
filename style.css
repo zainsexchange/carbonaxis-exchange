@@ -3612,3 +3612,17 @@ table{
     padding-top:118px !important;
   }
 }
+.watchlist-btn{
+  background: transparent;
+  border: 1px solid #00e0a4;
+  color: #00e0a4;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.watchlist-btn:hover{
+  background:#00e0a4;
+  color:#08110d;
+}

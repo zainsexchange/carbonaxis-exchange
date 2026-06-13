@@ -376,6 +376,19 @@ data-description="Methane capture and waste management initiative reducing green
       </div>
 
     </div>
+    <button
+  type="button"
+  class="watchlist-btn"
+  onclick="toggleWatchlist(
+    '${project.projectName}',
+    '${project.country}',
+    '${project.projectType}',
+    '${project.price}',
+    '${project.credits}',
+    '${projectImage}'
+  )">
+  🤍 Watchlist
+</button>
 <h2 style="margin-top:60px;">
 Latest Approved Projects
 </h2>
@@ -1119,6 +1132,51 @@ async function submitBrokerInquiry() {
 
   }
 
+}
+function toggleWatchlist(
+  projectName,
+  country,
+  projectType,
+  price,
+  credits,
+  image
+){
+
+  let watchlist =
+    JSON.parse(localStorage.getItem("watchlist")) || [];
+
+  const exists =
+    watchlist.find(
+      p => p.projectName === projectName
+    );
+
+  if(exists){
+
+    watchlist =
+      watchlist.filter(
+        p => p.projectName !== projectName
+      );
+
+    alert("Removed from Watchlist");
+
+  }else{
+
+    watchlist.push({
+      projectName,
+      country,
+      projectType,
+      price,
+      credits,
+      image
+    });
+
+    alert("Added to Watchlist");
+  }
+
+  localStorage.setItem(
+    "watchlist",
+    JSON.stringify(watchlist)
+  );
 }
 </script>
 <div class="broker-modal" id="brokerModal">
