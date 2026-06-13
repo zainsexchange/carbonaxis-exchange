@@ -249,6 +249,28 @@
 .action-buttons .delete-btn{
   grid-column: 1 / 3;
 }
+.status-filters{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin:16px 0;
+}
+
+.status-filters button{
+  background:rgba(255,255,255,.06);
+  color:white;
+  border:1px solid rgba(255,255,255,.12);
+  padding:8px 14px;
+  border-radius:999px;
+  cursor:pointer;
+  font-weight:700;
+}
+
+.status-filters button.active,
+.status-filters button:hover{
+  background:#00e0a4;
+  color:#06110e;
+}
   </style>
 </head>
 
@@ -331,6 +353,12 @@
   Project Submissions
   (<span id="projectCountText">0</span>)
 </h2>
+<div class="status-filters">
+  <button onclick="filterProjectsByStatus('all')" class="active">All</button>
+  <button onclick="filterProjectsByStatus('Pending')">Pending</button>
+  <button onclick="filterProjectsByStatus('Approved')">Approved</button>
+  <button onclick="filterProjectsByStatus('Rejected')">Rejected</button>
+</div>
       <div class="table-tools">
   <button onclick="exportProjects()" class="export-btn">
     Export CSV
@@ -605,6 +633,24 @@ async function exportProjects(){
     "project-submissions.csv",
     rows
   );
+}
+function filterProjectsByStatus(status){
+  const rows = document.querySelectorAll("#projectTable tr");
+  const buttons = document.querySelectorAll(".status-filters button");
+
+  buttons.forEach(btn => btn.classList.remove("active"));
+
+  event.target.classList.add("active");
+
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+
+    if(status === "all"){
+      row.style.display = "";
+    } else {
+      row.style.display = text.includes(status.toLowerCase()) ? "" : "none";
+    }
+  });
 }
 </script>
 <div class="footer">
