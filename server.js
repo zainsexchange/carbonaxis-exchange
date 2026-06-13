@@ -311,6 +311,37 @@ app.post("/api/broker-inquiry", async (req, res) => {
     });
   }
 });
+app.get("/api/broker-inquiries", requireAdmin, async (req, res) => {
+  try {
+    const inquiries = await BrokerInquiry.find().sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: inquiries,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch broker inquiries",
+    });
+  }
+});
+
+app.delete("/api/broker-inquiries/:id", requireAdmin, async (req, res) => {
+  try {
+    await BrokerInquiry.findByIdAndDelete(req.params.id);
+
+    res.json({
+      success: true,
+      message: "Broker inquiry deleted",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Broker inquiry delete failed",
+    });
+  }
+});
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
