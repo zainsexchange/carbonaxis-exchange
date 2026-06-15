@@ -1120,6 +1120,21 @@ if (
 }
 
 loadApprovedProjects();
+window.addEventListener("load", () => {
+  const watchlist =
+    JSON.parse(localStorage.getItem("watchlist")) || [];
+
+  document.querySelectorAll(".watchlist-btn").forEach(btn => {
+    const onclick = btn.getAttribute("onclick") || "";
+
+    watchlist.forEach(item => {
+      if (onclick.includes(item.projectName)) {
+        btn.classList.add("saved");
+        btn.innerText = "❤️";
+      }
+    });
+  });
+});
 </script>
 <script>
 function openBrokerForm(){
