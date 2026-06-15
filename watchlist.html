@@ -1,0 +1,298 @@
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carbon Marketplace | CarbonAxis Exchange</title>
+  <meta name="description" content="Explore verified carbon credits, environmental assets and climate projects through the CarbonAxis Exchange marketplace.">
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="stylesheet" href="/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <meta property="og:type" content="website">
+<meta property="og:site_name" content="CarbonAxis Exchange">
+<meta property="og:title" content="CarbonAxis Exchange | Building Trusted Climate Markets">
+<meta property="og:description" content="Trusted climate market infrastructure for carbon credits, climate projects and environmental assets.">
+<meta property="og:image" content="https://carbonaxisexchange.com/og-image.png">
+<meta property="og:url" content="https://carbonaxisexchange.com">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CarbonAxis Exchange">
+<meta name="twitter:description" content="Building Trusted Climate Markets">
+<meta name="twitter:image" content="https://carbonaxisexchange.com/og-image.png">
+</head>
+<body>
+  <header class="navbar">
+    <div class="container nav-inner">
+     <a href="/index.html" class="brand">
+  <img src="/logo.png" alt="CarbonAxis Exchange Logo" class="site-logo">
+</a>
+      <nav>
+          <a href="/index.html">Home</a>
+<a href="/marketplace.html" class="active">Marketplace</a>
+        <a href="/projects.html">Projects</a>
+        <a href="/how-it-works.html">How It Works</a>
+      <a href="/insights.html">Insights</a>
+      <a href="/about.html">About</a>
+        <a href="#early-access">Early Access</a>
+      </nav>
+      <a class="btn btn-primary nav-btn" href="/index.html#early-access">
+  Get Access
+</a>
+     <div class="notification-menu">
+
+  <button class="notification-btn">
+
+    🔔
+
+    <span class="notification-count">
+      3
+    </span>
+
+  </button>
+
+  <div class="notification-dropdown">
+
+    <div class="notification-item">
+
+      <h4>
+        New Carbon Project Added
+      </h4>
+
+      <p>
+        Renewable energy credits listed.
+      </p>
+
+    </div>
+
+    <div class="notification-item">
+
+      <h4>
+        Verification Completed
+      </h4>
+
+      <p>
+        Biochar project verified successfully.
+      </p>
+
+    </div>
+
+    <div class="notification-item">
+
+      <h4>
+        Watchlist Updated
+      </h4>
+
+      <p>
+        Market activity changed on tracked assets.
+      </p>
+
+    </div>
+
+  </div>
+
+</div>
+      <div class="profile-menu">
+
+  <button class="profile-btn">
+
+    <span class="profile-avatar">
+      C
+    </span>
+
+    <span>
+      Account
+    </span>
+
+    <span class="profile-arrow">
+      ▼
+    </span>
+
+  </button>
+
+  <div class="profile-dropdown">
+
+    <a href="/dashboard.html">
+  Dashboard
+</a>
+
+    <a href="#marketplace-listings">
+      Marketplace
+    </a>
+
+    <a href="/watchlist.html">
+      Watchlist
+    </a>
+
+    <a href="#">
+      Settings
+    </a>
+
+    <a href="#">
+      Logout
+    </a>
+
+  </div>
+
+</div>
+      <a class="btn btn-outline login-open" href="#">Login</a>
+    </div>
+    <button class="mobile-menu-btn" aria-label="Open Menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+  </header>
+   <div class="mobile-overlay"></div>
+<div class="mobile-menu">
+    <a href="/index.html">Home</a>
+  <a href="/marketplace.html">Marketplace</a>
+  <a href="/projects.html">Projects</a>
+  <a href="/insights.html">Insights</a>
+  <a href="/index.html#early-access">Early Access</a>
+  <a href="/dashboard.html">Dashboard</a>
+</div>
+<main>
+    <section class="section marketplace-page-hero">
+  <div class="container">
+    <p class="section-label">Saved Projects</p>
+    <h1>My Watchlist</h1>
+    <p class="hero-text">
+      View and manage your saved carbon credit opportunities.
+    </p>
+  </div>
+</section>
+
+<section class="section marketplace-section">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <p class="section-label">Watchlist</p>
+        <h2>Saved Carbon Listings</h2>
+      </div>
+
+      <button class="btn btn-outline" onclick="clearWatchlist()">
+        Clear All
+      </button>
+    </div>
+
+    <div class="listing-grid" id="watchlistGrid"></div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div>
+        <a href="/index.html" class="footer-logo">
+          <img src="/logo.png" alt="CarbonAxis Exchange">
+        </a>
+
+        <p>
+          Building trusted climate markets through transparent carbon
+          trading infrastructure, climate finance and environmental asset
+          discovery.
+        </p>
+      </div>
+
+      <div>
+        <h4>Platform</h4>
+        <div class="footer-links">
+          <a href="/marketplace.html">Marketplace</a>
+          <a href="/projects.html">Projects</a>
+          <a href="/how-it-works.html">How It Works</a>
+          <a href="/insights.html">Insights</a>
+        </div>
+      </div>
+
+      <div>
+        <h4>Company</h4>
+        <div class="footer-links">
+          <a href="/about.html">About</a>
+          <a href="/contact.html">Contact</a>
+          <a href="/privacy-policy.html">Privacy Policy</a>
+          <a href="/terms-of-service.html">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      © 2026 CarbonAxis Exchange. Building Trusted Climate Markets.
+    </div>
+  </div>
+  <script>
+function loadWatchlist(){
+  const grid = document.getElementById("watchlistGrid");
+  const watchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
+
+  if(watchlist.length === 0){
+    grid.innerHTML = `
+      <div class="listing-card">
+        <h3>No saved projects yet</h3>
+        <p class="listing-location">
+          Go to Marketplace and add projects to your watchlist.
+        </p>
+        <a href="/marketplace.html" class="btn btn-primary">
+          Explore Marketplace
+        </a>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = "";
+
+  watchlist.forEach(item => {
+    grid.innerHTML += `
+      <div class="listing-card">
+        <div class="listing-image">
+          <img src="${item.image}" alt="${item.projectName}">
+        </div>
+
+        <div class="listing-top">
+          <span class="market-status active-status">Saved</span>
+          <span class="verified-tag">Watchlist</span>
+          <span class="price">${item.price}</span>
+        </div>
+
+        <h3>${item.projectName}</h3>
+
+        <p class="listing-location">
+          ${item.country} · ${item.projectType}
+        </p>
+
+        <div class="listing-specs">
+          <span>Volume: ${item.credits} tCO₂e</span>
+          <span>Status: Saved</span>
+        </div>
+
+        <div class="listing-footer">
+          <span>${item.credits} tCO₂e</span>
+
+          <button class="listing-btn" onclick="removeFromWatchlist('${item.projectName}')">
+            Remove
+          </button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function removeFromWatchlist(projectName){
+  let watchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
+  watchlist = watchlist.filter(item => item.projectName !== projectName);
+  localStorage.setItem("watchlist", JSON.stringify(watchlist));
+  loadWatchlist();
+}
+
+function clearWatchlist(){
+  if(!confirm("Clear all saved projects?")) return;
+  localStorage.removeItem("watchlist");
+  loadWatchlist();
+}
+
+loadWatchlist();
+</script>
+</body>
+</html>

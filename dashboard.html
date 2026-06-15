@@ -120,9 +120,7 @@
       Marketplace
     </a>
 
-    <a href="#">
-      Watchlist
-    </a>
+    <a href="/watchlist.html">Watchlist</a>
 
     <a href="#">
       Settings
@@ -624,7 +622,9 @@ counters.forEach(counter => {
 
     <p class="login-note">
       Early access only. Don’t have access?
-      <a href="/index.html#early-access" id="requestInviteLink">Request invitation</a>
+      <a id="requestInviteLink" href="index.html#early-access">
+  Request Invitation
+</a>
     </p>
   </div>
 </div>
@@ -653,7 +653,7 @@ function closeLoginModal(){
   loginInputs.forEach(input => {
     input.value = "";
   });
-
+  
 }
 
 loginOpen.addEventListener("click", function(e){
@@ -675,6 +675,14 @@ loginOverlay.addEventListener("click", function(){
   closeLoginModal();
 
 });
+const requestInviteLink = document.getElementById("requestInviteLink");
+
+if (requestInviteLink) {
+  requestInviteLink.addEventListener("click", function () {
+    document.querySelector(".login-modal")?.classList.remove("active");
+    document.body.classList.remove("modal-open");
+  });
+}
 
 </script>
 <script>
