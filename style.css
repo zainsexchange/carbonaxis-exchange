@@ -3612,17 +3612,40 @@ table{
     padding-top:118px !important;
   }
 }
+.listing-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+
+.listing-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
 .watchlist-btn{
-  background: transparent;
-  border: 1px solid #00e0a4;
-  color: #00e0a4;
-  padding: 8px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: 0.3s;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:1px solid rgba(0,224,164,.35);
+  background:rgba(0,224,164,.06);
+  color:#00e0a4;
+  cursor:pointer;
+  font-size:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:.3s ease;
 }
 
 .watchlist-btn:hover{
+  transform:scale(1.08);
+  background:rgba(0,224,164,.16);
+}
+
+.watchlist-btn.saved{
   background:#00e0a4;
-  color:#08110d;
+  color:#06110e;
 }

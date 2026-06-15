@@ -258,12 +258,29 @@ data-description="This project focuses on biochar-based carbon removal and long-
 </div>
 
         <div class="listing-footer">
-          <span>98,000 tCO₂e</span>
+  <span>98,000 tCO₂e</span>
 
-          <button type="button" class="listing-btn">
-  View Details
-</button>
-        </div>
+  <div class="listing-actions">
+    <button
+      type="button"
+      class="watchlist-btn"
+      onclick="toggleWatchlist(
+        'Biochar Carbon Removal Project',
+        'Pakistan',
+        'Carbon Removal',
+        '$38/t',
+        '98,000',
+        '/images/forest.png',
+        this
+      )">
+      🤍
+    </button>
+
+    <button type="button" class="listing-btn">
+      View Details
+    </button>
+  </div>
+</div>
 
       </div>
 
@@ -315,12 +332,29 @@ data-description="Large-scale renewable energy certificates supporting clean ele
 </div>
 
         <div class="listing-footer">
-          <span>210,000 tCO₂e</span>
+  <span>210,000 tCO₂e</span>
 
-          <button type="button" class="listing-btn">
-  View Details
-</button>
-        </div>
+  <div class="listing-actions">
+    <button
+      type="button"
+      class="watchlist-btn"
+      onclick="toggleWatchlist(
+        'Solar Renewable Energy Credits',
+        'UAE',
+        'Renewable Energy',
+        '$12/t',
+        '210,000',
+        '/images/solar.png',
+        this
+      )">
+      🤍
+    </button>
+
+    <button type="button" class="listing-btn">
+      View Details
+    </button>
+  </div>
+</div>
 
       </div>
 
@@ -368,27 +402,32 @@ data-description="Methane capture and waste management initiative reducing green
         <div class="listing-footer">
           <span>145,000 tCO₂e</span>
 
-          <button type="button" class="listing-btn">
-  View Details
-</button>
+          <div class="listing-actions">
+            <button
+              type="button"
+              class="watchlist-btn"
+              onclick="toggleWatchlist(
+                'Methane Avoidance Initiative',
+                'Malaysia',
+                'Waste Management',
+                '$16/t',
+                '145,000',
+                '/images/methane.png',
+                this
+              )">
+              🤍
+            </button>
+
+            <button type="button" class="listing-btn">
+              View Details
+            </button>
+          </div>
+        </div>
         </div>
 
       </div>
 
     </div>
-    <button
-  type="button"
-  class="watchlist-btn"
-  onclick="toggleWatchlist(
-    '${project.projectName}',
-    '${project.country}',
-    '${project.projectType}',
-    '${project.price}',
-    '${project.credits}',
-    '${projectImage}'
-  )">
-  🤍 Watchlist
-</button>
 <h2 style="margin-top:60px;">
 Latest Approved Projects
 </h2>
@@ -1038,22 +1077,39 @@ if (
           </div>
 
           <div class="listing-footer">
-            <span>${project.credits || "0"} tCO₂e</span>
+  <span>${project.credits || "0"} tCO₂e</span>
 
-            <button
-              type="button"
-              class="listing-btn"
-              onclick="openDynamicProjectModal(
-                '${project.projectName || "Carbon Project"}',
-                '${project.country || "Global"} · ${project.projectType || "Carbon Credits"}',
-                '${project.price || "Request"}',
-                '${project.credits || "0"} tCO₂e',
-                '${project.description || "No description available."}',
-                '${projectImage}'
-              )">
-              View Details
-            </button>
-          </div>
+  <div class="listing-actions">
+    <button
+      type="button"
+      class="watchlist-btn"
+      onclick="toggleWatchlist(
+        '${project.projectName || "Carbon Project"}',
+        '${project.country || "Global"}',
+        '${project.projectType || "Carbon Credits"}',
+        '${project.price || "Request"}',
+        '${project.credits || "0"}',
+        '${projectImage}',
+        this
+      )">
+      🤍
+    </button>
+
+    <button
+      type="button"
+      class="listing-btn"
+      onclick="openDynamicProjectModal(
+        '${project.projectName || "Carbon Project"}',
+        '${project.country || "Global"} · ${project.projectType || "Carbon Credits"}',
+        '${project.price || "Request"}',
+        '${project.credits || "0"} tCO₂e',
+        '${project.description || "No description available."}',
+        '${projectImage}'
+      )">
+      View Details
+    </button>
+  </div>
+</div>
         </div>
       `;
     });
@@ -1139,28 +1195,26 @@ function toggleWatchlist(
   projectType,
   price,
   credits,
-  image
+  image,
+  btn
 ){
-
   let watchlist =
     JSON.parse(localStorage.getItem("watchlist")) || [];
 
   const exists =
-    watchlist.find(
-      p => p.projectName === projectName
-    );
+    watchlist.find(p => p.projectName === projectName);
 
   if(exists){
-
     watchlist =
-      watchlist.filter(
-        p => p.projectName !== projectName
-      );
+      watchlist.filter(p => p.projectName !== projectName);
+
+    if(btn){
+      btn.classList.remove("saved");
+      btn.innerText = "🤍";
+    }
 
     alert("Removed from Watchlist");
-
   }else{
-
     watchlist.push({
       projectName,
       country,
@@ -1170,13 +1224,15 @@ function toggleWatchlist(
       image
     });
 
+    if(btn){
+      btn.classList.add("saved");
+      btn.innerText = "❤️";
+    }
+
     alert("Added to Watchlist");
   }
 
-  localStorage.setItem(
-    "watchlist",
-    JSON.stringify(watchlist)
-  );
+  localStorage.setItem("watchlist", JSON.stringify(watchlist));
 }
 </script>
 <div class="broker-modal" id="brokerModal">
