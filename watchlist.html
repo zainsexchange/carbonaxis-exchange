@@ -152,7 +152,6 @@
   <a href="/index.html#early-access">Early Access</a>
   <a href="/dashboard.html">Dashboard</a>
 </div>
-<main>
     <main>
   <section class="section marketplace-page-hero">
     <div class="container">
@@ -180,7 +179,6 @@
       <div class="listing-grid" id="watchlistGrid"></div>
     </div>
   </section>
-</main>
 </main>
 
 <footer>
@@ -351,18 +349,18 @@ function loadWatchlist(){
         <div class="listing-footer">
           <span>${item.credits} tCO₂e</span>
 
-          <button class="listing-btn" onclick="removeFromWatchlist('${item.projectName}')">
-            Remove
-          </button>
+          <button class="listing-btn" onclick="removeFromWatchlist('${item.projectKey}')">
+  Remove
+</button>
         </div>
       </div>
     `;
   });
 }
 
-function removeFromWatchlist(projectName){
+function removeFromWatchlist(projectKey){
   let watchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
-  watchlist = watchlist.filter(item => item.projectName !== projectName);
+  watchlist = watchlist.filter(item => item.projectKey !== projectKey);
   localStorage.setItem("watchlist", JSON.stringify(watchlist));
   loadWatchlist();
 }

@@ -1126,7 +1126,7 @@ window.addEventListener("load", () => {
     const onclick = btn.getAttribute("onclick") || "";
 
     watchlist.forEach(item => {
-      if (onclick.includes(item.projectName)) {
+      if (onclick.includes(item.projectName) && onclick.includes(item.credits)) {
         btn.classList.add("saved");
         btn.innerText = "❤️";
       }
@@ -1211,15 +1211,17 @@ function toggleWatchlist(
   image,
   btn
 ){
+  const projectKey = `${projectName}-${country}-${projectType}-${credits}`;
+
   let watchlist =
     JSON.parse(localStorage.getItem("watchlist")) || [];
 
   const exists =
-    watchlist.find(p => p.projectName === projectName);
+    watchlist.find(p => p.projectKey === projectKey);
 
   if(exists){
     watchlist =
-      watchlist.filter(p => p.projectName !== projectName);
+      watchlist.filter(p => p.projectKey !== projectKey);
 
     if(btn){
       btn.classList.remove("saved");
@@ -1229,6 +1231,7 @@ function toggleWatchlist(
     alert("Removed from Watchlist");
   }else{
     watchlist.push({
+      projectKey,
       projectName,
       country,
       projectType,
