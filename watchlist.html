@@ -153,32 +153,34 @@
   <a href="/dashboard.html">Dashboard</a>
 </div>
 <main>
-    <section class="section marketplace-page-hero">
-  <div class="container">
-    <p class="section-label">Saved Projects</p>
-    <h1>My Watchlist</h1>
-    <p class="hero-text">
-      View and manage your saved carbon credit opportunities.
-    </p>
-  </div>
-</section>
+    <main>
+  <section class="section marketplace-page-hero">
+    <div class="container">
+      <p class="section-label">Saved Projects</p>
+      <h1>My Watchlist</h1>
+      <p class="hero-text">
+        View and manage your saved carbon credit opportunities.
+      </p>
+    </div>
+  </section>
 
-<section class="section marketplace-section">
-  <div class="container">
-    <div class="section-head">
-      <div>
-        <p class="section-label">Watchlist</p>
-        <h2>Saved Carbon Listings</h2>
+  <section class="section marketplace-section">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <p class="section-label">Watchlist</p>
+          <h2>Saved Carbon Listings</h2>
+        </div>
+
+        <button class="btn btn-outline" onclick="clearWatchlist()">
+          Clear All
+        </button>
       </div>
 
-      <button class="btn btn-outline" onclick="clearWatchlist()">
-        Clear All
-      </button>
+      <div class="listing-grid" id="watchlistGrid"></div>
     </div>
-
-    <div class="listing-grid" id="watchlistGrid"></div>
-  </div>
-</section>
+  </section>
+</main>
 </main>
 
 <footer>
@@ -326,7 +328,7 @@ function loadWatchlist(){
     grid.innerHTML += `
       <div class="listing-card">
         <div class="listing-image">
-          <img src="${item.image}" alt="${item.projectName}">
+          <img src="${item.image || '/images/forest.png'}" alt="${item.projectName}">
         </div>
 
         <div class="listing-top">
