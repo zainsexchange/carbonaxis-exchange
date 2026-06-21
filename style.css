@@ -930,11 +930,11 @@ body::before{
 
   border:none;
 }
-.insights-section{
+.AI Intelligence-section{
   background:rgba(255,255,255,0.018);
 }
 
-.insights-grid{
+.AI Intelligence-grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:22px;
@@ -966,7 +966,7 @@ body::before{
   box-shadow:0 18px 45px rgba(0,224,164,0.12);
 }
 
-.insight-card span{
+.AI Intelligence-card span{
   color:var(--teal);
   font-size:13px;
   font-weight:900;
@@ -974,24 +974,24 @@ body::before{
   letter-spacing:0.2em;
 }
 
-.insight-card h3{
+.AI Intelligence-card h3{
   font-size:23px;
   margin:18px 0 0;
 }
 
-.insight-card p{
+.AI Intelligence-card p{
   color:var(--muted);
   line-height:1.7;
 }
 
 @media(max-width:992px){
-  .insights-grid{
+  .AI Intelligence-grid{
     grid-template-columns:repeat(2,1fr);
   }
 }
 
 @media(max-width:640px){
-  .insights-grid{
+  .AI Intelligence-grid{
     grid-template-columns:1fr;
   }
 }
@@ -3526,7 +3526,7 @@ table{
     overflow: hidden !important;
   }
 
-  /* Normal inner pages: Marketplace / Projects / About / Insights */
+  /* Normal inner pages: Marketplace / Projects / About / AI Intelligence */
   main > .section:first-child,
   .marketplace-page-hero,
   .page-hero{
