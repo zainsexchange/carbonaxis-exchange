@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 dotenv.config();
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
@@ -69,7 +71,40 @@ const ProjectSubmission = mongoose.model(
   "ProjectSubmission",
   projectSubmissionSchema
 );
+const userSchema = new mongoose.Schema(
+  {
+    name: String,
 
+    email: {
+      type: String,
+      unique: true,
+    },
+
+    password: String,
+
+    company: String,
+
+    country: String,
+
+    role: {
+      type: String,
+      default: "user",
+    },
+
+    subscription: {
+      type: String,
+      default: "free",
+    },
+
+    emailVerified: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { timestamps: true }
+);
+
+const User = mongoose.model("User", userSchema);
 app.get("/", (req, res) => {
   res.send("CarbonAxis backend is running");
 });
@@ -262,6 +297,116 @@ app.delete("/api/project-submissions/:id", requireAdmin, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Delete failed",
+    });
+  }
+});
+app.post("/api/register", async (req, res) => {
+  try {
+
+    const {
+      name,
+      email,
+      password,
+      company,
+      country
+    } = req.body;
+
+    const existingUser = await User.findOne({
+      email
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already registered",
+      });
+    }
+
+    const hashedPassword =
+      await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      company,
+      country,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Account created successfully",
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Registration failed",
+    });
+
+  }
+});
+app.post("/api/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        subscription: user.subscription,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      success: true,
+      message: "Login successful",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        company: user.company,
+        country: user.country,
+        role: user.role,
+        subscription: user.subscription,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Login failed",
     });
   }
 });
