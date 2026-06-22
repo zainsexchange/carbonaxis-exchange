@@ -7,7 +7,7 @@
 
   <script>
     if (localStorage.getItem("adminLoggedIn") !== "true") {
-      window.location.href = "login.html";
+      window.location.href = "admin-login.html";
     }
   </script>
 
@@ -568,7 +568,7 @@ document.getElementById("projectCountText").innerText = data.data.length;
 
 function logout(){
   localStorage.removeItem("adminLoggedIn");
-  window.location.href = "login.html";
+  window.location.href = "admin-login.html";
 }
 function searchTable(inputId, tableId) {
 
