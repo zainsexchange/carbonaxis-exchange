@@ -131,6 +131,7 @@ password
 
 const data =
 await response.json();
+console.log(data);
 
 if(data.success){
 
@@ -159,7 +160,7 @@ alert(data.message);
 
 console.error(error);
 
-alert("Login Failed");
+alert(data.message || "Login Failed");
 
 }
 
