@@ -22,6 +22,13 @@
 <meta name="twitter:image" content="https://carbonaxisexchange.com/og-image.png">
 </head>
 <body>
+  <script>
+const token = localStorage.getItem("token");
+
+if (!token) {
+    window.location.href = "/login.html";
+}
+</script>
   <header class="navbar">
     <div class="container nav-inner">
      <a href="/index.html" class="brand">
@@ -128,9 +135,9 @@
       Settings
     </a>
 
-    <a href="#">
-      Logout
-    </a>
+    <a href="#" onclick="logout()">
+  Logout
+</a>
 
   </div>
 
@@ -916,6 +923,24 @@ mobileOverlay.addEventListener("click", closeMobileMenu);
 mobileLinks.forEach(link => {
   link.addEventListener("click", closeMobileMenu);
 });
+</script>
+<script>
+function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/login.html";
+}
+</script>
+<script>
+// reuse existing token variable if present to avoid redeclaration
+var _token = (typeof token !== 'undefined') ? token : localStorage.getItem("token");
+
+if(_token){
+  const loginBtn = document.querySelector(".login-open");
+  if(loginBtn){
+    loginBtn.style.display = "none";
+  }
+}
 </script>
 </body>
 </html>
