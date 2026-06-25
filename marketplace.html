@@ -714,28 +714,23 @@ counters.forEach(counter => {
   </div>
 </div>
 <script>
+const profileMenu = document.querySelector(".profile-menu");
+const profileBtn = document.querySelector(".profile-btn");
 
-const profileMenu =
-document.querySelector(".profile-menu");
+if (profileBtn && profileMenu) {
 
-const profileBtn =
-document.querySelector(".profile-btn");
+    profileBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        profileMenu.classList.toggle("active");
+    });
 
-profileBtn.addEventListener("click", () => {
+    document.addEventListener("click", (e) => {
+        if (!profileMenu.contains(e.target)) {
+            profileMenu.classList.remove("active");
+        }
+    });
 
-  profileMenu.classList.toggle("active");
-
-});
-
-document.addEventListener("click", (e) => {
-
-  if(!profileMenu.contains(e.target)){
-
-    profileMenu.classList.remove("active");
-
-  }
-
-});
+}
 </script>
 <script>
 
@@ -867,29 +862,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
 </script>
 <script>
+const notificationMenu = document.querySelector(".notification-menu");
+const notificationBtn = document.querySelector(".notification-btn");
 
-const notificationMenu =
-document.querySelector(".notification-menu");
+if (notificationBtn && notificationMenu) {
 
-const notificationBtn =
-document.querySelector(".notification-btn");
+    notificationBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        notificationMenu.classList.toggle("active");
+    });
 
-notificationBtn.addEventListener("click", () => {
+    document.addEventListener("click", (e) => {
+        if (!notificationMenu.contains(e.target)) {
+            notificationMenu.classList.remove("active");
+        }
+    });
 
-  notificationMenu.classList.toggle("active");
-
-});
-
-document.addEventListener("click", (e) => {
-
-  if(!notificationMenu.contains(e.target)){
-
-    notificationMenu.classList.remove("active");
-
-  }
-
-});
-
+}
 </script>
 <script>
 const marketSearch = document.getElementById("marketSearch");
