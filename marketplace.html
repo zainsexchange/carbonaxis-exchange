@@ -126,14 +126,14 @@
       Settings
     </a>
 
-    <a href="#">
-      Logout
-    </a>
+    <a href="#" onclick="logout()">
+  Logout
+</a>
 
   </div>
 
 </div>
-      <a class="btn btn-outline login-open" href="#">Login</a>
+      <a class="btn btn-outline login-open" href="/login.html">Login</a>
     </div>
     <button class="mobile-menu-btn" aria-label="Open Menu">
   <span></span>
@@ -713,62 +713,6 @@ counters.forEach(counter => {
     </p>
   </div>
 </div>
-
-<script>
-
-const loginOpen =
-document.querySelector(".login-open");
-
-const loginModal =
-document.getElementById("loginModal");
-
-const closeLogin =
-document.querySelector(".close-login");
-
-const loginOverlay =
-document.querySelector(".login-overlay");
-
-const loginInputs =
-document.querySelectorAll(".login-box input");
-
-function closeLoginModal(){
-
-  loginModal.classList.remove("active");
-
-  loginInputs.forEach(input => {
-    input.value = "";
-  });
-
-}
-
-loginOpen.addEventListener("click", function(e){
-
-  e.preventDefault();
-
-  loginModal.classList.add("active");
-
-});
-
-closeLogin.addEventListener("click", function(){
-
-  closeLoginModal();
-
-});
-
-loginOverlay.addEventListener("click", function(){
-
-  closeLoginModal();
-
-});
- const requestInviteLink = document.getElementById("requestInviteLink");
-
-if (requestInviteLink) {
-  requestInviteLink.addEventListener("click", function () {
-    document.querySelector(".login-modal")?.classList.remove("active");
-    document.body.classList.remove("modal-open");
-  });
-}
-</script>
 <script>
 
 const profileMenu =
@@ -792,7 +736,6 @@ document.addEventListener("click", (e) => {
   }
 
 });
-
 </script>
 <script>
 
@@ -1269,5 +1212,22 @@ function toggleWatchlist(
     </button>
   </div>
 </div>
+<script>
+const userToken = localStorage.getItem("token");
+
+const loginBtn = document.querySelector(".login-open");
+const profileMenuBox = document.querySelector(".profile-menu");
+const notificationMenuBox = document.querySelector(".notification-menu");
+
+if (userToken) {
+  if (loginBtn) loginBtn.style.display = "none";
+  if (profileMenuBox) profileMenuBox.style.display = "block";
+  if (notificationMenuBox) notificationMenuBox.style.display = "block";
+} else {
+  if (loginBtn) loginBtn.style.display = "inline-flex";
+  if (profileMenuBox) profileMenuBox.style.display = "none";
+  if (notificationMenuBox) notificationMenuBox.style.display = "none";
+}
+</script>
 </body>
 </html>
