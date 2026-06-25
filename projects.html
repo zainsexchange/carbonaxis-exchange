@@ -470,62 +470,6 @@ counters.forEach(counter => {
     </p>
   </div>
 </div>
-
-<script>
-
-const loginOpen =
-document.querySelector(".login-open");
-
-const loginModal =
-document.getElementById("loginModal");
-
-const closeLogin =
-document.querySelector(".close-login");
-
-const loginOverlay =
-document.querySelector(".login-overlay");
-
-const loginInputs =
-document.querySelectorAll(".login-box input");
-
-function closeLoginModal(){
-
-  loginModal.classList.remove("active");
-
-  loginInputs.forEach(input => {
-    input.value = "";
-  });
- 
-}
-
-loginOpen.addEventListener("click", function(e){
-
-  e.preventDefault();
-
-  loginModal.classList.add("active");
-
-});
-
-closeLogin.addEventListener("click", function(){
-
-  closeLoginModal();
-
-});
-
-loginOverlay.addEventListener("click", function(){
-
-  closeLoginModal();
-
-});
- const requestInviteLink = document.getElementById("requestInviteLink");
-
-if (requestInviteLink) {
-  requestInviteLink.addEventListener("click", function () {
-    document.querySelector(".login-modal")?.classList.remove("active");
-    document.body.classList.remove("modal-open");
-  });
-}
-</script>
 <script>
 const profileMenu = document.querySelector(".profile-menu");
 const profileBtn = document.querySelector(".profile-btn");
@@ -640,6 +584,13 @@ if (userToken) {
   if (loginBtn) loginBtn.style.display = "inline-flex";
   if (profileMenuBox) profileMenuBox.style.display = "none";
   if (notificationMenuBox) notificationMenuBox.style.display = "none";
+}
+</script>
+<script>
+function logout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  window.location.href = "/login.html";
 }
 </script>
 </body>
