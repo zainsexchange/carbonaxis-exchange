@@ -1,8 +1,8 @@
-function logout() {
+window.logout = function () {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
   window.location.href = "/login.html";
-}
+};
 
 document.addEventListener("DOMContentLoaded", () => {
   const token = localStorage.getItem("token");
@@ -28,9 +28,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (token) {
-    if (loginBtn) loginBtn.style.display = "none";
-    if (profileMenu) profileMenu.style.display = "block";
-    if (notificationMenu) notificationMenu.style.display = "block";
+    if (loginBtn) loginBtn.style.setProperty("display", "none", "important");
+    if (profileMenu) profileMenu.style.setProperty("display", "block", "important");
+    if (notificationMenu) notificationMenu.style.setProperty("display", "block", "important");
 
     if (navBtn) {
       navBtn.textContent = "Dashboard";
@@ -47,11 +47,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       profileAvatar.textContent = initials;
     }
-
   } else {
-    if (loginBtn) loginBtn.style.display = "inline-flex";
-    if (profileMenu) profileMenu.style.display = "none";
-    if (notificationMenu) notificationMenu.style.display = "none";
+    if (loginBtn) loginBtn.style.setProperty("display", "inline-flex", "important");
+    if (profileMenu) profileMenu.style.setProperty("display", "none", "important");
+    if (notificationMenu) notificationMenu.style.setProperty("display", "none", "important");
 
     if (navBtn) {
       navBtn.textContent = "Get Access";
