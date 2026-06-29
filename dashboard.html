@@ -925,13 +925,6 @@ mobileLinks.forEach(link => {
 });
 </script>
 <script>
-function logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.href = "/login.html";
-}
-</script>
-<script>
 // reuse existing token variable if present to avoid redeclaration
 var _token = (typeof token !== 'undefined') ? token : localStorage.getItem("token");
 
@@ -942,5 +935,6 @@ if(_token){
   }
 }
 </script>
+<script src="/js/auth.js"></script>
 </body>
 </html>

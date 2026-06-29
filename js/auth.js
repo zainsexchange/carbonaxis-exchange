@@ -1,98 +1,61 @@
 function logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.href = "/login.html";
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  window.location.href = "/login.html";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-    const token = localStorage.getItem("token");
+  const loginBtn = document.querySelector(".login-open");
+  const profileMenu = document.querySelector(".profile-menu");
+  const notificationMenu = document.querySelector(".notification-menu");
+  const navBtn = document.querySelector(".nav-btn");
+  const profileAvatar = document.querySelector(".profile-avatar");
 
-    // Protected pages
-    const protectedPages = [
-        "dashboard.html",
-        "projects.html",
-        "watchlist.html",
-        "profile.html"
-    ];
+  const protectedPages = [
+    "dashboard.html",
+    "watchlist.html",
+    "profile.html"
+  ];
 
-    const currentPage = window.location.pathname.split("/").pop();
+  const currentPage = window.location.pathname.split("/").pop();
 
-    if (protectedPages.includes(currentPage) && !token) {
-        window.location.href = "/login.html";
-        return;
+  if (protectedPages.includes(currentPage) && !token) {
+    window.location.href = "/login.html";
+    return;
+  }
+
+  if (token) {
+    if (loginBtn) loginBtn.style.display = "none";
+    if (profileMenu) profileMenu.style.display = "block";
+    if (notificationMenu) notificationMenu.style.display = "block";
+
+    if (navBtn) {
+      navBtn.textContent = "Dashboard";
+      navBtn.href = "/dashboard.html";
     }
 
-    // Navbar
-    const loginBtn = document.querySelector(".login-open");
-    const profileMenu = document.querySelector(".profile-menu");
-    const notificationMenu = document.querySelector(".notification-menu");
+    if (profileAvatar && user.name) {
+      const initials = user.name
+        .split(" ")
+        .map(word => word[0])
+        .join("")
+        .substring(0, 2)
+        .toUpperCase();
 
-    if (token) {
-
-        if (loginBtn)
-            loginBtn.style.display = "none";
-
-        if (profileMenu)
-            profileMenu.style.display = "block";
-
-        if (notificationMenu)
-            notificationMenu.style.display = "block";
-
-    } else {
-
-        if (loginBtn)
-            loginBtn.style.display = "inline-flex";
-
-        if (profileMenu)
-            profileMenu.style.display = "none";
-
-        if (notificationMenu)
-            notificationMenu.style.display = "none";
+      profileAvatar.textContent = initials;
     }
 
-    // Profile Dropdown
+  } else {
+    if (loginBtn) loginBtn.style.display = "inline-flex";
+    if (profileMenu) profileMenu.style.display = "none";
+    if (notificationMenu) notificationMenu.style.display = "none";
 
-    const profileBtn = document.querySelector(".profile-btn");
-
-    if (profileBtn && profileMenu) {
-
-        profileBtn.addEventListener("click", function(e){
-
-            e.stopPropagation();
-
-            profileMenu.classList.toggle("active");
-
-        });
-
-        document.addEventListener("click", function(){
-
-            profileMenu.classList.remove("active");
-
-        });
-
+    if (navBtn) {
+      navBtn.textContent = "Get Access";
+      navBtn.href = "/index.html#early-access";
     }
-
-    // Notification Dropdown
-
-    const notificationBtn = document.querySelector(".notification-btn");
-
-    if(notificationBtn && notificationMenu){
-
-        notificationBtn.addEventListener("click", function(e){
-
-            e.stopPropagation();
-
-            notificationMenu.classList.toggle("active");
-
-        });
-
-        document.addEventListener("click", function(){
-
-            notificationMenu.classList.remove("active");
-
-        });
-
-    }
-
+  }
 });

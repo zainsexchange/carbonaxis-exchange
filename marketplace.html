@@ -1218,12 +1218,6 @@ if (userToken) {
   if (notificationMenuBox) notificationMenuBox.style.display = "none";
 }
 </script>
-<script>
-function logout() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-  window.location.href = "/login.html";
-}
-</script>
+<script src="/js/auth.js"></script>
 </body>
 </html>
