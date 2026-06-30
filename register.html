@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Register | CarbonAxis Exchange</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+
+.login-page{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#081511;
+}
+
+.login-box{
+    width:420px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(0,229,176,0.15);
+    border-radius:20px;
+    padding:40px;
+    backdrop-filter:blur(15px);
+}
+
+.login-box h1{
+    text-align:center;
+    margin-bottom:25px;
+}
+
+.login-box input{
+    width:100%;
+    padding:14px;
+    margin-bottom:15px;
+    border-radius:10px;
+    border:none;
+}
+
+.login-btn{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:10px;
+    background:#00e5b0;
+    color:black;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.login-footer{
+    text-align:center;
+    margin-top:20px;
+}
+
+.login-footer a{
+    color:#00e5b0;
+}
+.login-message{
+    margin-top:15px;
+    text-align:center;
+    font-size:14px;
+    font-weight:600;
+}
+
+.login-message.success{
+    color:#00e5b0;
+}
+
+.login-message.error{
+    color:#ff5c5c;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="login-page">
+
+<div class="login-box">
+
+<h1>Create Account</h1>
+
+<form id="registerForm">
+
+    <input
+type="text"
+id="name"
+placeholder="Full Name"
+required>
+
+<input
+type="email"
+id="email"
+placeholder="Email Address"
+required>
+
+<input
+type="password"
+id="password"
+placeholder="Password"
+required>
+
+<input
+type="password"
+id="confirmPassword"
+placeholder="Confirm Password"
+required>
+
+<button
+type="submit"
+class="login-btn">
+Create Account
+</button>
+
+<p id="registerMessage" class="login-message"></p>
+</form>
+
+<div class="login-footer">
+
+<p>
+Already have an account?
+<a href="login.html">
+Login
+</a>
+</p>
+
+</div>
+
+</div>
+</div>
+<script src="/js/api.js"></script>
+<script>
+
+const registerForm =
+document.getElementById("registerForm");
+
+const registerMessage =
+document.getElementById("registerMessage");
+
+registerForm.addEventListener("submit", function(e){
+
+    e.preventDefault();
+
+    registerUser();
+
+});
+
+function showMessage(message, type){
+
+    registerMessage.innerText = message;
+
+    registerMessage.className =
+"login-message " + type;
+
+}
+
+async function registerUser(){
+
+    const name =
+    document.getElementById("name").value.trim();
+
+    const email =
+    document.getElementById("email").value.trim();
+
+    const password =
+    document.getElementById("password").value.trim();
+
+    const confirmPassword =
+    document.getElementById("confirmPassword").value.trim();
+
+    if(
+!name ||
+!email ||
+!password ||
+!confirmPassword
+){
+
+    showMessage(
+        "Please fill in all fields.",
+        "error"
+    );
+
+    return;
+
+}
+if(password !== confirmPassword){
+
+    showMessage(
+        "Passwords do not match.",
+        "error"
+    );
+
+    return;
+
+}
+
+    showMessage(
+        "Creating your account...",
+        "success"
+    );
+
+    try{
+
+        const response = await fetch(
+            `${API.BASE}${API.register}`,
+            {
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({
+
+    name,
+
+    email,
+
+    password
+
+})
+            }
+        );
+
+        const data =
+        await response.json();
+
+        if(data.success){
+
+            showMessage(
+
+    "Account created successfully! Redirecting to login...",
+
+    "success"
+
+);
+
+setTimeout(function(){
+
+    window.location.href =
+    "login.html";
+
+},1500);
+
+        }else{
+
+            showMessage(
+                data.message ||
+                "Registration failed. Please try again.",
+                "error"
+            );
+
+        }
+
+    }catch(error){
+
+        console.error(error);
+
+        showMessage(
+            "Unable to connect to server.",
+            "error"
+        );
+
+    }
+
+}
+
+</script>
+</body>
+</html>
