@@ -60,6 +60,20 @@
 .login-footer a{
     color:#00e5b0;
 }
+.login-message{
+    margin-top:15px;
+    text-align:center;
+    font-size:14px;
+    font-weight:600;
+}
+
+.login-message.success{
+    color:#00e5b0;
+}
+
+.login-message.error{
+    color:#ff5c5c;
+}
 
 </style>
 
@@ -73,20 +87,27 @@
 
 <h1>Login</h1>
 
+<form id="loginForm">
+
 <input
 type="email"
 id="email"
-placeholder="Email Address">
+placeholder="Email Address"
+required>
 
 <input
 type="password"
 id="password"
-placeholder="Password">
+placeholder="Password"
+required>
 
 <button
-class="login-btn"
-onclick="loginUser()">
-Login </button>
+type="submit"
+class="login-btn">
+Login
+</button>
+<p id="loginMessage" class="login-message"></p>
+</form>
 
 <div class="login-footer">
 
@@ -100,73 +121,123 @@ Register
 </div>
 
 </div>
-
 </div>
-
+<script src="/js/api.js"></script>
 <script>
+
+const loginForm =
+document.getElementById("loginForm");
+
+const loginMessage =
+document.getElementById("loginMessage");
+
+loginForm.addEventListener("submit", function(e){
+
+    e.preventDefault();
+
+    loginUser();
+
+});
+
+function showMessage(message, type){
+
+    loginMessage.innerText = message;
+
+    loginMessage.className =
+    "login-message " + type;
+
+}
 
 async function loginUser(){
 
-const email =
-document.getElementById("email").value;
+    const email =
+    document.getElementById("email").value.trim();
 
-const password =
-document.getElementById("password").value;
+    const password =
+    document.getElementById("password").value.trim();
 
-try{
+    if(!email || !password){
 
-const response = await fetch(
-"https://carbonaxis-exchange.onrender.com/api/login",
-{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-email,
-password
-})
-}
-);
+        showMessage(
+            "Please enter email and password.",
+            "error"
+        );
 
-const data =
-await response.json();
-console.log(data);
+        return;
 
-if(data.success){
+    }
 
-localStorage.setItem(
-"token",
-data.token
-);
+    showMessage(
+        "Checking your credentials...",
+        "success"
+    );
 
-localStorage.setItem(
-"user",
-JSON.stringify(data.user)
-);
+    try{
 
-alert("Login Successful");
+        const response = await fetch(
+            `${API.BASE}${API.login}`,
+            {
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({
+                    email,
+                    password
+                })
+            }
+        );
 
-window.location.href =
-"dashboard.html";
+        const data =
+        await response.json();
 
-}else{
+        if(data.success){
 
-alert(data.message);
+            localStorage.setItem(
+                "token",
+                data.token
+            );
 
-}
+            localStorage.setItem(
+                "user",
+                JSON.stringify(data.user)
+            );
 
-}catch(error){
+            showMessage(
+                "Login successful. Redirecting...",
+                "success"
+            );
 
-console.error(error);
+            setTimeout(function(){
 
-alert(data.message || "Login Failed");
+                window.location.href =
+                "dashboard.html";
 
-}
+            },800);
+
+        }else{
+
+            showMessage(
+                data.message ||
+                "Invalid email or password.",
+                "error"
+            );
+
+        }
+
+    }catch(error){
+
+        console.error(error);
+
+        showMessage(
+            "Unable to connect to server.",
+            "error"
+        );
+
+    }
 
 }
 
 </script>
-
 </body>
 </html>
