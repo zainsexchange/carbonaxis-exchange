@@ -127,7 +127,7 @@
   </div>
 
 </div>
-      <a class="btn btn-outline login-open" href="#">Login</a>
+      <a class="btn btn-outline login-open" href="/login.html">Login</a>
       <button class="mobile-menu-btn" aria-label="Open Menu">
   <span></span>
   <span></span>
@@ -963,6 +963,8 @@ Pakistan · Carbon Removal
         Contact Broker
       </a>
 
+      <a href="#" onclick="logout()">Logout</a>
+
     </div>
 
   </div>
@@ -990,54 +992,6 @@ Pakistan · Carbon Removal
   </div>
 </div>
 
-<script>
-
-const loginOpen =
-document.querySelector(".login-open");
-
-const loginModal =
-document.getElementById("loginModal");
-
-const closeLogin =
-document.querySelector(".close-login");
-
-const loginOverlay =
-document.querySelector(".login-overlay");
-
-const loginInputs =
-document.querySelectorAll(".login-box input");
-
-function closeLoginModal(){
-
-  loginModal.classList.remove("active");
-
-  loginInputs.forEach(input => {
-    input.value = "";
-  });
-
-}
-
-loginOpen.addEventListener("click", function(e){
-
-  e.preventDefault();
-
-  loginModal.classList.add("active");
-
-});
-
-closeLogin.addEventListener("click", function(){
-
-  closeLoginModal();
-
-});
-
-loginOverlay.addEventListener("click", function(){
-
-  closeLoginModal();
-
-});
-
-</script>
 <script>
 
 const profileMenu =
