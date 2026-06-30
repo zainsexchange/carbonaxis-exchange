@@ -378,31 +378,6 @@ function clearWatchlist(){
 
 loadWatchlist();
 </script>
-<script>
-
-const notificationMenu =
-document.querySelector(".notification-menu");
-
-const notificationBtn =
-document.querySelector(".notification-btn");
-
-notificationBtn.addEventListener("click", () => {
-
-  notificationMenu.classList.toggle("active");
-
-});
-
-document.addEventListener("click", (e) => {
-
-  if(!notificationMenu.contains(e.target)){
-
-    notificationMenu.classList.remove("active");
-
-  }
-
-});
-
-</script>
 <div class="login-modal" id="loginModal">
   <div class="login-overlay"></div>
 
@@ -426,30 +401,6 @@ document.addEventListener("click", (e) => {
     </p>
   </div>
 </div>
-<script>
-
-const profileMenu =
-document.querySelector(".profile-menu");
-
-const profileBtn =
-document.querySelector(".profile-btn");
-
-profileBtn.addEventListener("click", () => {
-
-  profileMenu.classList.toggle("active");
-
-});
-
-document.addEventListener("click", (e) => {
-
-  if(!profileMenu.contains(e.target)){
-
-    profileMenu.classList.remove("active");
-
-  }
-
-});
-</script>
 <script>
 const userToken = localStorage.getItem("token");
 

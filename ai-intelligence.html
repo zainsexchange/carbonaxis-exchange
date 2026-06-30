@@ -391,56 +391,6 @@ counters.forEach(counter => {
     </p>
   </div>
 </div>
-<script>
-
-const profileMenu =
-document.querySelector(".profile-menu");
-
-const profileBtn =
-document.querySelector(".profile-btn");
-
-profileBtn.addEventListener("click", () => {
-
-  profileMenu.classList.toggle("active");
-
-});
-
-document.addEventListener("click", (e) => {
-
-  if(!profileMenu.contains(e.target)){
-
-    profileMenu.classList.remove("active");
-
-  }
-
-});
-
-</script>
-<script>
-
-const notificationMenu =
-document.querySelector(".notification-menu");
-
-const notificationBtn =
-document.querySelector(".notification-btn");
-
-notificationBtn.addEventListener("click", () => {
-
-  notificationMenu.classList.toggle("active");
-
-});
-
-document.addEventListener("click", (e) => {
-
-  if(!notificationMenu.contains(e.target)){
-
-    notificationMenu.classList.remove("active");
-
-  }
-
-});
-
-</script>
 
 <script>
 const mobileMenuBtn = document.querySelector(".mobile-menu-btn");

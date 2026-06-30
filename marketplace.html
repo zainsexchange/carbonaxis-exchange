@@ -712,25 +712,6 @@ counters.forEach(counter => {
   </div>
 </div>
 <script>
-const profileMenu = document.querySelector(".profile-menu");
-const profileBtn = document.querySelector(".profile-btn");
-
-if (profileBtn && profileMenu) {
-
-    profileBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        profileMenu.classList.toggle("active");
-    });
-
-    document.addEventListener("click", (e) => {
-        if (!profileMenu.contains(e.target)) {
-            profileMenu.classList.remove("active");
-        }
-    });
-
-}
-</script>
-<script>
 
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -858,25 +839,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 
-</script>
-<script>
-const notificationMenu = document.querySelector(".notification-menu");
-const notificationBtn = document.querySelector(".notification-btn");
-
-if (notificationBtn && notificationMenu) {
-
-    notificationBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        notificationMenu.classList.toggle("active");
-    });
-
-    document.addEventListener("click", (e) => {
-        if (!notificationMenu.contains(e.target)) {
-            notificationMenu.classList.remove("active");
-        }
-    });
-
-}
 </script>
 <script>
 const marketSearch = document.getElementById("marketSearch");
