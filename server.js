@@ -119,15 +119,7 @@ app.get("/", (req, res) => {
 
 app.post("/api/early-access", async (req, res) => {
   try {
-    let {
-  name,
-  email,
-  password,
-  company,
-  country
-} = req.body;
-
-email = email.toLowerCase().trim();
+    const { name, email, role, message } = req.body;
 
     const submission = await EarlyAccess.create({
       name,
@@ -319,13 +311,15 @@ app.delete("/api/project-submissions/:id", requireAdmin, async (req, res) => {
 app.post("/api/register", async (req, res) => {
   try {
 
-    const {
-      name,
-      email,
-      password,
-      company,
-      country
-    } = req.body;
+    let {
+  name,
+  email,
+  password,
+  company,
+  country
+} = req.body;
+
+email = email.toLowerCase().trim();
 
     const existingUser = await User.findOne({
       email
