@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { authenticateToken } from "./middleware/auth.js";
 dotenv.config();
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
