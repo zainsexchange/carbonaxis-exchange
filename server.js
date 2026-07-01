@@ -86,6 +86,13 @@ const userSchema = new mongoose.Schema(
     company: String,
 
     country: String,
+    phone: String,
+jobTitle: String,
+industry: String,
+website: String,
+linkedin: String,
+bio: String,
+profileImage: String,
 
     role: {
       type: String,
@@ -520,6 +527,71 @@ app.get("/api/profile", authenticateToken, async (req, res) => {
         res.status(500).json({
             success:false,
             message:"Failed to fetch profile"
+        });
+
+    }
+
+});
+app.put("/api/profile", authenticateToken, async (req, res) => {
+
+    try{
+
+        const {
+            name,
+            company,
+            country,
+            phone,
+            jobTitle,
+            industry,
+            website,
+            linkedin,
+            bio,
+            profileImage
+        } = req.body;
+
+        const updatedUser = await User.findByIdAndUpdate(
+
+            req.user.id,
+
+            {
+                name,
+                company,
+                country,
+                phone,
+                jobTitle,
+                industry,
+                website,
+                linkedin,
+                bio,
+                profileImage
+            },
+
+            {
+                new: true
+            }
+
+        ).select("-password");
+
+        res.json({
+
+            success:true,
+
+            message:"Profile updated successfully.",
+
+            user:updatedUser
+
+        });
+
+    }catch(error){
+
+        console.error(error);
+
+        res.status(500).json({
+
+            success:false,
+
+            message:"Failed to update profile."
+
         });
 
     }
