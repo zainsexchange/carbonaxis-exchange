@@ -119,7 +119,15 @@ app.get("/", (req, res) => {
 
 app.post("/api/early-access", async (req, res) => {
   try {
-    const { name, email, role, message } = req.body;
+    let {
+  name,
+  email,
+  password,
+  company,
+  country
+} = req.body;
+
+email = email.toLowerCase().trim();
 
     const submission = await EarlyAccess.create({
       name,
@@ -364,7 +372,9 @@ app.post("/api/register", async (req, res) => {
 });
 app.post("/api/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+
+email = email.toLowerCase().trim();
 
     const user = await User.findOne({ email });
 
@@ -495,11 +505,6 @@ app.delete("/api/broker-inquiries/:id", requireAdmin, async (req, res) => {
     });
   }
 });
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
 app.get("/api/profile", authenticateToken, async (req, res) => {
 
     try{
@@ -596,4 +601,9 @@ app.put("/api/profile", authenticateToken, async (req, res) => {
 
     }
 
+});
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
