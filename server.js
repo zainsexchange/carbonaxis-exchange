@@ -320,6 +320,27 @@ app.post("/api/register", async (req, res) => {
 } = req.body;
 
 email = email.toLowerCase().trim();
+const passwordRules = {
+  length: password.length >= 8,
+  upper: /[A-Z]/.test(password),
+  lower: /[a-z]/.test(password),
+  number: /\d/.test(password),
+  special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+};
+
+if (
+  !passwordRules.length ||
+  !passwordRules.upper ||
+  !passwordRules.lower ||
+  !passwordRules.number ||
+  !passwordRules.special
+) {
+  return res.status(400).json({
+    success: false,
+    message: "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
+  });
+}
+
 
     const existingUser = await User.findOne({
       email
@@ -369,26 +390,6 @@ app.post("/api/login", async (req, res) => {
     let { email, password } = req.body;
 
 email = email.toLowerCase().trim();
-const passwordRules = {
-  length: password.length >= 8,
-  upper: /[A-Z]/.test(password),
-  lower: /[a-z]/.test(password),
-  number: /\d/.test(password),
-  special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
-};
-
-if (
-  !passwordRules.length ||
-  !passwordRules.upper ||
-  !passwordRules.lower ||
-  !passwordRules.number ||
-  !passwordRules.special
-) {
-  return res.status(400).json({
-    success: false,
-    message: "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
-  });
-}
 
     const user = await User.findOne({ email });
 
@@ -516,6 +517,51 @@ app.delete("/api/broker-inquiries/:id", requireAdmin, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Broker inquiry delete failed",
+    });
+  }
+});
+app.get("/api/dashboard", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    const totalProjects = await ProjectSubmission.countDocuments();
+
+    const approvedProjects = await ProjectSubmission.countDocuments({
+      status: "Approved"
+    });
+
+    res.json({
+      success: true,
+      user: {
+        name: user.name,
+        email: user.email,
+        company: user.company,
+        country: user.country,
+        role: user.role,
+        subscription: user.subscription
+      },
+      stats: {
+        portfolioValue: 0,
+        creditsWatched: 0,
+        projectsSubmitted: totalProjects,
+        verifiedProjects: approvedProjects,
+        aiSearches: 0
+      }
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to load dashboard"
     });
   }
 });

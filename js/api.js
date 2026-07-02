@@ -4,6 +4,7 @@ const API = {
   login: "/login",
   register: "/register",
   profile: "/profile",
+  dashboard: "/dashboard",
   projects: "/projects",
   watchlist: "/watchlist"
 };
