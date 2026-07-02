@@ -3745,3 +3745,28 @@ table{
     padding-top:100px !important;
 }
 }}
+.password-rules{
+
+margin-top:15px;
+
+font-size:14px;
+
+line-height:1.8;
+
+}
+
+.password-rules p{
+
+margin:3px 0;
+
+color:#bbbbbb;
+
+}
+
+.password-rules .valid{
+
+color:#00e5b0;
+
+font-weight:600;
+
+}

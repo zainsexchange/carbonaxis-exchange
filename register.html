@@ -109,6 +109,20 @@ id="password"
 placeholder="Password"
 required>
 
+<div id="passwordRules" class="password-rules">
+
+<p id="ruleLength">❌ Minimum 8 characters</p>
+
+<p id="ruleUpper">❌ One uppercase letter</p>
+
+<p id="ruleLower">❌ One lowercase letter</p>
+
+<p id="ruleNumber">❌ One number</p>
+
+<p id="ruleSpecial">❌ One special character</p>
+
+</div>
+
 <input
 type="password"
 id="confirmPassword"
@@ -137,14 +151,56 @@ Login
 
 </div>
 </div>
+<script src="/js/utils/validation.js"></script>
 <script src="/js/api.js"></script>
 <script>
+function updateRule(id, valid){
 
+    const element =
+    document.getElementById(id);
+
+    if(valid){
+
+        element.classList.add("valid");
+
+        element.innerHTML =
+        "✅ " +
+        element.innerText.substring(2);
+
+    }else{
+
+        element.classList.remove("valid");
+
+        element.innerHTML =
+        "❌ " +
+        element.innerText.substring(2);
+
+    }
+
+}
 const registerForm =
 document.getElementById("registerForm");
 
 const registerMessage =
 document.getElementById("registerMessage");
+const passwordInput =
+document.getElementById("password");
+passwordInput.addEventListener("input", function(){
+
+    const rules =
+    validatePassword(passwordInput.value);
+
+    updateRule("ruleLength", rules.length);
+
+    updateRule("ruleUpper", rules.upper);
+
+    updateRule("ruleLower", rules.lower);
+
+    updateRule("ruleNumber", rules.number);
+
+    updateRule("ruleSpecial", rules.special);
+
+});
 
 registerForm.addEventListener("submit", function(e){
 
@@ -176,6 +232,34 @@ async function registerUser(){
 
     const confirmPassword =
     document.getElementById("confirmPassword").value.trim();
+    const rules =
+validatePassword(password);
+
+if(
+
+!rules.length ||
+
+!rules.upper ||
+
+!rules.lower ||
+
+!rules.number ||
+
+!rules.special
+
+){
+
+showMessage(
+
+"Please create a stronger password.",
+
+"error"
+
+);
+
+return;
+
+}
 
     if(
 !name ||
