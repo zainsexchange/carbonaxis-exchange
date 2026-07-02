@@ -369,6 +369,26 @@ app.post("/api/login", async (req, res) => {
     let { email, password } = req.body;
 
 email = email.toLowerCase().trim();
+const passwordRules = {
+  length: password.length >= 8,
+  upper: /[A-Z]/.test(password),
+  lower: /[a-z]/.test(password),
+  number: /\d/.test(password),
+  special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+};
+
+if (
+  !passwordRules.length ||
+  !passwordRules.upper ||
+  !passwordRules.lower ||
+  !passwordRules.number ||
+  !passwordRules.special
+) {
+  return res.status(400).json({
+    success: false,
+    message: "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
+  });
+}
 
     const user = await User.findOne({ email });
 
