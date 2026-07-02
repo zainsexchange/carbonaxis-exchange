@@ -13,6 +13,9 @@ content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="/style.css">
 
+<link rel="stylesheet" href="/css/carbon-ui/smart-select.css">
+<link rel="stylesheet" href="/css/profile.css">
+
 <link rel="icon"
 type="image/png"
 href="/favicon.png">
@@ -43,37 +46,106 @@ href="/favicon.png">
 <meta name="twitter:image" content="https://carbonaxisexchange.com/og-image.png">
 </header>
 <main class="profile-page">
+  <section class="profile-hero">
+    <div class="container">
+      <p class="section-label">Account</p>
+      <h1>My Profile</h1>
+      <p class="profile-subtitle">
+        Manage your CarbonAxis Exchange account information.
+      </p>
+    </div>
+  </section>
 
-<div class="container">
-    <div class="profile-card">
+  <section class="profile-section">
+    <div class="container">
+      <div class="profile-card">
+        <div class="profile-card-head">
+          <div class="profile-avatar-large" id="profileAvatarLarge">CA</div>
+          <div>
+            <h2>Personal Information</h2>
+            <p>Update your personal and professional details.</p>
+          </div>
+        </div>
 
-<h2>
-Personal Information
-</h2>
+        <form id="profileForm" class="profile-form">
+          <div class="form-grid">
+            <label>
+              Full Name
+              <input type="text" id="name">
+            </label>
 
-<form id="profileForm">
-    <label>
+            <label>
+              Email Address
+              <input type="email" id="email" readonly>
+            </label>
 
-Full Name
+            <label>
+              Company
+              <input type="text" id="company">
+            </label>
 
-<input
+            <label>
+              Country
+              <input
 type="text"
-id="name">
+id="country"
+autocomplete="off">
+            </label>
 
-</label>
+            <label>
+              Phone
+              <input type="text" id="phone">
+            </label>
 
-</form>
+            <label>
+              Job Title
+              <input
+type="text"
+id="jobTitle"
+autocomplete="off">
+            </label>
 
-</div>
+            <label>
+              Industry
+              <input
+type="text"
+id="industry"
+autocomplete="off">
+            </label>
 
-<h1>
-My Profile
-</h1>
+            <label>
+              Website
+              <input type="text" id="website">
+            </label>
 
-<p>
-Manage your CarbonAxis Exchange account information.
-</p>
+            <label class="full-width">
+              LinkedIn
+              <input type="text" id="linkedin">
+            </label>
 
-</div>
+            <label class="full-width">
+              Bio
+              <textarea id="bio"></textarea>
+            </label>
+          </div>
 
+          <div class="profile-actions">
+            <button type="submit" class="btn btn-primary">
+              Save Changes
+            </button>
+
+            <p id="profileMessage" class="profile-message"></p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
 </main>
+<script src="/js/api.js"></script>
+<script src="/js/data.js"></script>
+<script src="/js/navbar.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/carbon-ui/smart-select.js"></script>
+<script src="/js/profile.js"></script>
+</body>
+</html>
