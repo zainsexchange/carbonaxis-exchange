@@ -40,6 +40,9 @@ class CarbonSmartSelect {
         this.activeIndex = Math.max(this.activeIndex - 1, 0);
         this.highlight(items);
       }
+      if (e.key === "Tab") {
+        this.close();
+      }
 
       if (e.key === "Enter") {
         if (this.dropdown.classList.contains("active") && this.activeIndex >= 0) {
@@ -50,6 +53,13 @@ class CarbonSmartSelect {
 
       if (e.key === "Escape") {
         this.close();
+        if (e.key === "Escape") {
+  this.close();
+}
+
+if (e.key === "Tab") {
+  this.close();
+}
       }
     });
 
@@ -75,11 +85,37 @@ class CarbonSmartSelect {
     }
 
     const results = this.data
-      .filter((item) => {
-        const label = this.getLabel(item).toLowerCase();
-        return label.includes(value);
-      })
-      .slice(0, 10);
+  .map((item) => {
+    const label = this.getLabel(item).toLowerCase();
+    const iso = item.iso ? item.iso.toLowerCase() : "";
+    const code = item.code ? item.code.toLowerCase() : "";
+    const aliases = item.aliases || [];
+
+    let score = 99;
+
+    if (label.startsWith(value)) {
+      score = 1;
+    } else if (aliases.some(alias => alias.toLowerCase().startsWith(value))) {
+      score = 2;
+    } else if (iso.startsWith(value)) {
+      score = 3;
+    } else if (code.startsWith(value)) {
+      score = 4;
+    } else if (label.includes(value)) {
+      score = 5;
+    } else if (aliases.some(alias => alias.toLowerCase().includes(value))) {
+      score = 6;
+    }
+
+    return {
+      item,
+      score
+    };
+  })
+  .filter(result => result.score !== 99)
+  .sort((a, b) => a.score - b.score)
+  .map(result => result.item)
+  .slice(0, 10);
 
     if (!results.length) {
       this.close();
