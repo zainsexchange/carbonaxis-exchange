@@ -111,6 +111,70 @@ profileImage: String,
   },
   { timestamps: true }
 );
+const carbonProjectSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
+
+    projectName: String,
+    projectType: String,
+    country: String,
+    organization: String,
+
+    registry: String,
+    methodology: String,
+    vintageYear: String,
+    estimatedCredits: String,
+
+    askingPrice: String,
+    currency: String,
+
+    description: String,
+
+    status: {
+      type: String,
+      default: "Draft"
+    },
+
+    aiInsights: {
+      opportunityScore: {
+        type: Number,
+        default: 0
+      },
+      riskScore: {
+        type: Number,
+        default: 0
+      },
+      marketReadiness: {
+        type: Number,
+        default: 0
+      },
+      timingSignal: {
+        type: String,
+        default: ""
+      },
+      aiSummary: {
+        type: String,
+        default: ""
+      },
+      policyFlags: {
+        type: [String],
+        default: []
+      },
+      recommendedMarkets: {
+        type: [String],
+        default: []
+      },
+      lastAnalyzed: Date
+    }
+  },
+  { timestamps: true }
+);
+
+const CarbonProject = mongoose.model("CarbonProject", carbonProjectSchema);
 
 const User = mongoose.model("User", userSchema);
 app.get("/", (req, res) => {
@@ -139,6 +203,49 @@ app.post("/api/early-access", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Something went wrong",
+    });
+  }
+});
+app.post("/api/projects", authenticateToken, async (req, res) => {
+  try {
+    const project = await CarbonProject.create({
+      userId: req.user.id,
+      ...req.body,
+      status: req.body.status || "Draft"
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Project created successfully",
+      project
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to create project"
+    });
+  }
+});
+app.get("/api/projects", authenticateToken, async (req, res) => {
+  try {
+    const projects = await CarbonProject.find({
+      userId: req.user.id
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      projects
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch projects"
     });
   }
 });
