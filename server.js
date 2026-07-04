@@ -638,11 +638,14 @@ app.get("/api/dashboard", authenticateToken, async (req, res) => {
       });
     }
 
-    const totalProjects = await ProjectSubmission.countDocuments();
+    const totalProjects = await CarbonProject.countDocuments({
+  userId: req.user.id
+});
 
-    const approvedProjects = await ProjectSubmission.countDocuments({
-      status: "Approved"
-    });
+const approvedProjects = await CarbonProject.countDocuments({
+  userId: req.user.id,
+  status: "Approved"
+});
 
     res.json({
       success: true,
