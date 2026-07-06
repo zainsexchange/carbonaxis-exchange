@@ -28,33 +28,40 @@ document.addEventListener("DOMContentLoaded", () => {
       notificationMenu.classList.toggle("active");
     });
   }
-  const user = JSON.parse(localStorage.getItem("user"));
+  const token = localStorage.getItem("token");
 
-if (user && user.name) {
-  const avatar = document.querySelector(".profile-avatar");
-  const accountText = document.querySelector(".profile-btn span:nth-child(2)");
+if (token) {
 
-  if (avatar) {
-    avatar.innerText = user.name
-      .split(" ")
-      .map(n => n[0])
-      .join("")
-      .substring(0, 2)
-      .toUpperCase();
-  }
+    fetch(`${API.BASE}${API.profile}`, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
 
-  if (accountText) {
-    accountText.innerText = user.name;
-  }
+        if (!data.success) return;
+
+        const user = data.user;
+
+        localStorage.setItem("user", JSON.stringify(user));
+
+        const avatar = document.querySelector(".profile-avatar");
+        const accountText = document.querySelector(".profile-btn span:nth-child(2)");
+
+        if (avatar) {
+            avatar.innerText = user.name
+                .split(" ")
+                .map(n => n[0])
+                .join("")
+                .substring(0,2)
+                .toUpperCase();
+        }
+
+        if (accountText) {
+            accountText.innerText = user.name;
+        }
+
+    });
 }
-
-  document.addEventListener("click", () => {
-    if (profileMenu) {
-      profileMenu.classList.remove("active");
-    }
-
-    if (notificationMenu) {
-      notificationMenu.classList.remove("active");
-    }
-  });
 });
