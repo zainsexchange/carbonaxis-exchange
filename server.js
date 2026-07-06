@@ -248,8 +248,71 @@ app.get("/api/projects", authenticateToken, async (req, res) => {
       message: "Failed to fetch projects"
     });
   }
+  
 });
+app.get("/api/projects/:id", authenticateToken, async (req, res) => {
+  try {
+    const project = await CarbonProject.findOne({
+      _id: req.params.id,
+      userId: req.user.id
+    });
 
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      project
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to load project"
+    });
+  }
+});
+app.put("/api/projects/:id", authenticateToken, async (req, res) => {
+  try {
+    const project = await CarbonProject.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        userId: req.user.id
+      },
+      req.body,
+      {
+        new: true
+      }
+    );
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Project updated successfully",
+      project
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to update project"
+    });
+  }
+});
 app.post("/api/project-submission", async (req, res) => {
   try {
     const { projectName, country, projectType, credits, price, description } = req.body;

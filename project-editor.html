@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Project Editor | CarbonAxis Exchange</title>
+
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/css/project-editor.css">
+</head>
+
+<body>
+
+<header class="navbar">
+  <div class="container nav-inner">
+    <a href="/index.html" class="brand">
+      <img src="/logo.png" alt="CarbonAxis Exchange Logo" class="site-logo">
+    </a>
+
+    <nav>
+      <a href="/index.html">Home</a>
+      <a href="/ai-intelligence.html">AI Intelligence</a>
+      <a href="/marketplace.html">Marketplace</a>
+      <a href="/projects.html">Projects</a>
+      <a href="/how-it-works.html">How It Works</a>
+      <a href="/about.html">About</a>
+    </nav>
+
+    <div class="notification-menu">
+      <button class="notification-btn">🔔</button>
+    </div>
+
+    <div class="profile-menu">
+      <button class="profile-btn">
+        <span class="profile-avatar">C</span>
+        <span>Account</span>
+        <span class="profile-arrow">▼</span>
+      </button>
+
+      <div class="profile-dropdown">
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/profile.html">Profile</a>
+        <a href="/projects.html">Projects</a>
+        <a href="/watchlist.html">Watchlist</a>
+        <a href="#" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="section marketplace-page-hero">
+    <div class="container">
+      <p class="section-label">Project Editor</p>
+      <h1>Create Carbon Project</h1>
+      <div class="project-progress">
+  <div class="progress-bar">
+    <div class="progress-fill"></div>
+  </div>
+
+  <div class="progress-steps">
+    <span class="active">Basic</span>
+    <span>Carbon</span>
+    <span>Commercial</span>
+    <span>Documents</span>
+    <span>AI</span>
+  </div>
+</div>
+      <p class="hero-text">
+        Add project details, carbon information and commercial data for review.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+
+      <div class="project-editor-card">
+
+        <div class="project-editor-head">
+          <div>
+            <p class="section-label">Step 1 of 3</p>
+            <h2>Basic Information</h2>
+          </div>
+
+          <a href="/projects.html" class="btn btn-outline">
+            Back to Projects
+          </a>
+        </div>
+
+        <form id="projectForm" class="project-form">
+
+          <div class="editor-section">
+  <h3>Basic Information</h3>
+
+  <div class="form-grid">
+
+            <label>
+              Project Name
+              <input type="text" id="projectName" required>
+            </label>
+
+            <label>
+              Country
+              <input type="text" id="country" required>
+            </label>
+
+            <label>
+              Organization
+              <input type="text" id="organization">
+            </label>
+
+            <label>
+              Project Type
+              <input type="text" id="projectType">
+            </label>
+
+          </div>
+          </div>
+
+          <div class="project-editor-actions">
+            <p id="projectMessage"></p>
+
+            <button type="submit" class="btn btn-primary">
+              Save Draft
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<script src="/js/api.js?v=40"></script>
+<script src="/js/navbar.js?v=40"></script>
+<script src="/js/auth.js?v=40"></script>
+<script src="/js/project-editor.js?v=40"></script>
+
+</body>
+</html>
