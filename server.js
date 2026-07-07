@@ -312,6 +312,50 @@ app.put("/api/projects/:id", authenticateToken, async (req, res) => {
       message: "Failed to update project"
     });
   }
+  
+});
+app.delete("/api/projects/:id", authenticateToken, async (req, res) => {
+
+    try {
+
+        const project = await CarbonProject.findOneAndDelete({
+
+            _id: req.params.id,
+            userId: req.user.id
+
+        });
+
+        if (!project) {
+
+            return res.status(404).json({
+
+                success:false,
+                message:"Project not found"
+
+            });
+
+        }
+
+        res.json({
+
+            success:true,
+            message:"Project deleted successfully"
+
+        });
+
+    } catch(error){
+
+        console.error(error);
+
+        res.status(500).json({
+
+            success:false,
+            message:"Unable to delete project"
+
+        });
+
+    }
+
 });
 app.post("/api/project-submission", async (req, res) => {
   try {

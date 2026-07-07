@@ -95,3 +95,33 @@
     overflow-x:auto;
   }
 }
+.project-form .form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:28px 32px;
+}
+
+.project-form label{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  font-weight:700;
+}
+
+.field-help{
+  font-size:13px;
+  color:rgba(255,255,255,.55);
+  line-height:1.5;
+  font-weight:400;
+  margin-top:-4px;
+}
+
+.project-form input{
+  margin-top:4px;
+}
+
+@media(max-width:768px){
+  .project-form .form-grid{
+    grid-template-columns:1fr;
+  }
+}

@@ -52,8 +52,20 @@ async function loadMyProjects() {
           </div>
 
           <div class="hero-actions" style="margin-top:18px;">
-            <a href="/project-editor.html?id=${project._id}" class="btn btn-outline">Edit</a>
-            <a href="#" class="btn btn-primary">View</a>
+  <a href="#" class="btn btn-primary">View</a>
+
+  <a href="/project-editor.html?id=${project._id}" class="btn btn-outline">
+    Edit
+  </a>
+
+  <button
+    type="button"
+    class="btn btn-outline"
+    onclick="deleteProject('${project._id}')">
+    Delete
+  </button>
+</div>
+            
           </div>
         </div>
       `;
@@ -62,5 +74,38 @@ async function loadMyProjects() {
   } catch (error) {
     console.error(error);
     grid.innerHTML = "<p>Unable to connect to server.</p>";
+  }
+}
+async function deleteProject(projectId){
+
+  const confirmed = confirm(
+    "Delete this project permanently?"
+  );
+
+  if(!confirmed) return;
+
+  try{
+
+    const response = await fetch(
+      `${API.BASE}${API.projects}/${projectId}`,
+      {
+        method:"DELETE",
+        headers:{
+          Authorization:`Bearer ${localStorage.getItem("token")}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if(data.success){
+      await loadMyProjects();
+    }else{
+      alert(data.message || "Delete failed.");
+    }
+
+  }catch(error){
+    console.error(error);
+    alert("Unable to delete project.");
   }
 }

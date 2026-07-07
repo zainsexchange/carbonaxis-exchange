@@ -9,6 +9,7 @@
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/css/project-editor.css">
+  <link rel="stylesheet" href="/css/carbon-ui/smart-select.css">
 </head>
 
 <body>
@@ -98,24 +99,36 @@
   <div class="form-grid">
 
             <label>
-              Project Name
-              <input type="text" id="projectName" required>
-            </label>
+  Project Name
+  <span class="field-help">
+    This name will appear in your project dashboard and future marketplace listing.
+  </span>
+  <input type="text" id="projectName" required>
+</label>
 
-            <label>
-              Country
-              <input type="text" id="country" required>
-            </label>
+<label>
+  Country
+  <span class="field-help">
+    Select the country where the carbon project is physically located.
+  </span>
+  <input type="text" id="country" required>
+</label>
 
-            <label>
-              Organization
-              <input type="text" id="organization">
-            </label>
+<label>
+  Organization
+  <span class="field-help">
+    Enter the company, developer, or organization responsible for this project.
+  </span>
+  <input type="text" id="organization">
+</label>
 
-            <label>
-              Project Type
-              <input type="text" id="projectType">
-            </label>
+<label>
+  Project Type
+  <span class="field-help">
+    Choose the category that best describes the project activity.
+  </span>
+  <input type="text" id="projectType">
+</label>
 
           </div>
           </div>
@@ -139,7 +152,10 @@
 <script src="/js/api.js?v=40"></script>
 <script src="/js/navbar.js?v=40"></script>
 <script src="/js/auth.js?v=40"></script>
+<script src="/js/data.js?v=40"></script>
+<script src="/js/carbon-ui/smart-select.js?v=40"></script>
 <script src="/js/project-editor.js?v=40"></script>
+
 
 </body>
 </html>

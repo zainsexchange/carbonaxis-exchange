@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const token = localStorage.getItem("token");
-
   if (!token) {
     window.location.href = "/login.html";
     return;
@@ -8,6 +7,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const form = document.getElementById("projectForm");
   const message = document.getElementById("projectMessage");
+  new CarbonSmartSelect("country", COUNTRIES);
+new CarbonSmartSelect("projectType", PROJECT_TYPES);
 
   const params = new URLSearchParams(window.location.search);
   const projectId = params.get("id");
