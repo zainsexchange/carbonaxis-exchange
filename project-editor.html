@@ -82,7 +82,7 @@
 
         <div class="project-editor-head">
           <div>
-            <p class="section-label">Step 1 of 3</p>
+            <p class="section-label">Step 1 of 5</p>
             <h2>Basic Information</h2>
           </div>
 
@@ -93,55 +93,122 @@
 
         <form id="projectForm" class="project-form">
 
-          <div class="editor-section">
-  <h3>Basic Information</h3>
+  <div class="editor-section wizard-step active" data-step="1">
+    <h3>Basic Information</h3>
+
+    <div class="form-grid">
+      <label>
+        Project Name
+        <span class="field-help">This name will appear in your project dashboard and future marketplace listing.</span>
+        <input type="text" id="projectName" required>
+      </label>
+
+      <label>
+        Country
+        <span class="field-help">Select the country where the carbon project is physically located.</span>
+        <input type="text" id="country" required>
+      </label>
+
+      <label>
+        Organization
+        <span class="field-help">Enter the company, developer, or organization responsible for this project.</span>
+        <input type="text" id="organization">
+      </label>
+
+      <label>
+        Project Type
+        <span class="field-help">Choose the category that best describes the project activity.</span>
+        <input
+    type="text"
+    id="projectType"
+    autocomplete="off"
+    placeholder="Search Project Type...">
+      </label>
+    </div>
+  </div>
+
+  <div class="editor-section wizard-step" data-step="2">
+    <h3>Carbon Information</h3>
+    <p class="field-help">Add registry, methodology, credit volume and verification details for this project.</p>
+
+    <div class="form-grid">
+      <label>
+        Registry
+        <span class="field-help">Select the carbon registry linked with this project.</span>
+        <input
+    type="text"
+    id="registry"
+    autocomplete="off"
+    placeholder="Search Registry...">
+      </label>
+
+      <label>
+        Methodology
+        <span class="field-help">Enter the methodology used to calculate carbon credits.</span>
+        <input
+    type="text"
+    id="methodology"
+    autocomplete="off"
+    placeholder="Search Methodology...">
+      </label>
+
+      <label>
+        Vintage Year
+        <span class="field-help">Year when the credits are generated or issued.</span>
+        <input type="text" id="vintageYear">
+      </label>
+
+      <label>
+        Estimated Credits
+        <span class="field-help">Estimated total carbon credits for this project.</span>
+        <input type="number" id="estimatedCredits">
+      </label>
+    </div>
+  </div>
+  <div class="editor-section wizard-step" data-step="3">
+  <h3>Commercial Information</h3>
+  <p class="field-help">
+    Add pricing and availability details for future marketplace listing.
+  </p>
 
   <div class="form-grid">
+    <label>
+      Asking Price
+      <span class="field-help">Enter the expected price per carbon credit.</span>
+      <input type="number" id="askingPrice">
+    </label>
 
-            <label>
-  Project Name
-  <span class="field-help">
-    This name will appear in your project dashboard and future marketplace listing.
-  </span>
-  <input type="text" id="projectName" required>
-</label>
+    <label>
+      Currency
+      <span class="field-help">Select the currency for pricing.</span>
+      <input
+    type="text"
+    id="currency"
+    autocomplete="off"
+    placeholder="Search Currency...">
+    </label>
+  </div>
+</div>
 
-<label>
-  Country
-  <span class="field-help">
-    Select the country where the carbon project is physically located.
-  </span>
-  <input type="text" id="country" required>
-</label>
+  <div class="project-editor-actions">
+    <p id="projectMessage"></p>
 
-<label>
-  Organization
-  <span class="field-help">
-    Enter the company, developer, or organization responsible for this project.
-  </span>
-  <input type="text" id="organization">
-</label>
+    <div class="wizard-actions">
+      <button type="button" class="btn btn-outline" id="prevStep">
+        ← Previous
+      </button>
 
-<label>
-  Project Type
-  <span class="field-help">
-    Choose the category that best describes the project activity.
-  </span>
-  <input type="text" id="projectType">
-</label>
+      <button type="submit" class="btn btn-primary">
+        Save Draft
+      </button>
 
-          </div>
-          </div>
+      <button type="button" class="btn btn-primary" id="nextStep">
+        Continue →
+      </button>
+    </div>
+  </div>
 
-          <div class="project-editor-actions">
-            <p id="projectMessage"></p>
-
-            <button type="submit" class="btn btn-primary">
-              Save Draft
-            </button>
-          </div>
-
-        </form>
+</form>
 
       </div>
 

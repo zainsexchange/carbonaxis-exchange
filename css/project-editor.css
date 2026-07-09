@@ -125,3 +125,18 @@
     grid-template-columns:1fr;
   }
 }
+.wizard-step{
+  display:none;
+}
+
+.wizard-step.active{
+  display:block;
+}
+
+.wizard-actions{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+}

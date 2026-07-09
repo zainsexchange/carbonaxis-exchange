@@ -513,6 +513,23 @@ h2{
   padding-top:20px;
   color:rgba(255,255,255,.58);
 }
+.status-badge{
+
+    display:inline-flex;
+    align-items:center;
+
+    padding:6px 14px;
+
+    border-radius:30px;
+
+    font-size:13px;
+
+    font-weight:700;
+
+    text-transform:uppercase;
+
+    letter-spacing:1px;
+}
 
 /* CTA */
 .cta-section{
@@ -1480,14 +1497,9 @@ body::before{
 }
 
 .dash-card{
-  border:1px solid var(--line);
-  background:linear-gradient(145deg,rgba(255,255,255,0.06),rgba(255,255,255,0.025));
-  border-radius:30px;
-  padding:30px;
-  min-height:190px;
-  position:relative;
-  overflow:hidden;
-  transition:0.35s ease;
+    display:flex;
+    flex-direction:column;
+    height:640px;
 }
 
 .dash-card::before{
@@ -1515,9 +1527,15 @@ body::before{
 }
 
 .dash-card h3{
-  font-size:38px;
-  margin:18px 0 10px;
-  color:var(--teal);
+    font-size:48px;
+    line-height:1.05;
+    min-height:110px;
+
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+
+    overflow:hidden;
 }
 
 .dash-card p{
@@ -1545,6 +1563,9 @@ body::before{
 
 .dash-card .hero-actions button:nth-child(3){
   grid-column:1 / -1;
+}
+.project-meta{
+    margin-bottom:auto;
 }
 
 @media(max-width:992px){
@@ -2438,6 +2459,36 @@ html, body{
   }
 
 }
+.hero-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:22px;
+}
+
+.hero-actions .btn,
+.hero-actions button{
+
+    height:48px;
+    font-size:16px;
+    border-radius:14px;
+}
+
+.hero-actions button:last-child{
+
+    grid-column:1/-1;
+}
+.dash-card{
+
+    transition:.3s;
+}
+
+.dash-card:hover{
+
+    transform:translateY(-6px);
+
+    box-shadow:0 20px 60px rgba(0,255,180,.18);
+}
 .mobile-menu-btn{
   display:none;
 }
@@ -3096,6 +3147,29 @@ footer h4{
 
 #approvedProjectsGrid .listing-card{
   max-width:100%;
+}
+.status-badge.draft{
+
+    background:#3b2f00;
+
+    color:#ffd54f;
+
+    border:1px solid #ffd54f55;
+}
+.status-badge.published{
+
+    background:#003d25;
+    color:#00ff99;
+}
+.status-badge.review{
+
+    background:#002b45;
+    color:#4fc3f7;
+}
+.status-badge.rejected{
+
+    background:#450000;
+    color:#ff5252;
 }
 
 @media(max-width:992px){

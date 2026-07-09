@@ -41,7 +41,9 @@ async function loadMyProjects() {
     data.projects.forEach(project => {
       grid.innerHTML += `
         <div class="dash-card">
-          <span>${project.status || "Draft"}</span>
+          <span class="status-badge ${project.status?.toLowerCase() || "draft"}">
+    ${project.status || "Draft"}
+</span>
           <h3>${project.projectName || "Untitled Project"}</h3>
           <p>${project.country || "Global"} · ${project.projectType || "Carbon Project"}</p>
 
