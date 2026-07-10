@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Project Editor | CarbonAxis Exchange</title>
+  <title>Project Details | CarbonAxis Exchange</title>
 
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="stylesheet" href="/style.css">
@@ -54,24 +54,12 @@
 <main>
   <section class="section marketplace-page-hero">
     <div class="container">
-      <p class="section-label">Project Editor</p>
-      <h1>Create Carbon Project</h1>
-      <div class="project-progress">
-  <div class="progress-bar">
-    <div class="progress-fill"></div>
-  </div>
-
-  <div class="progress-steps">
-    <span class="active">Basic</span>
-    <span>Carbon</span>
-    <span>Commercial</span>
-    <span>Documents</span>
-    <span>AI</span>
-  </div>
-</div>
+      <p class="section-label">Project Overview</p>
+      <h1>Project Details</h1>
+    
       <p class="hero-text">
-        Add project details, carbon information and commercial data for review.
-      </p>
+  Review project information, commercial details, documents and analysis.
+</p>
     </div>
   </section>
 
@@ -82,8 +70,8 @@
 
         <div class="project-editor-head">
           <div>
-            <p class="section-label">Step 1 of 5</p>
-            <h2>Basic Information</h2>
+            <p class="section-label">Project Summary</p>
+            <h2>Project Information</h2>
           </div>
 
           <a href="/projects.html" class="btn btn-outline">
@@ -93,26 +81,26 @@
 
         <form id="projectForm" class="project-form">
 
-  <div class="editor-section wizard-step active" data-step="1">
+  <div class="editor-section">
     <h3>Basic Information</h3>
 
     <div class="form-grid">
       <label>
         Project Name
         <span class="field-help">This name will appear in your project dashboard and future marketplace listing.</span>
-        <input type="text" id="projectName" required>
+        <input type="text" id="projectName"  readonly>
       </label>
 
       <label>
         Country
         <span class="field-help">Select the country where the carbon project is physically located.</span>
-        <input type="text" id="country" required>
+        <input type="text" id="country"  readonly>
       </label>
 
       <label>
         Organization
         <span class="field-help">Enter the company, developer, or organization responsible for this project.</span>
-        <input type="text" id="organization">
+        <input type="text" id="organization"  readonly>
       </label>
 
       <label>
@@ -122,12 +110,12 @@
     type="text"
     id="projectType"
     autocomplete="off"
-    placeholder="Search Project Type...">
+    placeholder="Search Project Type..." readonly>
       </label>
     </div>
   </div>
 
-  <div class="editor-section wizard-step" data-step="2">
+  <div class="editor-section">
     <h3>Carbon Information</h3>
     <p class="field-help">Add registry, methodology, credit volume and verification details for this project.</p>
 
@@ -139,7 +127,7 @@
     type="text"
     id="registry"
     autocomplete="off"
-    placeholder="Search Registry...">
+    placeholder="Search Registry..." readonly>
       </label>
 
       <label>
@@ -149,23 +137,23 @@
     type="text"
     id="methodology"
     autocomplete="off"
-    placeholder="Search Methodology...">
+    placeholder="Search Methodology..." readonly>
       </label>
 
       <label>
         Vintage Year
         <span class="field-help">Year when the credits are generated or issued.</span>
-        <input type="text" id="vintageYear">
+        <input type="text" id="vintageYear" readonly>
       </label>
 
       <label>
         Estimated Credits
         <span class="field-help">Estimated total carbon credits for this project.</span>
-        <input type="number" id="estimatedCredits">
+        <input type="number" id="estimatedCredits" readonly>
       </label>
     </div>
   </div>
-  <div class="editor-section wizard-step" data-step="3">
+  <div class="editor-section">
   <h3>Commercial Information</h3>
   <p class="field-help">
     Add pricing and availability details for future marketplace listing.
@@ -175,7 +163,7 @@
     <label>
       Asking Price
       <span class="field-help">Enter the expected price per carbon credit.</span>
-      <input type="number" id="askingPrice">
+      <input type="number" id="askingPrice" readonly>
     </label>
 
     <label>
@@ -185,11 +173,11 @@
     type="text"
     id="currency"
     autocomplete="off"
-    placeholder="Search Currency...">
+    placeholder="Search Currency..." readonly>
     </label>
   </div>
 </div>
-<div class="editor-section wizard-step" data-step="4">
+<div class="editor-section">
   <h3>Project Documents</h3>
 
   <p class="field-help">
@@ -205,7 +193,7 @@
         type="file"
         id="projectDesignDocument"
         accept=".pdf,.doc,.docx"
-      >
+      disabled>
     </label>
 
     <label class="document-upload-card">
@@ -215,7 +203,7 @@
         type="file"
         id="monitoringReport"
         accept=".pdf,.doc,.docx"
-      >
+      disabled>
     </label>
 
     <label class="document-upload-card">
@@ -225,7 +213,7 @@
         type="file"
         id="verificationReport"
         accept=".pdf,.doc,.docx"
-      >
+        disabled>
     </label>
 
     <label class="document-upload-card">
@@ -236,7 +224,7 @@
         id="projectImages"
         accept="image/*"
         multiple
-      >
+      readonly>
     </label>
 
     <label class="document-upload-card">
@@ -247,7 +235,7 @@
         id="gisFiles"
         accept=".pdf,.kml,.kmz,.geojson,.zip"
         multiple
-      >
+      readonly>
     </label>
 
     <label class="document-upload-card">
@@ -257,12 +245,12 @@
         type="file"
         id="additionalDocuments"
         multiple
-      >
+      readonly>
     </label>
 
   </div>
 </div>
-<div class="editor-section wizard-step" data-step="5">
+<div class="editor-section">
 
     <h3>CarbonAxis Intelligence</h3>
 
@@ -344,21 +332,21 @@
 
 </div>
   <div class="project-editor-actions">
-    <p id="projectMessage"></p>
+  <p id="projectMessage"></p>
 
-    <div class="wizard-actions">
-      <button type="button" class="btn btn-outline" id="prevStep">
-        ← Previous
-      </button>
+  <div class="wizard-actions">
+    <a href="#" id="editProjectBtn" class="btn btn-primary">
+      Edit Project
+    </a>
 
-      <button type="submit" class="btn btn-primary">
-        Save Draft
-      </button>
+    <button
+      id="submitProject"
+      class="btn btn-primary"
+      type="button">
+      Submit for Review
+    </button>
+  </div>
 
-      <button type="button" class="btn btn-primary" id="nextStep">
-        Continue →
-      </button>
-    </div>
   </div>
 
 </form>
@@ -374,7 +362,7 @@
 <script src="/js/auth.js?v=40"></script>
 <script src="/js/data.js?v=40"></script>
 <script src="/js/carbon-ui/smart-select.js?v=40"></script>
-<script src="/js/project-editor.js?v=40"></script>
+<script src="/js/project-view.js"></script>
 
 
 </body>

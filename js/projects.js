@@ -54,9 +54,12 @@ async function loadMyProjects() {
           </div>
 
           <div class="hero-actions" style="margin-top:18px;">
-  <a href="#" class="btn btn-primary">View</a>
-
-  <a href="/project-editor.html?id=${project._id}" class="btn btn-outline">
+  <a
+  href="/project-view.html?id=${project._id}"
+  class="btn btn-primary">
+  View
+</a>
+  <a href="/project-view.html?id=${project._id}" class="btn btn-outline">
     Edit
   </a>
 
@@ -110,4 +113,8 @@ async function deleteProject(projectId){
     console.error(error);
     alert("Unable to delete project.");
   }
+}
+function viewProject(projectId) {
+  window.location.href =
+    `/project-editor.html?id=${encodeURIComponent(projectId)}`;
 }

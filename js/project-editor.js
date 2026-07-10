@@ -83,10 +83,31 @@ if (prevBtn) {
 }
 
 if (nextBtn) {
-  nextBtn.addEventListener("click", () => {
+  nextBtn.addEventListener("click", async () => {
     if (currentStep < totalSteps) {
       currentStep++;
       showStep(currentStep);
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+
+      return;
+    }
+
+    // Step 5 — Finish
+    message.innerText = "Saving project...";
+
+    if (form.requestSubmit) {
+      form.requestSubmit();
+    } else {
+      form.dispatchEvent(
+        new Event("submit", {
+          bubbles: true,
+          cancelable: true
+        })
+      );
     }
   });
 }
@@ -154,6 +175,35 @@ currency: document.getElementById("currency").value.trim(),
     }
   });
 });
+const runAI = document.getElementById("runAI");
+
+if(runAI){
+
+runAI.addEventListener("click",()=>{
+
+runAI.innerText="Analyzing...";
+
+setTimeout(()=>{
+
+document.getElementById("aiScore").innerText="96%";
+
+document.getElementById("aiRegistry").innerText="Verra (VCS)";
+
+document.getElementById("aiReadiness").innerText="97%";
+
+document.getElementById("aiRisk").innerText="Very Low";
+
+document.getElementById("aiCredits").innerText="31,250";
+
+document.getElementById("aiValue").innerText="$562,500";
+
+runAI.innerText="Analysis Complete";
+
+},1800);
+
+});
+
+}
 
 async function loadProject(projectId) {
   const message = document.getElementById("projectMessage");
