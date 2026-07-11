@@ -39,43 +39,57 @@ async function loadMyProjects() {
     if (empty) empty.style.display = "none";
 
     data.projects.forEach(project => {
-      grid.innerHTML += `
-        <div class="dash-card">
-          <span class="status-badge ${project.status?.toLowerCase() || "draft"}">
-    ${project.status || "Draft"}
-</span>
-          <h3>${project.projectName || "Untitled Project"}</h3>
-          <p>${project.country || "Global"} · ${project.projectType || "Carbon Project"}</p>
+  const statusClass = (project.status || "Draft")
+    .toLowerCase()
+    .replace(/\s+/g, "-");
 
-          <div class="project-meta">
-            <span>Registry: ${project.registry || "Not selected"}</span>
-            <span>Credits: ${project.estimatedCredits || "0"}</span>
-            <span>Price: ${project.askingPrice || "Not set"} ${project.currency || ""}</span>
-          </div>
+  grid.innerHTML += `
+    <div class="dash-card">
 
-          <div class="hero-actions" style="margin-top:18px;">
-  <a
-  href="/project-view.html?id=${project._id}"
-  class="btn btn-primary">
-  View
-</a>
-  <a href="/project-view.html?id=${project._id}" class="btn btn-outline">
-    Edit
-  </a>
+      <span class="status-badge ${statusClass}">
+        ${project.status || "Draft"}
+      </span>
 
-  <button
-    type="button"
-    class="btn btn-outline"
-    onclick="deleteProject('${project._id}')">
-    Delete
-  </button>
-</div>
-            
-          </div>
-        </div>
-      `;
-    });
+      <h3>${project.projectName || "Untitled Project"}</h3>
 
+      <p>
+        ${project.country || "Global"} ·
+        ${project.projectType || "Carbon Project"}
+      </p>
+
+      <div class="project-meta">
+        <span>Registry: ${project.registry || "Not selected"}</span>
+        <span>Credits: ${project.estimatedCredits || "0"}</span>
+        <span>
+          Price: ${project.askingPrice || "Not set"}
+          ${project.currency || ""}
+        </span>
+      </div>
+
+      <div class="hero-actions" style="margin-top:18px;">
+        <a
+          href="/project-view.html?id=${project._id}"
+          class="btn btn-primary">
+          View
+        </a>
+
+        <a
+          href="/project-editor.html?id=${project._id}"
+          class="btn btn-outline">
+          Edit
+        </a>
+
+        <button
+          type="button"
+          class="btn btn-outline"
+          onclick="deleteProject('${project._id}')">
+          Delete
+        </button>
+      </div>
+
+    </div>
+  `;
+});
   } catch (error) {
     console.error(error);
     grid.innerHTML = "<p>Unable to connect to server.</p>";
@@ -113,8 +127,4 @@ async function deleteProject(projectId){
     console.error(error);
     alert("Unable to delete project.");
   }
-}
-function viewProject(projectId) {
-  window.location.href =
-    `/project-editor.html?id=${encodeURIComponent(projectId)}`;
 }
