@@ -135,9 +135,17 @@ const carbonProjectSchema = new mongoose.Schema(
     description: String,
 
     status: {
-      type: String,
-      default: "Draft"
-    },
+  type: String,
+  enum: [
+    "Draft",
+    "Submitted",
+    "Under Review",
+    "Approved",
+    "Published",
+    "Rejected"
+  ],
+  default: "Draft"
+},
 
     aiInsights: {
       opportunityScore: {
@@ -280,6 +288,44 @@ app.get("/api/projects/:id", authenticateToken, async (req, res) => {
 });
 app.put("/api/projects/:id", authenticateToken, async (req, res) => {
   try {
+    const project = await CarbonProject.findOne({
+      _id: req.params.id,
+      userId: req.user.id
+    });
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found"
+      });
+    }
+
+    if (project.status !== "Draft") {
+      return res.status(400).json({
+        success: false,
+        message: "Only draft projects can be submitted"
+      });
+    }
+
+    project.status = "Submitted";
+    await project.save();
+
+    res.json({
+      success: true,
+      message: "Project submitted successfully",
+      project
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Unable to submit project"
+    });
+  }
+});
+  try {
     const project = await CarbonProject.findOneAndUpdate(
       {
         _id: req.params.id,
@@ -313,7 +359,6 @@ app.put("/api/projects/:id", authenticateToken, async (req, res) => {
     });
   }
   
-});
 app.delete("/api/projects/:id", authenticateToken, async (req, res) => {
 
     try {
