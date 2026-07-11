@@ -286,6 +286,7 @@ app.get("/api/projects/:id", authenticateToken, async (req, res) => {
     });
   }
 });
+// Update draft project
 app.put("/api/projects/:id", authenticateToken, async (req, res) => {
   try {
     const project = await CarbonProject.findOne({
@@ -303,39 +304,56 @@ app.put("/api/projects/:id", authenticateToken, async (req, res) => {
     if (project.status !== "Draft") {
       return res.status(400).json({
         success: false,
-        message: "Only draft projects can be submitted"
+        message: "Only draft projects can be edited"
       });
     }
 
-    project.status = "Submitted";
+    const allowedFields = [
+      "projectName",
+      "projectType",
+      "country",
+      "organization",
+      "registry",
+      "methodology",
+      "vintageYear",
+      "estimatedCredits",
+      "askingPrice",
+      "currency",
+      "description"
+    ];
+
+    allowedFields.forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(req.body, field)) {
+        project[field] = req.body[field];
+      }
+    });
+
     await project.save();
 
-    res.json({
+    return res.json({
       success: true,
-      message: "Project submitted successfully",
+      message: "Project updated successfully",
       project
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("Update project error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Unable to submit project"
+      message: "Failed to update project"
     });
   }
 });
+
+
+// Submit draft project for review
+app.put("/api/projects/:id/submit", authenticateToken, async (req, res) => {
   try {
-    const project = await CarbonProject.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        userId: req.user.id
-      },
-      req.body,
-      {
-        new: true
-      }
-    );
+    const project = await CarbonProject.findOne({
+      _id: req.params.id,
+      userId: req.user.id
+    });
 
     if (!project) {
       return res.status(404).json({
@@ -344,20 +362,31 @@ app.put("/api/projects/:id", authenticateToken, async (req, res) => {
       });
     }
 
-    res.json({
+    if (project.status !== "Draft") {
+      return res.status(400).json({
+        success: false,
+        message: `Project is already ${project.status}`
+      });
+    }
+
+    project.status = "Submitted";
+    await project.save();
+
+    return res.json({
       success: true,
-      message: "Project updated successfully",
+      message: "Project submitted successfully",
       project
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("Submit project error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Failed to update project"
+      message: "Unable to submit project"
     });
   }
+});
   
 app.delete("/api/projects/:id", authenticateToken, async (req, res) => {
 
