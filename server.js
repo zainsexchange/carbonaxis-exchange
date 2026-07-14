@@ -12,6 +12,7 @@ import {
   ensureAiUsagePeriod,
   getAiQuota,
   consumeAiQuery,
+  getEffectiveAiPlan,
 } from "./services/usage.js";
 dotenv.config();
 
@@ -1221,11 +1222,12 @@ app.post("/api/ai/ask", authenticateToken, async (req, res) => {
             content: m.content,
           }));
 
+    const aiPlan = getEffectiveAiPlan(user);
     const result = await runGreenIntelligence({
       question: String(question).trim(),
       country: String(country || "").trim(),
       product: String(product || "").trim(),
-      subscription: user.subscription,
+      subscription: aiPlan.id,
       conversation: history,
     });
 
@@ -1240,7 +1242,7 @@ app.post("/api/ai/ask", authenticateToken, async (req, res) => {
       product,
       answer: result.answer,
       verdictHint: verdictMatch ? verdictMatch[1].toUpperCase() : "",
-      plan: user.subscription,
+      plan: aiPlan.id,
       provider: result.provider,
     });
 
@@ -1265,7 +1267,7 @@ app.post("/api/ai/ask", authenticateToken, async (req, res) => {
       deepAnalysis: result.deepAnalysis,
       mode: result.mode || "general",
       quota: usage.quota,
-      focusMarkets: getPlan(user.subscription).marketsPriority,
+      focusMarkets: aiPlan.marketsPriority,
       threadId: thread._id,
       threadTitle: thread.title,
     });
@@ -1285,7 +1287,7 @@ app.post("/api/projects/:id/analyze", authenticateToken, async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    const plan = getPlan(user.subscription);
+    const plan = getEffectiveAiPlan(user);
     if (!plan.projectAiInsights) {
       return res.status(402).json({
         success: false,
@@ -1313,7 +1315,7 @@ app.post("/api/projects/:id/analyze", authenticateToken, async (req, res) => {
       });
     }
 
-    const insights = await analyzeProjectForAI(project, user.subscription);
+    const insights = await analyzeProjectForAI(project, plan.id);
     project.aiInsights = insights;
     await project.save();
 

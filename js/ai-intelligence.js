@@ -41,7 +41,11 @@
 
   function renderQuota(quota) {
     if (!quota) return;
-    if (quotaEl) quotaEl.textContent = `${quota.remaining}/${quota.limit} left`;
+    if (quotaEl) {
+      quotaEl.textContent = quota.unlimited
+        ? "Unlimited"
+        : `${quota.remaining}/${quota.limit} left`;
+    }
     if (planEl) planEl.textContent = quota.planName || "Free";
   }
 
