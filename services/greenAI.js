@@ -134,7 +134,9 @@ export async function runGreenIntelligence({
     .filter(Boolean)
     .join("\n");
 
-  if (!process.env.OPENAI_API_KEY) {
+  const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
+
+  if (!apiKey) {
     return {
       provider: "local",
       answer: localFallbackAnalysis({
@@ -161,39 +163,75 @@ export async function runGreenIntelligence({
     { role: "user", content: userPayload },
   ];
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      temperature: greenMode ? 0.4 : 0.6,
-      messages,
-    }),
-  });
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+        temperature: greenMode ? 0.4 : 0.6,
+        messages,
+      }),
+    });
 
-  if (!response.ok) {
-    const errText = await response.text();
-    console.error("OpenAI error:", errText);
-    throw new Error("AI provider request failed");
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("OpenAI error:", response.status, errText.slice(0, 500));
+      // Soft-fail: never show a hard crash to the user for provider issues
+      return {
+        provider: "local",
+        answer: localFallbackAnalysis({
+          question,
+          country,
+          product,
+          deepAnalysis,
+          greenMode,
+          explainMode,
+          tradeMode,
+          generalFact,
+        }),
+        deepAnalysis,
+        plan: plan.id,
+        mode: greenMode ? "green" : "general",
+      };
+    }
+
+    const data = await response.json();
+    const answer = data.choices?.[0]?.message?.content?.trim();
+
+    if (!answer) {
+      throw new Error("Empty AI response");
+    }
+
+    return {
+      provider: "openai",
+      answer,
+      deepAnalysis,
+      plan: plan.id,
+      mode: greenMode ? "green" : "general",
+    };
+  } catch (err) {
+    console.error("OpenAI request failed:", err?.message || err);
+    return {
+      provider: "local",
+      answer: localFallbackAnalysis({
+        question,
+        country,
+        product,
+        deepAnalysis,
+        greenMode,
+        explainMode,
+        tradeMode,
+        generalFact,
+      }),
+      deepAnalysis,
+      plan: plan.id,
+      mode: greenMode ? "green" : "general",
+    };
   }
-
-  const data = await response.json();
-  const answer = data.choices?.[0]?.message?.content?.trim();
-
-  if (!answer) {
-    throw new Error("Empty AI response");
-  }
-
-  return {
-    provider: "openai",
-    answer,
-    deepAnalysis,
-    plan: plan.id,
-    mode: greenMode ? "green" : "general",
-  };
 }
 
 export async function analyzeProjectForAI(project, subscription = "free") {
@@ -344,6 +382,17 @@ Want Pakistan’s **green energy or carbon-credit** angle instead? Ask and I’l
 
     if (/pakistan/i.test(q) && /capital/i.test(q)) {
       return `**Islamabad** is the capital of Pakistan.`;
+    }
+
+    if (/sohar/i.test(q) && /oman/i.test(q)) {
+      return `**Sohar** is a major port city in northern Oman (Al Batinah / North Al Batinah area), northwest of Muscat.
+
+It’s known for:
+- the large **Port of Sohar** and industrial / free-zone activity
+- shipping, logistics, metals, and energy-related industry
+- being one of Oman’s important commercial hubs outside the capital
+
+If you meant something more specific (history, port, industry, or green-energy angle in Sohar), ask a follow-up and I’ll go deeper.`;
     }
 
     return `I can help with general questions too.
