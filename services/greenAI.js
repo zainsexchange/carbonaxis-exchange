@@ -1,30 +1,53 @@
 import { GREEN_KNOWLEDGE } from "./greenKnowledge.js";
 import { getPlan } from "../config/plans.js";
 
-const SYSTEM_BASE = `You are CarbonAxis Green Energy Intelligence Engine.
+const SYSTEM_BASE = `You are CarbonAxis Intelligence — the AI assistant of CarbonAxis Exchange.
 
-Product identity:
-- CarbonAxis Exchange is a carbon credits / climate markets platform.
-- Your job is advisory analysis for green energy, climate regulation, carbon credits, and related trading decisions.
-- You MAY answer general questions, but always steer toward green-energy / climate relevance when useful.
-- You have deepest expertise on Pakistan and Oman; you can discuss worldwide markets with slightly lower confidence.
+## How you work (two strengths)
+1) GENERAL MODE
+- Answer normal everyday questions clearly, helpfully, and conversationally — like a strong general AI assistant.
+- Be useful for business, research, writing, explanations, planning, and market basics.
+- Keep a professional CarbonAxis tone, but do NOT force climate topics into unrelated questions.
 
-Always:
-- Be specific, structured, and decision-oriented.
-- Call out restriction / regulation horizon (months, 1–2 years, 3–4 years).
-- Distinguish short-term trade opportunities vs long-term sustainable ones.
-- Never invent fake laws or statute numbers. If unsure, say so and give best directional analysis.
-- Never claim guaranteed returns.
+2) GREEN ENERGY / CLIMATE MODE (your signature strength — be outstanding here)
+Trigger when the user asks about green energy, carbon credits, RECs, climate finance, ESG, net zero, renewable power, biochar, methane, hydrogen, CBAM, environmental regulation, trading feasibility in climate markets, or restriction risk.
+In this mode you must be MORE impressive than a generic chatbot:
+- Give sharper, more structured, decision-ready answers
+- Lead with a clear verdict when trade/feasibility is asked: PROCEED | PROCEED_SHORT_TERM | CAUTION | AVOID
+- Cover current feasibility + near-term risk (months) + mid-term horizon (1–4 years)
+- Prioritize Pakistan and Oman depth; still answer worldwide with honest confidence notes
+- Make the answer attractive: crisp headings, practical next steps, and confident but responsible language
+- Never invent fake statute numbers; if uncertain, say so and still give directional analysis
+- Never claim guaranteed returns
+
+## Product identity
+CarbonAxis Exchange is a carbon credits / climate markets platform. Your deepest expertise is green energy and climate-regulation advisory, especially Pakistan and Oman.
 
 ${GREEN_KNOWLEDGE}`;
 
-function buildSystemPrompt(planId, deepAnalysis) {
+function isGreenEnergyQuestion(question = "", country = "", product = "") {
+  const text = `${question} ${country} ${product}`.toLowerCase();
+  return /green|climate|carbon|credit|rec\b|renewable|solar|wind|biochar|methane|hydrogen|net.?zero|esg|cbam|emission|co2|tco2|offset|nepra|aedb|otc|feasib|regulat|pakistan|oman|uae|energy transition|voluntary carbon|vcu|sequestr|forestry|nature-based/.test(
+    text
+  );
+}
+
+function buildSystemPrompt(planId, deepAnalysis, greenMode) {
   const plan = getPlan(planId);
+  const modeBlock = greenMode
+    ? `Active mode: GREEN ENERGY (premium depth). Be especially strong, clear, and decision-oriented. Make the analysis stand out.`
+    : `Active mode: GENERAL. Answer helpfully like a capable general assistant. If useful, you may briefly mention CarbonAxis context, but do not force it.`;
+
   return `${SYSTEM_BASE}
 
 User plan: ${plan.name}
-Deep analysis mode: ${deepAnalysis ? "ON" : "OFF (keep answers concise; mention upgrade for deeper horizon briefs)"}
-Priority markets for this plan: ${plan.marketsPriority.join(", ")}
+Deep analysis mode: ${
+    deepAnalysis
+      ? "ON"
+      : "OFF for free tier depth limits — still answer well; mention Pro for deeper regulatory briefs on green questions"
+  }
+Priority markets: ${plan.marketsPriority.join(", ")}
+${modeBlock}
 `;
 }
 
@@ -42,15 +65,18 @@ export async function runGreenIntelligence({
 }) {
   const plan = getPlan(subscription);
   const deepAnalysis = plan.deepAnalysis;
-  const system = buildSystemPrompt(subscription, deepAnalysis);
+  const greenMode = isGreenEnergyQuestion(question, country, product);
+  const system = buildSystemPrompt(subscription, deepAnalysis, greenMode);
 
   const userPayload = [
     country ? `Focus country/market: ${country}` : null,
     product ? `Product / trade item: ${product}` : null,
     `User question: ${question}`,
-    deepAnalysis
-      ? "Provide deep regulatory horizon analysis and a clear go/no-go style verdict."
-      : "Provide a clear concise analysis with a verdict. Note that Pro unlocks deeper horizon briefs.",
+    greenMode
+      ? deepAnalysis
+        ? "This is a GREEN ENERGY question. Deliver an outstanding regulatory/trading feasibility brief with clear verdict and horizon analysis."
+        : "This is a GREEN ENERGY question. Deliver a sharp, attractive verdict-led brief. Note Pro unlocks deeper horizon analysis."
+      : "This is a GENERAL question. Answer clearly and helpfully like a strong general AI. Do not force a trading verdict unless relevant.",
   ]
     .filter(Boolean)
     .join("\n");
@@ -58,16 +84,23 @@ export async function runGreenIntelligence({
   if (!process.env.OPENAI_API_KEY) {
     return {
       provider: "local",
-      answer: localFallbackAnalysis({ question, country, product, deepAnalysis }),
+      answer: localFallbackAnalysis({
+        question,
+        country,
+        product,
+        deepAnalysis,
+        greenMode,
+      }),
       deepAnalysis,
       plan: plan.id,
+      mode: greenMode ? "green" : "general",
     };
   }
 
   const messages = [
     { role: "system", content: system },
     ...conversation
-      .slice(-6)
+      .slice(-8)
       .map((m) => ({ role: m.role, content: m.content })),
     { role: "user", content: userPayload },
   ];
@@ -80,7 +113,7 @@ export async function runGreenIntelligence({
     },
     body: JSON.stringify({
       model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      temperature: 0.35,
+      temperature: greenMode ? 0.4 : 0.6,
       messages,
     }),
   });
@@ -103,6 +136,7 @@ export async function runGreenIntelligence({
     answer,
     deepAnalysis,
     plan: plan.id,
+    mode: greenMode ? "green" : "general",
   };
 }
 
@@ -214,7 +248,25 @@ function heuristicTiming(project) {
   return "MIXED";
 }
 
-function localFallbackAnalysis({ question, country, product, deepAnalysis }) {
+function localFallbackAnalysis({
+  question,
+  country,
+  product,
+  deepAnalysis,
+  greenMode = true,
+}) {
+  if (!greenMode) {
+    return `I can help with that.
+
+**Your question:** ${question}
+
+Here's a clear starting point: I can explain concepts, draft options, compare ideas, and help you plan next steps.
+
+For CarbonAxis's specialty strength — green energy, carbon markets, and regulation (especially Pakistan & Oman) — ask a trading/feasibility question and I'll switch into premium decision mode with a clear verdict.
+
+**Note:** Full model answers need OPENAI_API_KEY on the server. Local fallback is active right now.`;
+  }
+
   const c = (country || "the selected market").trim() || "the selected market";
   const p = (product || "this activity").trim() || "this activity";
   const focus = /pakistan/i.test(c)

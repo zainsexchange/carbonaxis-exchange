@@ -1042,14 +1042,14 @@ app.get("/api/ai/quota", authenticateToken, async (req, res) => {
   }
 });
 
-app.post("/api/ai/ask", authenticateToken, async (req, res) => {
+.appost("/api/ai/ask", authenticateToken, async (req, res) => {
   try {
     const { question, country = "", product = "", conversation = [] } = req.body;
 
-    if (!question || String(question).trim().length < 5) {
+    if (!question || String(question).trim().length < 3) {
       return res.status(400).json({
         success: false,
-        message: "Please enter a clearer question (at least 5 characters).",
+        message: "Please enter a question.",
       });
     }
 
@@ -1096,6 +1096,7 @@ app.post("/api/ai/ask", authenticateToken, async (req, res) => {
       answer: result.answer,
       provider: result.provider,
       deepAnalysis: result.deepAnalysis,
+      mode: result.mode || "general",
       quota: usage.quota,
       focusMarkets: getPlan(user.subscription).marketsPriority,
     });
@@ -1103,7 +1104,7 @@ app.post("/api/ai/ask", authenticateToken, async (req, res) => {
     console.error("AI ask error:", error);
     res.status(500).json({
       success: false,
-      message: "Green Energy AI temporarily unavailable. Try again shortly.",
+      message: "CarbonAxis AI temporarily unavailable. Try again shortly.",
     });
   }
 });

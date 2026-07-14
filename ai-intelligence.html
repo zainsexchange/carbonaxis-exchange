@@ -4,8 +4,8 @@
   <link rel="icon" type="image/png" href="/favicon.png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Green Energy AI Intelligence | CarbonAxis Exchange</title>
-  <meta name="description" content="CarbonAxis Green Energy Intelligence — regulation-aware trading feasibility analysis with deepest coverage for Pakistan and Oman.">
+  <title>CarbonAxis AI Intelligence | Ask Anything · Strongest on Green Energy</title>
+  <meta name="description" content="CarbonAxis AI answers general questions easily, and delivers premium analysis on green energy, carbon markets, and regulation.">
   <link rel="stylesheet" href="/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -67,11 +67,11 @@
   <main>
     <section class="section marketplace-page-hero">
       <div class="container">
-        <p class="section-label">Green Energy Intelligence Engine</p>
-        <h1>Ask before you trade</h1>
+        <p class="section-label">CarbonAxis AI</p>
+        <h1>Ask anything. Strongest on green energy.</h1>
         <p class="hero-text">
-          CarbonAxis analyzes green-energy regulation risk and trading feasibility.
-          Deepest coverage for Pakistan &amp; Oman — worldwide questions welcome, with strongest grip on climate and green markets.
+          Chat like other AI engines for general questions.
+          On carbon, renewables, and regulation — especially Pakistan &amp; Oman — CarbonAxis goes deeper with clear go / no-go analysis.
         </p>
       </div>
     </section>
@@ -82,47 +82,48 @@
           <div class="ai-quota-bar">
             <strong id="aiPlan">Free plan</strong>
             <span id="aiQuota">Loading quota...</span>
+            <span id="aiModeBadge" class="ai-mode-badge">Ready</span>
             <a href="/pricing.html">View plans</a>
           </div>
 
           <div id="aiChatLog" class="ai-chat-log">
             <div class="ai-bubble ai-bubble-assistant">
               <div class="ai-bubble-label">CarbonAxis Engine</div>
-              <div class="ai-bubble-body">Ask a trading or regulation question. Example: “I want to trade solar RECs in Oman — is this feasible for the long term?”</div>
+              <div class="ai-bubble-body">Ask anything — like other AI chats. For green energy / trading questions, I’ll switch into premium analysis mode automatically.</div>
             </div>
           </div>
 
           <form id="aiAskForm" class="ai-ask-form">
-            <div class="ai-row">
-              <input id="aiCountry" type="text" placeholder="Country / market (e.g. Pakistan, Oman)" />
-              <input id="aiProduct" type="text" placeholder="Product / credit type (e.g. biochar, solar REC)" />
+            <textarea id="aiQuestion" placeholder="Message CarbonAxis AI..." required></textarea>
+            <div class="ai-compose-row">
+              <button type="button" id="aiAdvancedToggle" class="btn btn-outline">Optional: country / product</button>
+              <button id="aiSendBtn" class="btn btn-primary" type="submit">Send</button>
             </div>
-            <textarea id="aiQuestion" placeholder="Your question for the Green Energy engine..." required></textarea>
-            <button id="aiSendBtn" class="btn btn-primary" type="submit">Ask Engine</button>
+            <div id="aiAdvancedFields" class="ai-row ai-advanced-fields" hidden>
+              <input id="aiCountry" type="text" placeholder="Country / market (optional)" />
+              <input id="aiProduct" type="text" placeholder="Product / credit type (optional)" />
+            </div>
           </form>
         </div>
 
         <aside class="ai-side-panel">
-          <p class="section-label">How it decides</p>
-          <h3>Go / no-go analysis</h3>
-          <p>Each answer aims for a clear verdict:</p>
+          <p class="section-label">Two strengths</p>
+          <h3>General + Green specialty</h3>
           <ul>
-            <li><strong>PROCEED</strong> — longer-horizon alignment</li>
-            <li><strong>PROCEED_SHORT_TERM</strong> — tradeable now, restriction risk later</li>
-            <li><strong>CAUTION</strong> — needs more diligence</li>
-            <li><strong>AVOID</strong> — weak fit under green rules</li>
+            <li><strong>General</strong> — everyday answers, easy chat</li>
+            <li><strong>Green energy</strong> — premium verdicts &amp; regulation horizon</li>
           </ul>
 
           <p class="section-label" style="margin-top:22px;">Try these</p>
           <div class="ai-example-list">
+            <button type="button" data-ai-example="Explain carbon credits in simple words for a new trader.">
+              General: explain carbon credits simply
+            </button>
             <button type="button" data-ai-example="I want to trade solar renewable energy credits in Oman. Is this feasible long term under green energy transition policy?" data-ai-country="Oman" data-ai-product="Solar REC">
-              Oman solar REC — long-term feasibility?
+              Green: Oman solar REC feasibility
             </button>
-            <button type="button" data-ai-example="A trader wants to move high-emission fuel oil exposure in Pakistan for the next 2 years. Given green regulations, is this short-term only?" data-ai-country="Pakistan" data-ai-product="Fuel oil">
-              Pakistan fuel oil — short-term risk?
-            </button>
-            <button type="button" data-ai-example="Is biochar carbon removal from Pakistan suitable for international buyers over the next 3-4 years?" data-ai-country="Pakistan" data-ai-product="Biochar carbon removal">
-              Pakistan biochar credits — buyer outlook?
+            <button type="button" data-ai-example="A trader wants fuel oil exposure in Pakistan for 2 years. Is this short-term only under green regulation?" data-ai-country="Pakistan" data-ai-product="Fuel oil">
+              Green: Pakistan short-term risk
             </button>
           </div>
         </aside>
