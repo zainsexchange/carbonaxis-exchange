@@ -346,15 +346,17 @@ Want Pakistan’s **green energy or carbon-credit** angle instead? Ask and I’l
       return `**Islamabad** is the capital of Pakistan.`;
     }
 
-    return `I can answer general questions too.
+    return `I can help with general questions too.
 
 **Your question:** ${q}
 
-Right now the server is running in **backup mode** (no live AI model key configured), so I can only answer a limited set of general facts offline.
+I couldn’t pull a live world-data answer for that in this session. Ask me something I can cover offline (capitals, basic definitions) or switch to CarbonAxis specialty topics:
 
-Once **OPENAI_API_KEY** is added on Render, I’ll answer general questions fully (population, news-style facts, writing help, etc.) and stay strongest on green energy.
+- green energy & carbon markets
+- trading feasibility (especially Pakistan & Oman)
+- clear explainers (e.g. what carbon credits are)
 
-Try asking something like:
+Examples:
 - “What is the capital of Oman?”
 - “Explain carbon credits in simple words”
 - “Is solar REC trading in Oman feasible long term?”`;
