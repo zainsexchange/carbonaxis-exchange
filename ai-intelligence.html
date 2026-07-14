@@ -4,8 +4,8 @@
   <link rel="icon" type="image/png" href="/favicon.png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CarbonAxis AI Intelligence | Ask Anything · Strongest on Green Energy</title>
-  <meta name="description" content="CarbonAxis AI answers general questions easily, and delivers premium analysis on green energy, carbon markets, and regulation.">
+  <title>CarbonAxis AI | Ask Anything</title>
+  <meta name="description" content="Simple AI chat with premium strength on green energy, carbon markets, and regulation.">
   <link rel="stylesheet" href="/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -13,8 +13,7 @@
 </head>
 <body>
   <script>
-    const token = localStorage.getItem("token");
-    if (!token) {
+    if (!localStorage.getItem("token")) {
       window.location.href = "/login.html";
     }
   </script>
@@ -32,7 +31,7 @@
         <a href="/pricing.html">Pricing</a>
         <a href="/about.html">About</a>
       </nav>
-      <a class="btn btn-primary nav-btn" href="/pricing.html">Upgrade</a>
+      <a class="btn btn-primary nav-btn" href="/dashboard.html">Dashboard</a>
       <div class="profile-menu">
         <button class="profile-btn">
           <span class="profile-avatar">C</span>
@@ -43,7 +42,6 @@
           <a href="/dashboard.html">Dashboard</a>
           <a href="/profile.html">Profile</a>
           <a href="/watchlist.html">Watchlist</a>
-          <a href="/pricing.html">Pricing</a>
           <a href="#" onclick="logout()">Logout</a>
         </div>
       </div>
@@ -65,79 +63,50 @@
   </div>
 
   <main>
-    <section class="section marketplace-page-hero">
-      <div class="container">
+    <section class="section marketplace-page-hero" style="padding-bottom:10px;">
+      <div class="container ai-chat-simple">
         <p class="section-label">CarbonAxis AI</p>
-        <h1>Ask anything. Strongest on green energy.</h1>
-        <p class="hero-text">
-          Chat like other AI engines for general questions.
-          On carbon, renewables, and regulation — especially Pakistan &amp; Oman — CarbonAxis goes deeper with clear go / no-go analysis.
+        <h1 style="font-size:clamp(28px,5vw,42px);">Ask anything</h1>
+        <p class="hero-text" style="margin-top:10px;max-width:640px;">
+          Simple like other AI chats — smarter on green energy, carbon markets, and regulation.
         </p>
       </div>
     </section>
 
-    <section class="section">
-      <div class="container ai-engine-layout">
+    <section class="section" style="padding-top:10px;">
+      <div class="container ai-chat-simple">
         <div class="ai-chat-panel">
           <div class="ai-quota-bar">
-            <strong id="aiPlan">Free plan</strong>
-            <span id="aiQuota">Loading quota...</span>
+            <span><strong id="aiPlan">Free</strong> · <span id="aiQuota">…</span></span>
             <span id="aiModeBadge" class="ai-mode-badge">Ready</span>
-            <a href="/pricing.html">View plans</a>
           </div>
 
           <div id="aiChatLog" class="ai-chat-log">
             <div class="ai-bubble ai-bubble-assistant">
-              <div class="ai-bubble-label">CarbonAxis Engine</div>
-              <div class="ai-bubble-body">Ask anything — like other AI chats. For green energy / trading questions, I’ll switch into premium analysis mode automatically.</div>
+              <div class="ai-bubble-label">CarbonAxis</div>
+              <div class="ai-bubble-body">Hi — ask me anything. For green energy or trading questions, I’ll go deeper automatically.</div>
             </div>
+          </div>
+
+          <div class="ai-suggestion-row">
+            <button type="button" data-ai-example="Explain carbon credits in simple words.">Explain carbon credits</button>
+            <button type="button" data-ai-example="Is solar REC trading in Oman feasible long term?">Oman solar REC</button>
+            <button type="button" data-ai-example="Is fuel oil trading in Pakistan only short-term under green rules?">Pakistan short-term risk</button>
           </div>
 
           <form id="aiAskForm" class="ai-ask-form">
-            <textarea id="aiQuestion" placeholder="Message CarbonAxis AI..." required></textarea>
-            <div class="ai-compose-row">
-              <button type="button" id="aiAdvancedToggle" class="btn btn-outline">Optional: country / product</button>
+            <div class="ai-compose-bar">
+              <textarea id="aiQuestion" placeholder="Message CarbonAxis AI..." required></textarea>
               <button id="aiSendBtn" class="btn btn-primary" type="submit">Send</button>
             </div>
-            <div id="aiAdvancedFields" class="ai-row ai-advanced-fields" hidden>
-              <input id="aiCountry" type="text" placeholder="Country / market (optional)" />
-              <input id="aiProduct" type="text" placeholder="Product / credit type (optional)" />
-            </div>
+            <!-- kept for API compatibility, hidden -->
+            <input id="aiCountry" type="hidden" value="" />
+            <input id="aiProduct" type="hidden" value="" />
           </form>
         </div>
-
-        <aside class="ai-side-panel">
-          <p class="section-label">Two strengths</p>
-          <h3>General + Green specialty</h3>
-          <ul>
-            <li><strong>General</strong> — everyday answers, easy chat</li>
-            <li><strong>Green energy</strong> — premium verdicts &amp; regulation horizon</li>
-          </ul>
-
-          <p class="section-label" style="margin-top:22px;">Try these</p>
-          <div class="ai-example-list">
-            <button type="button" data-ai-example="Explain carbon credits in simple words for a new trader.">
-              General: explain carbon credits simply
-            </button>
-            <button type="button" data-ai-example="I want to trade solar renewable energy credits in Oman. Is this feasible long term under green energy transition policy?" data-ai-country="Oman" data-ai-product="Solar REC">
-              Green: Oman solar REC feasibility
-            </button>
-            <button type="button" data-ai-example="A trader wants fuel oil exposure in Pakistan for 2 years. Is this short-term only under green regulation?" data-ai-country="Pakistan" data-ai-product="Fuel oil">
-              Green: Pakistan short-term risk
-            </button>
-          </div>
-        </aside>
       </div>
     </section>
   </main>
-
-  <footer>
-    <div class="container">
-      <div class="footer-bottom">
-        © 2026 CarbonAxis Exchange. Building Trusted Climate Markets.
-      </div>
-    </div>
-  </footer>
 
   <script src="/js/api.js"></script>
   <script src="/js/navbar.js"></script>
