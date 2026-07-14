@@ -74,6 +74,32 @@
     }
   }
 
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  /** Turn simple markdown (**bold**, lists, newlines) into safe HTML */
+  function formatAssistantHtml(text) {
+    let html = escapeHtml(text);
+    // bold **text**
+    html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    // italic *text* (after bold, avoid leftover asterisks pairs)
+    html = html.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
+    // inline code `code`
+    html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+    // newlines
+    html = html.replace(/\n/g, "<br>");
+    return html;
+  }
+
+  function setAssistantBody(el, text) {
+    el.innerHTML = formatAssistantHtml(text);
+  }
+
   function appendMessage(role, text, { stream = false } = {}) {
     const bubble = document.createElement("div");
     bubble.className = `ai-bubble ai-bubble-${role}`;
@@ -84,8 +110,13 @@
     chatLog.appendChild(bubble);
     chatLog.scrollTop = chatLog.scrollHeight;
 
-    if (!stream || role === "user") {
+    if (role === "user") {
       body.textContent = text;
+      return Promise.resolve(body);
+    }
+
+    if (!stream) {
+      setAssistantBody(body, text);
       return Promise.resolve(body);
     }
     return typewriter(body, text);
@@ -101,11 +132,13 @@
 
       function tick() {
         i = Math.min(fullText.length, i + chunk);
+        // while typing keep plain text; format when finished
         el.textContent = fullText.slice(0, i);
         chatLog.scrollTop = chatLog.scrollHeight;
         if (i < fullText.length) setTimeout(tick, speed);
         else {
           el.classList.remove("typing");
+          setAssistantBody(el, fullText);
           resolve(el);
         }
       }
@@ -136,14 +169,6 @@
     } finally {
       clearTimeout(timer);
     }
-  }
-
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
   }
 
   async function loadThreads() {
