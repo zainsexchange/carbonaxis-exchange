@@ -120,7 +120,7 @@ showStep(currentStep);
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-
+      
     message.innerText = projectId ? "Updating project..." : "Saving draft...";
 
     const projectData = {
@@ -136,7 +136,6 @@ showStep(currentStep);
   askingPrice: document.getElementById("askingPrice").value.trim(),
 currency: document.getElementById("currency").value.trim(),
 
-  status: "Draft"
 };
 
     const url = projectId
@@ -154,6 +153,25 @@ currency: document.getElementById("currency").value.trim(),
         },
         body: JSON.stringify(projectData)
       });
+      const runAI = document.getElementById("runAI");
+
+  if (runAI) {
+    runAI.addEventListener("click", () => {
+      runAI.innerText = "Analyzing...";
+
+      setTimeout(() => {
+        document.getElementById("aiScore").innerText = "96%";
+        document.getElementById("aiRegistry").innerText = "Verra (VCS)";
+        document.getElementById("aiReadiness").innerText = "97%";
+        document.getElementById("aiRisk").innerText = "Very Low";
+        document.getElementById("aiCredits").innerText = "31,250";
+        document.getElementById("aiValue").innerText = "$562,500";
+
+        runAI.innerText = "Analysis Complete";
+      }, 1800);
+    });
+  }
+
 
       const data = await response.json();
 
@@ -175,35 +193,6 @@ currency: document.getElementById("currency").value.trim(),
     }
   });
 });
-const runAI = document.getElementById("runAI");
-
-if(runAI){
-
-runAI.addEventListener("click",()=>{
-
-runAI.innerText="Analyzing...";
-
-setTimeout(()=>{
-
-document.getElementById("aiScore").innerText="96%";
-
-document.getElementById("aiRegistry").innerText="Verra (VCS)";
-
-document.getElementById("aiReadiness").innerText="97%";
-
-document.getElementById("aiRisk").innerText="Very Low";
-
-document.getElementById("aiCredits").innerText="31,250";
-
-document.getElementById("aiValue").innerText="$562,500";
-
-runAI.innerText="Analysis Complete";
-
-},1800);
-
-});
-
-}
 
 async function loadProject(projectId) {
   const message = document.getElementById("projectMessage");

@@ -350,8 +350,17 @@ app.put("/api/projects/:id", authenticateToken, async (req, res) => {
 // Submit draft project for review
 app.put("/api/projects/:id/submit", authenticateToken, async (req, res) => {
   try {
+    const projectId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(projectId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid project ID"
+      });
+    }
+
     const project = await CarbonProject.findOne({
-      _id: req.params.id,
+      _id: projectId,
       userId: req.user.id
     });
 
@@ -386,8 +395,7 @@ app.put("/api/projects/:id/submit", authenticateToken, async (req, res) => {
       message: "Unable to submit project"
     });
   }
-});
-  
+});  
 app.delete("/api/projects/:id", authenticateToken, async (req, res) => {
 
     try {
