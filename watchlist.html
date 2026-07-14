@@ -308,73 +308,93 @@ window.addEventListener("resize", () => {
 });
 </script>
   <script>
-function loadWatchlist(){
+async function loadWatchlist(){
   const grid = document.getElementById("watchlistGrid");
-  const watchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
-
-  if(watchlist.length === 0){
-    grid.innerHTML = `
-      <div class="listing-card">
-        <h3>No saved projects yet</h3>
-        <p class="listing-location">
-          Go to Marketplace and add projects to your watchlist.
-        </p>
-        <a href="/marketplace.html" class="btn btn-primary">
-          Explore Marketplace
-        </a>
-      </div>
-    `;
+  const token = localStorage.getItem("token");
+  if(!token){
+    window.location.href = "/login.html";
     return;
   }
 
-  grid.innerHTML = "";
+  try {
+    const res = await fetch(`${API.BASE}${API.watchlist}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+    const watchlist = data.items || [];
 
-  watchlist.forEach(item => {
-    grid.innerHTML += `
-      <div class="listing-card">
-        <div class="listing-image">
-          <img src="${item.image || '/images/forest.png'}" alt="${item.projectName}">
+    if(watchlist.length === 0){
+      grid.innerHTML = `
+        <div class="listing-card">
+          <h3>No saved projects yet</h3>
+          <p class="listing-location">
+            Go to Marketplace and add projects to your watchlist.
+          </p>
+          <a href="/marketplace.html" class="btn btn-primary">
+            Explore Marketplace
+          </a>
         </div>
+      `;
+      return;
+    }
 
-        <div class="listing-top">
-          <span class="market-status active-status">Saved</span>
-          <span class="verified-tag">Watchlist</span>
-          <span class="price">${item.price}</span>
+    grid.innerHTML = "";
+    watchlist.forEach(item => {
+      const safeKey = encodeURIComponent(item.itemKey);
+      grid.innerHTML += `
+        <div class="listing-card">
+          <div class="listing-top">
+            <span class="market-status active-status">Saved</span>
+            <span class="verified-tag">Watchlist</span>
+            <span class="price">${item.price || "-"}</span>
+          </div>
+          <h3>${item.title}</h3>
+          <p class="listing-location">
+            ${item.country || "-"} · ${item.category || "-"}
+          </p>
+          <div class="listing-specs">
+            <span>Volume: ${item.volume || "-"}</span>
+            <span>Status: Saved</span>
+          </div>
+          <div class="listing-footer">
+            <span>${item.volume || ""}</span>
+            <button class="listing-btn" onclick="removeFromWatchlist('${safeKey}')">
+              Remove
+            </button>
+          </div>
         </div>
-
-        <h3>${item.projectName}</h3>
-
-        <p class="listing-location">
-          ${item.country} · ${item.projectType}
-        </p>
-
-        <div class="listing-specs">
-          <span>Volume: ${item.credits} tCO₂e</span>
-          <span>Status: Saved</span>
-        </div>
-
-        <div class="listing-footer">
-          <span>${item.credits} tCO₂e</span>
-
-          <button class="listing-btn" onclick="removeFromWatchlist('${item.projectKey}')">
-  Remove
-</button>
-        </div>
-      </div>
-    `;
-  });
+      `;
+    });
+  } catch (err) {
+    console.error(err);
+    grid.innerHTML = "<p>Unable to load watchlist.</p>";
+  }
 }
 
-function removeFromWatchlist(projectKey){
-  let watchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
-  watchlist = watchlist.filter(item => item.projectKey !== projectKey);
-  localStorage.setItem("watchlist", JSON.stringify(watchlist));
+async function removeFromWatchlist(encodedKey){
+  const token = localStorage.getItem("token");
+  const itemKey = decodeURIComponent(encodedKey);
+  await fetch(`${API.BASE}${API.watchlist}/${encodeURIComponent(itemKey)}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` }
+  });
   loadWatchlist();
 }
 
-function clearWatchlist(){
+async function clearWatchlist(){
   if(!confirm("Clear all saved projects?")) return;
-  localStorage.removeItem("watchlist");
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API.BASE}${API.watchlist}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const data = await res.json();
+  const items = data.items || [];
+  await Promise.all(items.map(item =>
+    fetch(`${API.BASE}${API.watchlist}/${encodeURIComponent(item.itemKey)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
+    })
+  ));
   loadWatchlist();
 }
 

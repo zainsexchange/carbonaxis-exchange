@@ -277,6 +277,19 @@ data-description="This project focuses on biochar-based carbon removal and long-
     <button type="button" class="listing-btn">
       View Details
     </button>
+    <button
+      type="button"
+      class="listing-btn"
+      onclick="openDealRequest(
+        'Biochar Carbon Removal Project',
+        'Pakistan',
+        'Carbon Removal',
+        '$38/t',
+        '98,000'
+      )"
+    >
+      Request Deal
+    </button>
   </div>
 </div>
 
@@ -351,6 +364,19 @@ data-description="Large-scale renewable energy certificates supporting clean ele
     <button type="button" class="listing-btn">
       View Details
     </button>
+    <button
+      type="button"
+      class="listing-btn"
+      onclick="openDealRequest(
+        'Solar Renewable Energy Credits',
+        'UAE',
+        'Renewable Energy',
+        '$12/t',
+        '210,000'
+      )"
+    >
+      Request Deal
+    </button>
   </div>
 </div>
 
@@ -418,6 +444,19 @@ data-description="Methane capture and waste management initiative reducing green
 
             <button type="button" class="listing-btn">
               View Details
+            </button>
+            <button
+              type="button"
+              class="listing-btn"
+              onclick="openDealRequest(
+                'Methane Avoidance Initiative',
+                'Malaysia',
+                'Waste Management',
+                '$16/t',
+                '145,000'
+              )"
+            >
+              Request Deal
             </button>
           </div>
         </div>
@@ -902,12 +941,13 @@ function openDynamicProjectModal(title, location, price, volume, description, im
   document.getElementById("projectModal").classList.add("active");
 }
 </script>
+<script src="/js/api.js"></script>
 <script>
 async function loadApprovedProjects() {
   const grid = document.getElementById("approvedProjectsGrid");
 
   try {
-    const res = await fetch("https://carbonaxis-exchange.onrender.com/api/approved-projects");
+    const res = await fetch(`${API.BASE}/approved-projects`);
     const data = await res.json();
 
     grid.innerHTML = "";
@@ -1000,6 +1040,18 @@ if (
       )">
       View Details
     </button>
+    <button
+      type="button"
+      class="listing-btn"
+      onclick="openDealRequest(
+        '${(project.projectName || "Carbon Project").replace(/'/g, "\\'")}',
+        '${(project.country || "Global").replace(/'/g, "\\'")}',
+        '${(project.projectType || "Carbon Credits").replace(/'/g, "\\'")}',
+        '${(project.price || "Request").replace(/'/g, "\\'")}',
+        '${(project.credits || "0").replace(/'/g, "\\'")}'
+      )">
+      Request Deal
+    </button>
   </div>
 </div>
         </div>
@@ -1012,20 +1064,27 @@ if (
 }
 
 loadApprovedProjects();
-window.addEventListener("load", () => {
-  const watchlist =
-    JSON.parse(localStorage.getItem("watchlist")) || [];
-
-  document.querySelectorAll(".watchlist-btn").forEach(btn => {
-    const onclick = btn.getAttribute("onclick") || "";
-
-    watchlist.forEach(item => {
-      if (onclick.includes(item.projectName) && onclick.includes(item.credits)) {
-        btn.classList.add("saved");
-        btn.innerText = "❤️";
-      }
+window.addEventListener("load", async () => {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+  try {
+    const res = await fetch(`${API.BASE}${API.watchlist}`, {
+      headers: { Authorization: `Bearer ${token}` }
     });
-  });
+    const data = await res.json();
+    const watchlist = data.items || [];
+    document.querySelectorAll(".watchlist-btn").forEach(btn => {
+      const onclick = btn.getAttribute("onclick") || "";
+      watchlist.forEach(item => {
+        if (onclick.includes(item.title) || onclick.includes(item.itemKey)) {
+          btn.classList.add("saved");
+          btn.innerText = "❤️";
+        }
+      });
+    });
+  } catch (e) {
+    console.error(e);
+  }
 });
 </script>
 <script>
@@ -1055,7 +1114,7 @@ async function submitBrokerInquiry() {
   try {
 
     const res = await fetch(
-      "https://carbonaxis-exchange.onrender.com/api/broker-inquiry",
+      `${API.BASE}/broker-inquiry`,
       {
         method: "POST",
         headers: {
@@ -1096,7 +1155,7 @@ async function submitBrokerInquiry() {
   }
 
 }
-function toggleWatchlist(
+async function toggleWatchlist(
   projectName,
   country,
   projectType,
@@ -1105,46 +1164,145 @@ function toggleWatchlist(
   image,
   btn
 ){
+  const token = localStorage.getItem("token");
+  if (!token) {
+    window.location.href = "/login.html";
+    return;
+  }
+
   const projectKey = `${projectName}-${country}-${projectType}-${credits}`;
 
-  let watchlist =
-    JSON.parse(localStorage.getItem("watchlist")) || [];
-
-  const exists =
-    watchlist.find(p => p.projectKey === projectKey);
-
-  if(exists){
-    watchlist =
-      watchlist.filter(p => p.projectKey !== projectKey);
-
-    if(btn){
+  try {
+    if (btn && btn.classList.contains("saved")) {
+      await fetch(`${API.BASE}${API.watchlist}/${encodeURIComponent(projectKey)}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
       btn.classList.remove("saved");
       btn.innerText = "🤍";
+      alert("Removed from Watchlist");
+      return;
     }
 
-    alert("Removed from Watchlist");
-  }else{
-    watchlist.push({
-      projectKey,
-      projectName,
-      country,
-      projectType,
-      price,
-      credits,
-      image
+    const res = await fetch(`${API.BASE}${API.watchlist}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        itemKey: projectKey,
+        title: projectName,
+        country,
+        category: projectType,
+        price,
+        volume: credits,
+        source: "marketplace"
+      })
     });
-
-    if(btn){
+    const data = await res.json();
+    if (!data.success) {
+      alert(data.message || "Could not save watchlist item");
+      return;
+    }
+    if (btn) {
       btn.classList.add("saved");
       btn.innerText = "❤️";
     }
-
     alert("Added to Watchlist");
+  } catch (err) {
+    console.error(err);
+    alert("Watchlist error");
+  }
+}
+
+let pendingDeal = null;
+
+function openDealRequest(projectName, country, projectType, price, credits) {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    window.location.href = "/login.html";
+    return;
+  }
+  pendingDeal = {
+    listingKey: `${projectName}-${country}-${projectType}-${credits}`,
+    listingTitle: projectName,
+    country,
+    category: projectType,
+    listedPrice: price,
+  };
+  document.getElementById("dealListingTitle").textContent = projectName;
+  document.getElementById("dealVolume").value = credits || "";
+  document.getElementById("dealBid").value = "";
+  document.getElementById("dealMessage").value = "";
+  document.getElementById("dealModal").classList.add("active");
+}
+
+function closeDealRequest() {
+  document.getElementById("dealModal").classList.remove("active");
+  pendingDeal = null;
+}
+
+async function submitDealRequest() {
+  const token = localStorage.getItem("token");
+  if (!token || !pendingDeal) return;
+
+  const volumeRequested = document.getElementById("dealVolume").value.trim();
+  const bidPrice = document.getElementById("dealBid").value.trim();
+  const message = document.getElementById("dealMessage").value.trim();
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  if (!volumeRequested) {
+    alert("Enter requested volume");
+    return;
   }
 
-  localStorage.setItem("watchlist", JSON.stringify(watchlist));
+  try {
+    const res = await fetch(`${API.BASE}${API.deals}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        ...pendingDeal,
+        volumeRequested,
+        bidPrice,
+        message,
+        contactEmail: user.email,
+        contactName: user.name,
+      }),
+    });
+    const data = await res.json();
+    if (!data.success) {
+      alert(data.message || "Deal request failed");
+      return;
+    }
+    alert("Deal request submitted. Track it in My Deals.");
+    closeDealRequest();
+    window.location.href = "/deals.html";
+  } catch (err) {
+    console.error(err);
+    alert("Server error submitting deal");
+  }
 }
 </script>
+<div class="deal-modal broker-modal" id="dealModal">
+  <div class="broker-overlay" onclick="closeDealRequest()"></div>
+  <div class="broker-box">
+    <button class="close-broker" onclick="closeDealRequest()">✕</button>
+    <p class="section-label">OTC Deal / RFQ</p>
+    <h2 id="dealListingTitle">Request Deal</h2>
+    <input type="text" id="dealVolume" placeholder="Requested volume (tCO₂e)" />
+    <input type="text" id="dealBid" placeholder="Your bid price (optional)" />
+    <textarea id="dealMessage" placeholder="Counterparty notes / delivery preferences"></textarea>
+    <button class="btn btn-primary" onclick="submitDealRequest()">Submit Deal Request</button>
+    <p style="margin-top:10px;font-size:13px;color:#9db0a9;">
+      Or ask Green Energy AI first about regulatory fit:
+      <a href="/ai-intelligence.html">Open AI Intelligence</a>
+    </p>
+  </div>
+</div>
 <div class="broker-modal" id="brokerModal">
   <div class="broker-overlay" onclick="closeBrokerForm()"></div>
 
@@ -1180,7 +1338,6 @@ if (userToken) {
   if (notificationMenuBox) notificationMenuBox.style.display = "none";
 }
 </script>
-<script src="/js/api.js"></script>
 <script src="/js/navbar.js"></script>
 <script src="/js/auth.js"></script>
 </body>

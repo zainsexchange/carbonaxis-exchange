@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My OTC Deals | CarbonAxis Exchange</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+</head>
+<body>
+  <script>
+    if (!localStorage.getItem("token")) {
+      window.location.href = "/login.html";
+    }
+  </script>
+
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="/index.html" class="brand">
+        <img src="/logo.png" alt="CarbonAxis Exchange Logo" class="site-logo" />
+      </a>
+      <nav>
+        <a href="/marketplace.html">Marketplace</a>
+        <a href="/deals.html" class="active">My Deals</a>
+        <a href="/ai-intelligence.html">AI Intelligence</a>
+        <a href="/dashboard.html">Dashboard</a>
+      </nav>
+      <a class="btn btn-primary nav-btn" href="/marketplace.html">Browse Listings</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="section marketplace-page-hero">
+      <div class="container">
+        <p class="section-label">OTC Desk</p>
+        <h1>My deal requests</h1>
+        <p class="hero-text">
+          Track RFQ / OTC requests you submitted from the marketplace.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="card" style="overflow:auto;">
+          <table style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr>
+                <th style="text-align:left;color:#00e5b0;padding:10px;">Listing</th>
+                <th style="text-align:left;color:#00e5b0;padding:10px;">Volume</th>
+                <th style="text-align:left;color:#00e5b0;padding:10px;">Bid</th>
+                <th style="text-align:left;color:#00e5b0;padding:10px;">Status</th>
+                <th style="text-align:left;color:#00e5b0;padding:10px;">Date</th>
+              </tr>
+            </thead>
+            <tbody id="myDealsTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    async function loadMyDeals() {
+      const token = localStorage.getItem("token");
+      const table = document.getElementById("myDealsTable");
+      try {
+        const res = await fetch(`${API.BASE}/deals`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        const deals = data.deals || [];
+        if (!deals.length) {
+          table.innerHTML = `<tr><td colspan="5" style="padding:16px;color:#9db0a9;">No deal requests yet. Open a listing and click Request Deal.</td></tr>`;
+          return;
+        }
+        table.innerHTML = deals
+          .map(
+            (d) => `
+          <tr>
+            <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.08);">${d.listingTitle}</td>
+            <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.08);">${d.volumeRequested || "-"}</td>
+            <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.08);">${d.bidPrice || "-"}</td>
+            <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.08);">${d.status}</td>
+            <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.08);">${new Date(d.createdAt).toLocaleString()}</td>
+          </tr>`
+          )
+          .join("");
+      } catch (e) {
+        table.innerHTML = `<tr><td colspan="5" style="padding:16px;">Unable to load deals.</td></tr>`;
+      }
+    }
+    loadMyDeals();
+  </script>
+</body>
+</html>

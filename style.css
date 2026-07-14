@@ -3867,3 +3867,173 @@ font-weight:600;
     font-weight:600;
     margin:12px 0;
 }
+
+/* Green Energy AI Intelligence */
+.ai-engine-layout{
+  display:grid;
+  grid-template-columns: 1.4fr 0.8fr;
+  gap:24px;
+  align-items:start;
+}
+
+.ai-chat-panel,
+.ai-side-panel{
+  background:rgba(8,18,16,0.72);
+  border:1px solid rgba(0,229,176,0.18);
+  border-radius:18px;
+  padding:20px;
+}
+
+.ai-quota-bar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px 16px;
+  align-items:center;
+  margin-bottom:14px;
+  font-size:13px;
+  color:#b7c7c1;
+}
+
+.ai-quota-bar strong{
+  color:#00e5b0;
+}
+
+.ai-chat-log{
+  min-height:360px;
+  max-height:520px;
+  overflow:auto;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  padding:8px 2px 16px;
+}
+
+.ai-bubble{
+  max-width:92%;
+  padding:12px 14px;
+  border-radius:14px;
+  white-space:pre-wrap;
+  line-height:1.55;
+  font-size:14px;
+}
+
+.ai-bubble-user{
+  align-self:flex-end;
+  background:rgba(0,229,176,0.14);
+  border:1px solid rgba(0,229,176,0.28);
+  color:#e9fff8;
+}
+
+.ai-bubble-assistant{
+  align-self:flex-start;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  color:#d7e7e1;
+}
+
+.ai-bubble-label{
+  font-size:11px;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  color:#00e5b0;
+  margin-bottom:6px;
+}
+
+.ai-thinking{
+  opacity:0.8;
+  font-style:italic;
+}
+
+.ai-ask-form{
+  display:grid;
+  gap:10px;
+  margin-top:10px;
+}
+
+.ai-ask-form .ai-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.ai-ask-form input,
+.ai-ask-form textarea{
+  width:100%;
+  background:rgba(0,0,0,0.35);
+  border:1px solid rgba(0,229,176,0.22);
+  border-radius:12px;
+  color:#fff;
+  padding:12px 14px;
+  font:inherit;
+}
+
+.ai-ask-form textarea{
+  min-height:90px;
+  resize:vertical;
+}
+
+.ai-example-list{
+  display:grid;
+  gap:10px;
+  margin-top:12px;
+}
+
+.ai-example-list button{
+  text-align:left;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(0,229,176,0.16);
+  color:#d9ece6;
+  border-radius:12px;
+  padding:12px;
+  cursor:pointer;
+  font:inherit;
+  line-height:1.4;
+}
+
+.ai-example-list button:hover{
+  border-color:rgba(0,229,176,0.45);
+  background:rgba(0,229,176,0.08);
+}
+
+.pricing-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:18px;
+}
+
+.pricing-card{
+  background:rgba(8,18,16,0.72);
+  border:1px solid rgba(0,229,176,0.18);
+  border-radius:18px;
+  padding:22px;
+}
+
+.pricing-card.featured{
+  border-color:rgba(0,229,176,0.55);
+  box-shadow:0 0 0 1px rgba(0,229,176,0.2);
+}
+
+.pricing-card h3{
+  margin:0 0 6px;
+}
+
+.pricing-card .price{
+  font-size:28px;
+  color:#00e5b0;
+  margin:10px 0 16px;
+}
+
+.pricing-card ul{
+  margin:0 0 18px;
+  padding-left:18px;
+  color:#b9cac4;
+  line-height:1.7;
+}
+
+@media (max-width: 960px){
+  .ai-engine-layout,
+  .pricing-grid,
+  .ai-ask-form .ai-row{
+    grid-template-columns:1fr;
+  }
+}

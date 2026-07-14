@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pricing Plans | CarbonAxis Exchange</title>
+  <meta name="description" content="CarbonAxis plans for Free, Pro and Enterprise — Green Energy AI limits and marketplace tools.">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="/index.html" class="brand">
+        <img src="/logo.png" alt="CarbonAxis Exchange Logo" class="site-logo">
+      </a>
+      <nav>
+        <a href="/index.html">Home</a>
+        <a href="/ai-intelligence.html">AI Intelligence</a>
+        <a href="/marketplace.html">Marketplace</a>
+        <a href="/projects.html">Projects</a>
+        <a href="/pricing.html" class="active">Pricing</a>
+        <a href="/about.html">About</a>
+      </nav>
+      <a class="btn btn-primary nav-btn" href="/register.html">Get Access</a>
+      <a class="btn btn-outline" href="/login.html">Login</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="section marketplace-page-hero">
+      <div class="container">
+        <p class="section-label">Plans</p>
+        <h1>Everyone can use the engine. Plans change the limits.</h1>
+        <p class="hero-text">
+          Free users get starter access. Pro and Enterprise unlock deeper regulatory analysis,
+          more AI queries, and stronger project intelligence.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container pricing-grid" id="pricingGrid"></div>
+      <div class="container" style="margin-top:24px;color:#9db0a9;font-size:14px;">
+        Stripe Checkout is wired in the API. Until Stripe keys/prices are set on Render,
+        upgrade buttons will ask you to request access manually.
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-bottom">© 2026 CarbonAxis Exchange.</div>
+    </div>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script>
+    function authToken() {
+      return localStorage.getItem("token");
+    }
+
+    async function startCheckout(plan) {
+      const token = authToken();
+      if (!token) {
+        window.location.href = "/login.html";
+        return;
+      }
+      try {
+        const res = await fetch(`${API.BASE}${API.billingCheckout}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ plan }),
+        });
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        }
+        alert(
+          data.message ||
+            "Checkout is not live yet. Request upgrade via Early Access / contact."
+        );
+        window.location.href = "/index.html#early-access";
+      } catch (e) {
+        console.error(e);
+        alert("Unable to start checkout");
+      }
+    }
+
+    async function loadPlans() {
+      const grid = document.getElementById("pricingGrid");
+      try {
+        const res = await fetch(`${API.BASE}${API.plans}`);
+        const data = await res.json();
+        const plans = data.plans || [];
+        grid.innerHTML = plans
+          .map((p) => {
+            const cta =
+              p.id === "free"
+                ? `<a class="btn btn-outline" href="/register.html">Start Free</a>`
+                : `<button class="btn ${
+                    p.id === "pro" ? "btn-primary" : "btn-outline"
+                  }" type="button" onclick="startCheckout('${p.id}')">
+                    ${p.id === "pro" ? "Upgrade to Pro" : "Go Enterprise"}
+                  </button>`;
+            return `
+          <article class="pricing-card ${p.id === "pro" ? "featured" : ""}">
+            <h3>${p.name}</h3>
+            <div class="price">${p.priceLabel}</div>
+            <ul>
+              ${p.features.map((f) => `<li>${f}</li>`).join("")}
+            </ul>
+            ${cta}
+          </article>`;
+          })
+          .join("");
+      } catch (e) {
+        grid.innerHTML = "<p>Unable to load plans. Please refresh.</p>";
+      }
+    }
+    loadPlans();
+  </script>
+</body>
+</html>

@@ -17,7 +17,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const protectedPages = [
     "dashboard.html",
     "watchlist.html",
-    "profile.html"
+    "profile.html",
+    "ai-intelligence.html",
+    "deals.html"
   ];
 
   const currentPage = window.location.pathname.split("/").pop();

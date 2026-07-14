@@ -6,7 +6,7 @@ export function authenticateToken(req, res, next) {
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({
       success: false,
-      message: "Access denied. No token provided."
+      message: "Access denied. No token provided.",
     });
   }
 
@@ -19,7 +19,20 @@ export function authenticateToken(req, res, next) {
   } catch (error) {
     return res.status(401).json({
       success: false,
-      message: "Invalid or expired token."
+      message: "Invalid or expired token.",
     });
   }
+}
+
+/** Admin routes: JWT required + role must be admin */
+export function requireAdminRole(req, res, next) {
+  authenticateToken(req, res, () => {
+    if (req.user?.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Admin access required.",
+      });
+    }
+    next();
+  });
 }

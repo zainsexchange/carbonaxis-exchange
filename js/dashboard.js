@@ -105,6 +105,9 @@ function updateStats(stats){
     const verified =
     document.getElementById("verifiedProjects");
 
+    const aiSearches =
+    document.getElementById("aiSearches");
+
     if(portfolio){
 
         portfolio.innerText =
@@ -125,6 +128,11 @@ function updateStats(stats){
         verified.innerText =
         stats.verifiedProjects;
 
+    }
+
+    if(aiSearches){
+        const limit = stats.aiLimit != null ? ` / ${stats.aiLimit}` : "";
+        aiSearches.innerText = `${stats.aiSearches || 0}${limit}`;
     }
 
 }

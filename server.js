@@ -5,8 +5,16 @@ import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { authenticateToken } from "./middleware/auth.js";
+import { authenticateToken, requireAdminRole } from "./middleware/auth.js";
+import { PLANS, getPlan } from "./config/plans.js";
+import { runGreenIntelligence, analyzeProjectForAI } from "./services/greenAI.js";
+import {
+  ensureAiUsagePeriod,
+  getAiQuota,
+  consumeAiQuery,
+} from "./services/usage.js";
 dotenv.config();
+
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: Number(process.env.EMAIL_PORT),
@@ -17,9 +25,67 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+let stripe = null;
+try {
+  if (process.env.STRIPE_SECRET_KEY) {
+    const Stripe = (await import("stripe")).default;
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  }
+} catch (err) {
+  console.warn("Stripe module not loaded:", err.message);
+}
+
 const app = express();
 
 app.use(cors());
+
+/** Stripe webhook needs raw body — register before json parser */
+app.post("/api/billing/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+  if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) {
+    return res.status(503).send("Stripe webhook not configured");
+  }
+
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      req.headers["stripe-signature"],
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    console.error("Webhook signature error:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  try {
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+      const userId = session.metadata?.userId;
+      const plan = session.metadata?.plan;
+      if (userId && PLANS[plan]) {
+        await User.findByIdAndUpdate(userId, {
+          subscription: plan,
+          stripeCustomerId: session.customer || undefined,
+          stripeSubscriptionId: session.subscription || undefined,
+        });
+      }
+    }
+
+    if (event.type === "customer.subscription.deleted") {
+      const sub = event.data.object;
+      await User.findOneAndUpdate(
+        { stripeSubscriptionId: sub.id },
+        { subscription: "free", stripeSubscriptionId: "" }
+      );
+    }
+  } catch (err) {
+    console.error("Webhook handler error:", err);
+    return res.status(500).send("Webhook handler failed");
+  }
+
+  res.json({ received: true });
+});
+
 app.use(express.json());
 
 mongoose
@@ -27,18 +93,7 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((error) => console.error("MongoDB connection error:", error));
 
-function requireAdmin(req, res, next) {
-  const adminKey = req.headers["x-admin-key"];
-
-  if (adminKey !== process.env.ADMIN_SECRET) {
-    return res.status(401).json({
-      success: false,
-      message: "Unauthorized access",
-    });
-  }
-
-  next();
-}
+const requireAdmin = requireAdminRole;
 
 const earlyAccessSchema = new mongoose.Schema(
   {
@@ -101,7 +156,16 @@ profileImage: String,
 
     subscription: {
       type: String,
+      enum: ["free", "pro", "enterprise"],
       default: "free",
+    },
+
+    stripeCustomerId: { type: String, default: "" },
+    stripeSubscriptionId: { type: String, default: "" },
+
+    aiUsage: {
+      period: { type: String, default: "" },
+      count: { type: Number, default: 0 },
     },
 
     emailVerified: {
@@ -185,6 +249,88 @@ const carbonProjectSchema = new mongoose.Schema(
 const CarbonProject = mongoose.model("CarbonProject", carbonProjectSchema);
 
 const User = mongoose.model("User", userSchema);
+
+const watchlistSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    itemKey: { type: String, required: true },
+    title: String,
+    country: String,
+    category: String,
+    price: String,
+    volume: String,
+    source: { type: String, default: "marketplace" },
+  },
+  { timestamps: true }
+);
+
+watchlistSchema.index({ userId: 1, itemKey: 1 }, { unique: true });
+
+const WatchlistItem = mongoose.model("WatchlistItem", watchlistSchema);
+
+const aiQuerySchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    question: String,
+    country: String,
+    product: String,
+    answer: String,
+    verdictHint: String,
+    plan: String,
+    provider: String,
+  },
+  { timestamps: true }
+);
+
+const AiQuery = mongoose.model("AiQuery", aiQuerySchema);
+
+const dealSchema = new mongoose.Schema(
+  {
+    buyerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    listingKey: { type: String, required: true },
+    listingTitle: { type: String, required: true },
+    country: String,
+    category: String,
+    listedPrice: String,
+    volumeRequested: { type: String, required: true },
+    bidPrice: String,
+    currency: { type: String, default: "USD" },
+    message: String,
+    contactEmail: String,
+    contactName: String,
+    status: {
+      type: String,
+      enum: [
+        "Open",
+        "Under Review",
+        "Countered",
+        "Accepted",
+        "Rejected",
+        "Closed",
+      ],
+      default: "Open",
+    },
+    adminNotes: { type: String, default: "" },
+    counterPrice: String,
+    counterVolume: String,
+  },
+  { timestamps: true }
+);
+
+const Deal = mongoose.model("Deal", dealSchema);
+
 app.get("/", (req, res) => {
   res.send("CarbonAxis backend is running");
 });
@@ -836,6 +982,13 @@ const approvedProjects = await CarbonProject.countDocuments({
   status: "Approved"
 });
 
+    const watchCount = await WatchlistItem.countDocuments({
+      userId: req.user.id,
+    });
+
+    await ensureAiUsagePeriod(user);
+    const quota = getAiQuota(user);
+
     res.json({
       success: true,
       user: {
@@ -844,15 +997,19 @@ const approvedProjects = await CarbonProject.countDocuments({
         company: user.company,
         country: user.country,
         role: user.role,
-        subscription: user.subscription
+        subscription: user.subscription,
       },
       stats: {
         portfolioValue: 0,
-        creditsWatched: 0,
+        creditsWatched: watchCount,
         projectsSubmitted: totalProjects,
         verifiedProjects: approvedProjects,
-        aiSearches: 0
-      }
+        aiSearches: quota.used,
+        aiLimit: quota.limit,
+        aiRemaining: quota.remaining,
+      },
+      plan: getPlan(user.subscription),
+      quota,
     });
 
   } catch (error) {
@@ -864,103 +1021,520 @@ const approvedProjects = await CarbonProject.countDocuments({
     });
   }
 });
+app.get("/api/plans", (req, res) => {
+  res.json({
+    success: true,
+    plans: Object.values(PLANS),
+  });
+});
+
+app.get("/api/ai/quota", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    await ensureAiUsagePeriod(user);
+    res.json({ success: true, quota: getAiQuota(user) });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to load AI quota" });
+  }
+});
+
+app.post("/api/ai/ask", authenticateToken, async (req, res) => {
+  try {
+    const { question, country = "", product = "", conversation = [] } = req.body;
+
+    if (!question || String(question).trim().length < 5) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a clearer question (at least 5 characters).",
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const usage = await consumeAiQuery(user);
+    if (!usage.allowed) {
+      return res.status(402).json({
+        success: false,
+        message: usage.message,
+        quota: usage.quota,
+        upgradeUrl: "/pricing.html",
+      });
+    }
+
+    const result = await runGreenIntelligence({
+      question: String(question).trim(),
+      country: String(country || "").trim(),
+      product: String(product || "").trim(),
+      subscription: user.subscription,
+      conversation: Array.isArray(conversation) ? conversation : [],
+    });
+
+    const verdictMatch = result.answer.match(
+      /\b(PROCEED_SHORT_TERM|PROCEED|CAUTION|AVOID|LONG_TERM|SHORT_TERM|MIXED)\b/i
+    );
+
+    await AiQuery.create({
+      userId: user._id,
+      question,
+      country,
+      product,
+      answer: result.answer,
+      verdictHint: verdictMatch ? verdictMatch[1].toUpperCase() : "",
+      plan: user.subscription,
+      provider: result.provider,
+    });
+
+    res.json({
+      success: true,
+      answer: result.answer,
+      provider: result.provider,
+      deepAnalysis: result.deepAnalysis,
+      quota: usage.quota,
+      focusMarkets: getPlan(user.subscription).marketsPriority,
+    });
+  } catch (error) {
+    console.error("AI ask error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Green Energy AI temporarily unavailable. Try again shortly.",
+    });
+  }
+});
+
+app.post("/api/projects/:id/analyze", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const plan = getPlan(user.subscription);
+    if (!plan.projectAiInsights) {
+      return res.status(402).json({
+        success: false,
+        message: "Project AI insights require Pro or Enterprise. Upgrade to unlock.",
+        upgradeUrl: "/pricing.html",
+      });
+    }
+
+    const project = await CarbonProject.findOne({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
+
+    if (!project) {
+      return res.status(404).json({ success: false, message: "Project not found" });
+    }
+
+    const usage = await consumeAiQuery(user);
+    if (!usage.allowed) {
+      return res.status(402).json({
+        success: false,
+        message: usage.message,
+        quota: usage.quota,
+        upgradeUrl: "/pricing.html",
+      });
+    }
+
+    const insights = await analyzeProjectForAI(project, user.subscription);
+    project.aiInsights = insights;
+    await project.save();
+
+    res.json({
+      success: true,
+      aiInsights: project.aiInsights,
+      quota: usage.quota,
+    });
+  } catch (error) {
+    console.error("Project analyze error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to analyze project",
+    });
+  }
+});
+
+app.get("/api/watchlist", authenticateToken, async (req, res) => {
+  try {
+    const items = await WatchlistItem.find({ userId: req.user.id }).sort({
+      createdAt: -1,
+    });
+    res.json({ success: true, items });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to load watchlist" });
+  }
+});
+
+app.post("/api/watchlist", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const plan = getPlan(user.subscription);
+    const count = await WatchlistItem.countDocuments({ userId: user._id });
+    if (count >= plan.maxWatchlist) {
+      return res.status(402).json({
+        success: false,
+        message: `Watchlist limit reached for ${plan.name} (${plan.maxWatchlist}). Upgrade for more.`,
+        upgradeUrl: "/pricing.html",
+      });
+    }
+
+    const { itemKey, title, country, category, price, volume, source } = req.body;
+    if (!itemKey || !title) {
+      return res.status(400).json({
+        success: false,
+        message: "itemKey and title are required",
+      });
+    }
+
+    const item = await WatchlistItem.findOneAndUpdate(
+      { userId: user._id, itemKey: String(itemKey) },
+      {
+        userId: user._id,
+        itemKey: String(itemKey),
+        title,
+        country,
+        category,
+        price,
+        volume,
+        source: source || "marketplace",
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    res.status(201).json({ success: true, item });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to save watchlist item" });
+  }
+});
+
+app.delete("/api/watchlist/:itemKey", authenticateToken, async (req, res) => {
+  try {
+    await WatchlistItem.findOneAndDelete({
+      userId: req.user.id,
+      itemKey: req.params.itemKey,
+    });
+    res.json({ success: true, message: "Removed from watchlist" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to remove watchlist item" });
+  }
+});
+
+/**
+ * Temporary plan switcher for MVP until payment gateway is connected.
+ * Admin/dev can enable via ALLOW_PLAN_SELF_SERVE=true
+ */
+app.post("/api/subscription/set", authenticateToken, async (req, res) => {
+  try {
+    if (process.env.ALLOW_PLAN_SELF_SERVE !== "true") {
+      return res.status(403).json({
+        success: false,
+        message: "Self-serve plan changes disabled. Contact CarbonAxis to upgrade.",
+      });
+    }
+
+    const { plan } = req.body;
+    if (!PLANS[plan]) {
+      return res.status(400).json({ success: false, message: "Invalid plan" });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { subscription: plan },
+      { new: true }
+    ).select("-password");
+
+    res.json({
+      success: true,
+      message: `Plan updated to ${PLANS[plan].name}`,
+      user,
+      plan: PLANS[plan],
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to update plan" });
+  }
+});
+
+/** OTC deal / RFQ */
+app.post("/api/deals", authenticateToken, async (req, res) => {
+  try {
+    const {
+      listingKey,
+      listingTitle,
+      country,
+      category,
+      listedPrice,
+      volumeRequested,
+      bidPrice,
+      currency,
+      message,
+      contactEmail,
+      contactName,
+    } = req.body;
+
+    if (!listingKey || !listingTitle || !volumeRequested) {
+      return res.status(400).json({
+        success: false,
+        message: "listingKey, listingTitle and volumeRequested are required",
+      });
+    }
+
+    const deal = await Deal.create({
+      buyerId: req.user.id,
+      listingKey,
+      listingTitle,
+      country,
+      category,
+      listedPrice,
+      volumeRequested,
+      bidPrice,
+      currency: currency || "USD",
+      message,
+      contactEmail: contactEmail || req.user.email,
+      contactName,
+      status: "Open",
+    });
+
+    try {
+      if (process.env.EMAIL_USER) {
+        await transporter.sendMail({
+          from: `"CarbonAxis Exchange" <${process.env.EMAIL_USER}>`,
+          to: process.env.EMAIL_USER,
+          subject: `New OTC Deal Request - ${listingTitle}`,
+          html: `
+            <h2>New OTC / RFQ Request</h2>
+            <p><b>Listing:</b> ${listingTitle}</p>
+            <p><b>Volume:</b> ${volumeRequested}</p>
+            <p><b>Bid:</b> ${bidPrice || "-"}</p>
+            <p><b>Buyer email:</b> ${contactEmail || req.user.email}</p>
+            <p><b>Message:</b> ${message || "-"}</p>
+          `,
+        });
+      }
+    } catch (emailErr) {
+      console.error("Deal email failed:", emailErr);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Deal request submitted. CarbonAxis will review shortly.",
+      deal,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to create deal" });
+  }
+});
+
+app.get("/api/deals", authenticateToken, async (req, res) => {
+  try {
+    const deals = await Deal.find({ buyerId: req.user.id }).sort({
+      createdAt: -1,
+    });
+    res.json({ success: true, deals });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to load deals" });
+  }
+});
+
+app.get("/api/deals/all", requireAdmin, async (req, res) => {
+  try {
+    const deals = await Deal.find()
+      .populate("buyerId", "name email company country subscription")
+      .sort({ createdAt: -1 });
+    res.json({ success: true, deals });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to load all deals" });
+  }
+});
+
+app.patch("/api/deals/:id/status", requireAdmin, async (req, res) => {
+  try {
+    const { status, adminNotes, counterPrice, counterVolume } = req.body;
+    const allowed = [
+      "Open",
+      "Under Review",
+      "Countered",
+      "Accepted",
+      "Rejected",
+      "Closed",
+    ];
+    if (!allowed.includes(status)) {
+      return res.status(400).json({ success: false, message: "Invalid status" });
+    }
+
+    const deal = await Deal.findByIdAndUpdate(
+      req.params.id,
+      {
+        status,
+        adminNotes: adminNotes || "",
+        counterPrice,
+        counterVolume,
+      },
+      { new: true }
+    );
+
+    if (!deal) {
+      return res.status(404).json({ success: false, message: "Deal not found" });
+    }
+
+    res.json({ success: true, deal });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to update deal" });
+  }
+});
+
+/** Stripe Checkout for Pro / Enterprise */
+app.post("/api/billing/checkout", authenticateToken, async (req, res) => {
+  try {
+    if (!stripe) {
+      return res.status(503).json({
+        success: false,
+        message:
+          "Stripe is not configured yet. Add STRIPE_SECRET_KEY on the server, or request an upgrade manually.",
+      });
+    }
+
+    const { plan } = req.body;
+    if (!["pro", "enterprise"].includes(plan)) {
+      return res.status(400).json({
+        success: false,
+        message: "Only pro or enterprise can be purchased.",
+      });
+    }
+
+    const priceId =
+      plan === "pro"
+        ? process.env.STRIPE_PRICE_PRO
+        : process.env.STRIPE_PRICE_ENTERPRISE;
+
+    if (!priceId) {
+      return res.status(503).json({
+        success: false,
+        message: `Missing Stripe price id for ${plan}. Set STRIPE_PRICE_PRO / STRIPE_PRICE_ENTERPRISE.`,
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const siteUrl = process.env.SITE_URL || "https://www.carbonaxisexchange.com";
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer_email: user.email,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${siteUrl}/dashboard.html?billing=success&plan=${plan}`,
+      cancel_url: `${siteUrl}/pricing.html?billing=cancel`,
+      metadata: {
+        userId: String(user._id),
+        plan,
+      },
+    });
+
+    res.json({ success: true, url: session.url, sessionId: session.id });
+  } catch (error) {
+    console.error("Stripe checkout error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Unable to start checkout",
+    });
+  }
+});
+
 app.get("/api/profile", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
 
-    try{
-
-        const user = await User.findById(req.user.id).select("-password");
-
-        if(!user){
-
-            return res.status(404).json({
-                success:false,
-                message:"User not found"
-            });
-
-        }
-
-        res.json({
-            success:true,
-            user
-        });
-
-    }catch(error){
-
-        console.error(error);
-
-        res.status(500).json({
-            success:false,
-            message:"Failed to fetch profile"
-        });
-
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
 
+    res.json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch profile",
+    });
+  }
 });
+
 app.put("/api/profile", authenticateToken, async (req, res) => {
+  try {
+    const {
+      name,
+      company,
+      country,
+      phone,
+      jobTitle,
+      industry,
+      website,
+      linkedin,
+      bio,
+      profileImage,
+    } = req.body;
 
-    try{
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        name,
+        company,
+        country,
+        phone,
+        jobTitle,
+        industry,
+        website,
+        linkedin,
+        bio,
+        profileImage,
+      },
+      {
+        new: true,
+      }
+    ).select("-password");
 
-        const {
-            name,
-            company,
-            country,
-            phone,
-            jobTitle,
-            industry,
-            website,
-            linkedin,
-            bio,
-            profileImage
-        } = req.body;
+    res.json({
+      success: true,
+      message: "Profile updated successfully.",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error(error);
 
-        const updatedUser = await User.findByIdAndUpdate(
-
-            req.user.id,
-
-            {
-                name,
-                company,
-                country,
-                phone,
-                jobTitle,
-                industry,
-                website,
-                linkedin,
-                bio,
-                profileImage
-            },
-
-            {
-                new: true
-            }
-
-        ).select("-password");
-
-        res.json({
-
-            success:true,
-
-            message:"Profile updated successfully.",
-
-            user:updatedUser
-
-        });
-
-    }catch(error){
-
-        console.error(error);
-
-        res.status(500).json({
-
-            success:false,
-
-            message:"Failed to update profile."
-
-        });
-
-    }
-
+    res.status(500).json({
+      success: false,
+      message: "Failed to update profile.",
+    });
+  }
 });
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

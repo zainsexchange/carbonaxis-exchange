@@ -6,7 +6,10 @@
   <link rel="stylesheet" href="style.css">
 
   <script>
-    if (localStorage.getItem("adminLoggedIn") !== "true") {
+    const __adminUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const __adminToken = localStorage.getItem("token");
+    if (!__adminToken || __adminUser.role !== "admin") {
+      localStorage.removeItem("adminLoggedIn");
       window.location.href = "admin-login.html";
     }
   </script>
@@ -306,13 +309,8 @@
 </div>
 
     <div class="stat-card">
-      <span>🌐 Marketplace Status</span>
-      <h2>Live</h2>
-    </div>
-
-    <div class="stat-card">
-      <span>🗄️ Database</span>
-      <h2 style="color:#00ff88">● Live</h2>
+      <span>🤝 OTC Deal Requests</span>
+      <h2 id="dealCount">0</h2>
     </div>
   </div>
   <p class="last-updated">
@@ -393,6 +391,38 @@
     </div>
 
   </div>
+
+<div class="card">
+  <h2>
+    OTC Deal / RFQ Requests
+    (<span id="dealCountText">0</span>)
+  </h2>
+
+  <div class="table-tools">
+    <input
+      type="text"
+      id="dealSearch"
+      class="search-box"
+      placeholder="Search deals by listing, buyer, status..."
+    >
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Listing</th>
+        <th>Buyer</th>
+        <th>Volume</th>
+        <th>Bid</th>
+        <th>Status</th>
+        <th>Date</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="dealTable"></tbody>
+  </table>
+</div>
+
 <div class="card">
   <h2>
     Broker Inquiries
@@ -427,357 +457,10 @@
     <tbody id="brokerTable"></tbody>
   </table>
 </div>
-<script>
-const API_BASE = "https://carbonaxis-exchange.onrender.com";
-const ADMIN_KEY = "CarbonAxisAdmin2026";
-
-async function deleteEarlyAccess(id) {
-  if (!confirm("Delete this early access request?")) return;
-
-  await fetch(`${API_BASE}/api/early-access/${id}`, {
-    method: "DELETE",
-    headers: { "x-admin-key": ADMIN_KEY }
-  });
-
-  location.reload();
-}
-
-async function deleteProject(id) {
-  if (!confirm("Delete this project submission?")) return;
-
-  await fetch(`${API_BASE}/api/project-submissions/${id}`, {
-    method: "DELETE",
-    headers: { "x-admin-key": ADMIN_KEY }
-  });
-
-  location.reload();
-}
-async function loadBrokerInquiries() {
-  const res = await fetch(`${API_BASE}/api/broker-inquiries`, {
-    headers: { "x-admin-key": ADMIN_KEY }
-  });
-
-  const data = await res.json();
-  const table = document.getElementById("brokerTable");
-
-  document.getElementById("brokerCount").innerText = data.data.length;
-  document.getElementById("brokerCountText").innerText = data.data.length;
-
-  table.innerHTML = "";
-
-  data.data.forEach(item => {
-    table.innerHTML += `
-      <tr>
-        <td>${item.projectName || "-"}</td>
-        <td>${item.name || "-"}</td>
-        <td>${item.email || "-"}</td>
-        <td>${item.message || "-"}</td>
-        <td>${new Date(item.createdAt).toLocaleString()}</td>
-        <td>
-          <button class="delete-btn" onclick="deleteBrokerInquiry('${item._id}')">
-            Delete
-          </button>
-        </td>
-      </tr>
-    `;
-  });
-}
-
-async function deleteBrokerInquiry(id) {
-  if (!confirm("Delete this broker inquiry?")) return;
-
-  await fetch(`${API_BASE}/api/broker-inquiries/${id}`, {
-    method: "DELETE",
-    headers: { "x-admin-key": ADMIN_KEY }
-  });
-
-  location.reload();
-}
-async function loadEarlyAccess() {
-  const res = await fetch(`${API_BASE}/api/early-access`, {
-    headers: { "x-admin-key": ADMIN_KEY }
-  });
-
-  const data = await res.json();
-  const table = document.getElementById("earlyAccessTable");
-
-  document.getElementById("earlyCount").innerText = data.data.length;
-document.getElementById("earlyCountText").innerText = data.data.length;
-
-  data.data.forEach(item => {
-    table.innerHTML += `
-      <tr>
-        <td>${item.name || "-"}</td>
-        <td>${item.email || "-"}</td>
-        <td>${item.role || "-"}</td>
-        <td>${item.message || "-"}</td>
-        <td>${new Date(item.createdAt).toLocaleString()}</td>
-        <td>
-          <button class="delete-btn" onclick="deleteEarlyAccess('${item._id}')">
-            Delete
-          </button>
-        </td>
-      </tr>
-    `;
-  });
-}
-
-async function loadProjects() {
-  const res = await fetch(`${API_BASE}/api/project-submissions`, {
-    headers: { "x-admin-key": ADMIN_KEY }
-  });
-
-  const data = await res.json();
-  const table = document.getElementById("projectTable");
-
-  document.getElementById("projectCount").innerText = data.data.length;
-document.getElementById("projectCountText").innerText = data.data.length;
-
-  data.data.forEach(item => {
-    table.innerHTML += `
-      <tr>
-        <td>${item.projectName || "-"}</td>
-        <td>${item.country || "-"}</td>
-        <td>
-  <span class="status ${(item.status || "Pending").toLowerCase()}">
-    ${item.status || "Pending"}
-</span>
-</td>
-        <td>${item.credits || "-"}</td>
-        <td>${item.description || "-"}</td>
-        <td>${new Date(item.createdAt).toLocaleString()}</td>
-<td>
-  <div class="action-buttons">
-    <button class="approve-btn" onclick="updateProjectStatus('${item._id}', 'Approved')">
-      Approve
-    </button>
-
-    <button class="reject-btn" onclick="updateProjectStatus('${item._id}', 'Rejected')">
-      Reject
-    </button>
-
-    <button class="delete-btn" onclick="deleteProject('${item._id}')">
-      Delete
-    </button>
-  </div>
-</td>
-</tr>
-    `;
-  });
-}
-
-function logout(){
-  localStorage.removeItem("adminLoggedIn");
-  window.location.href = "admin-login.html";
-}
-function searchTable(inputId, tableId) {
-
-  const input = document.getElementById(inputId);
-
-  input.addEventListener("keyup", function () {
-
-    const filter = this.value.toLowerCase();
-
-    const rows =
-      document.querySelectorAll(`#${tableId} tr`);
-
-    rows.forEach(row => {
-
-      const text =
-        row.textContent.toLowerCase();
-
-      row.style.display =
-        text.includes(filter)
-        ? ""
-        : "none";
-
-    });
-
-  });
-
-}
-async function updateProjectStatus(id, status) {
-  await fetch(`${API_BASE}/api/project-submissions/${id}/status`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      "x-admin-key": ADMIN_KEY
-    },
-    body: JSON.stringify({ status })
-  });
-
-  location.reload();
-}
-loadEarlyAccess();
-loadProjects();
-loadBrokerInquiries();
-document.getElementById("lastUpdated").innerText =
-  new Date().toLocaleString();
-
-setTimeout(() => {
-
-  searchTable(
-    "earlySearch",
-    "earlyAccessTable"
-  );
-
-  searchTable(
-    "projectSearch",
-    "projectTable"
-  );
-  searchTable(
-  "brokerSearch", 
-  "brokerTable"
-  );
-
-}, 1000);
-function downloadCSV(filename, rows) {
-  const csv = rows
-    .map(row => row.map(value => `"${value || ""}"`).join(","))
-    .join("\n");
-
-  const blob = new Blob([csv], { type: "text/csv" });
-  const link = document.createElement("a");
-
-  link.href = URL.createObjectURL(blob);
-  link.download = filename;
-  link.click();
-}
-async function exportEarlyAccess(){
-
-  const res = await fetch(
-    `${API_BASE}/api/early-access`,
-    {
-      headers:{
-        "x-admin-key":ADMIN_KEY
-      }
-    }
-  );
-
-  const data = await res.json();
-
-  const rows = [
-    ["Name","Email","Role","Message","Date"]
-  ];
-
-  data.data.forEach(item=>{
-    rows.push([
-      item.name,
-      item.email,
-      item.role,
-      item.message,
-      new Date(item.createdAt)
-        .toLocaleString()
-    ]);
-  });
-
-  downloadCSV(
-    "early-access.csv",
-    rows
-  );
-}
-async function exportProjects(){
-
-  const res = await fetch(
-    `${API_BASE}/api/project-submissions`,
-    {
-      headers:{
-        "x-admin-key":ADMIN_KEY
-      }
-    }
-  );
-async function exportBrokerInquiries(){
-
-  const res = await fetch(
-    `${API_BASE}/api/broker-inquiries`,
-    {
-      headers:{
-        "x-admin-key": ADMIN_KEY
-      }
-    }
-  );
-
-  const data = await res.json();
-
-  const rows = [
-    ["Project","Name","Email","Message","Date"]
-  ];
-
-  data.data.forEach(item=>{
-    rows.push([
-      item.projectName,
-      item.name,
-      item.email,
-      item.message,
-      new Date(item.createdAt).toLocaleString()
-    ]);
-  });
-
-  downloadCSV(
-    "broker-inquiries.csv",
-    rows
-  );
-}
-  const data = await res.json();
-
-  const rows = [
-    [
-      "Project",
-      "Country",
-      "Type",
-      "Credits",
-      "Description",
-      "Date"
-    ]
-  ];
-
-  data.data.forEach(item=>{
-    rows.push([
-      item.projectName,
-      item.country,
-      item.projectType,
-      item.credits,
-      item.description,
-      new Date(item.createdAt)
-        .toLocaleString()
-    ]);
-  });
-
-  downloadCSV(
-    "project-submissions.csv",
-    rows
-  );
-}
-function filterProjectsByStatus(status){
-  const rows = document.querySelectorAll("#projectTable tr");
-  const buttons = document.querySelectorAll(".status-filters button");
-
-  buttons.forEach(btn => btn.classList.remove("active"));
-
-  event.target.classList.add("active");
-
-  rows.forEach(row => {
-    const text = row.textContent.toLowerCase();
-
-    if(status === "all"){
-      row.style.display = "";
-    } else {
-      row.style.display = text.includes(status.toLowerCase()) ? "" : "none";
-    }
-  });
-}
-</script>
+<script src="/js/api.js"></script>
+<script src="/js/admin.js"></script>
 <div class="footer">
   CarbonAxis Exchange Admin Panel © 2026
-  
 </div>
-<script>
-const token = localStorage.getItem("token");
-
-if (!token) {
-    window.location.href = "/login.html";
-}
-</script>
-
 </body>
 </html>

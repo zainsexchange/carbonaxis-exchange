@@ -1172,6 +1172,7 @@ mobileLinks.forEach(link => {
   link.addEventListener("click", closeMobileMenu);
 });
 </script>
+<script src="/js/api.js"></script>
 <script>
 document.getElementById("earlyAccessForm").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -1182,7 +1183,7 @@ document.getElementById("earlyAccessForm").addEventListener("submit", async (e) 
     const message = document.getElementById("message").value;
 
     try {
-        const response = await fetch("https://carbonaxis-exchange.onrender.com/api/early-access", {
+        const response = await fetch(`${API.BASE}/early-access`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -1219,7 +1220,7 @@ document.getElementById("projectForm").addEventListener("submit", async function
     const description = document.getElementById("description").value;
 
     try {
-        const response = await fetch("https://carbonaxis-exchange.onrender.com/api/project-submission", {
+        const response = await fetch(`${API.BASE}/project-submission`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -1261,7 +1262,7 @@ document.getElementById("projectForm").addEventListener("submit", async function
   const description = document.getElementById("description").value;
 
   try {
-    const response = await fetch("https://carbonaxis-exchange.onrender.com/api/project-submission", {
+    const response = await fetch(`${API.BASE}/project-submission`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -1301,7 +1302,6 @@ if (requestInviteLink) {
   });
 }
 </script>
-<script src="/js/api.js"></script>
 <script src="/js/navbar.js"></script>
 <script src="/js/auth.js"></script>
 </body>
