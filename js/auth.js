@@ -49,26 +49,24 @@ document.addEventListener("DOMContentLoaded", () => {
       navBtn.href = "/dashboard.html";
     }
 
-    if (profileAvatar && user.name) {
+    if (user.name) {
       const initials = user.name
         .split(" ")
         .map((word) => word[0])
         .join("")
         .substring(0, 2)
         .toUpperCase();
-      profileAvatar.textContent = initials;
-    }
 
-    if (mobileMenu && !mobileMenu.querySelector("[data-mobile-account]")) {
-      const extra = document.createElement("div");
-      extra.setAttribute("data-mobile-account", "1");
-      extra.innerHTML = `
-        <a href="/dashboard.html">Dashboard</a>
-        <a href="/profile.html">Profile</a>
-        <a href="/ai-intelligence.html">AI Intelligence</a>
-        <a href="#" onclick="logout(); return false;">Logout</a>
-      `;
-      mobileMenu.appendChild(extra);
+      if (profileAvatar) {
+        profileAvatar.textContent = initials;
+      }
+
+      const nameLabel = document.querySelector(
+        ".profile-btn span:nth-child(2)"
+      );
+      if (nameLabel) {
+        nameLabel.textContent = user.name.split(" ")[0];
+      }
     }
   } else if (navBtn) {
     navBtn.textContent = "Get Access";

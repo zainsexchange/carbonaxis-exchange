@@ -3489,10 +3489,11 @@ table{
   .navbar nav,
   .nav-btn,
   .notification-menu,
-  .profile-menu,
   .login-open{
     display: none !important;
   }
+
+  /* profile-menu restored later for logged-in users (avatar dropdown) */
 
   .mobile-menu-btn{
     position: static !important;
@@ -4242,14 +4243,14 @@ font-weight:600;
    MOBILE HOME + LOGGED-IN HEADER HARD FIX
    ========================================================= */
 
-/* Desktop auth visibility via body class (no inline !important from JS) */
+/* Auth visibility via body class */
 .profile-menu,
 .notification-menu{
   display: none;
 }
-body.user-logged-in .profile-menu,
-body.user-logged-in .notification-menu{
-  display: block;
+body.user-logged-in .navbar .profile-menu,
+body.user-logged-in .navbar .notification-menu{
+  display: block !important;
 }
 body.user-logged-in .login-open{
   display: none !important;
@@ -4266,17 +4267,54 @@ body.user-guest .notification-menu{
     overflow-x: hidden !important;
   }
 
-  /* Keep header clean on phone even when logged in */
-  body.user-logged-in .navbar .profile-menu,
-  body.user-logged-in .navbar .notification-menu,
-  body.user-logged-in .navbar .nav-btn,
+  /* Keep page nav / CTAs hidden on phone */
   body.user-logged-in .navbar nav,
+  body.user-logged-in .navbar .nav-btn,
+  body.user-logged-in .navbar .notification-menu,
   .navbar .login-open{
     display: none !important;
   }
 
+  /* Account dropdown stays — compact avatar only */
+  body.user-logged-in .navbar .profile-menu{
+    display: block !important;
+    position: relative !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+    z-index: 10004 !important;
+  }
+
+  body.user-logged-in .navbar .profile-btn{
+    padding: 6px !important;
+    gap: 0 !important;
+    height: 42px !important;
+    width: 42px !important;
+    justify-content: center !important;
+  }
+
+  body.user-logged-in .navbar .profile-btn span:not(.profile-avatar){
+    display: none !important;
+  }
+
+  body.user-logged-in .navbar .profile-avatar{
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 12px !important;
+  }
+
+  body.user-logged-in .navbar .profile-dropdown{
+    right: 0 !important;
+    left: auto !important;
+    min-width: 180px !important;
+  }
+
+  .navbar .nav-inner{
+    gap: 8px !important;
+  }
+
   .navbar .mobile-menu-btn{
     display: flex !important;
+    margin-left: 0 !important;
   }
 
   .hero{
