@@ -1042,7 +1042,7 @@ app.get("/api/ai/quota", authenticateToken, async (req, res) => {
   }
 });
 
-.appost("/api/ai/ask", authenticateToken, async (req, res) => {
+app.post("/api/ai/ask", authenticateToken, async (req, res) => {
   try {
     const { question, country = "", product = "", conversation = [] } = req.body;
 
