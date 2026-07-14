@@ -28,6 +28,46 @@ document.addEventListener("DOMContentLoaded", () => {
       notificationMenu.classList.toggle("active");
     });
   }
+  // Close menus when clicking anywhere outside
+document.addEventListener("click", (e) => {
+
+  if (profileMenu && !profileMenu.contains(e.target)) {
+    profileMenu.classList.remove("active");
+  }
+
+  if (notificationMenu && !notificationMenu.contains(e.target)) {
+    notificationMenu.classList.remove("active");
+  }
+
+});
+document.querySelectorAll(".profile-dropdown a").forEach(link => {
+
+  link.addEventListener("click", () => {
+
+    if (profileMenu) {
+      profileMenu.classList.remove("active");
+    }
+
+  });
+
+});
+
+// Close menus when pressing ESC
+document.addEventListener("keydown", (e) => {
+
+  if (e.key === "Escape") {
+
+    if (profileMenu) {
+      profileMenu.classList.remove("active");
+    }
+
+    if (notificationMenu) {
+      notificationMenu.classList.remove("active");
+    }
+
+  }
+
+});
   const token = localStorage.getItem("token");
 
 if (token) {
