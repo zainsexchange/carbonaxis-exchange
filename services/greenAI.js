@@ -26,10 +26,25 @@ CarbonAxis Exchange is a carbon credits / climate markets platform. Your deepest
 ${GREEN_KNOWLEDGE}`;
 
 function isGreenEnergyQuestion(question = "", country = "", product = "") {
-  const text = `${question} ${country} ${product}`.toLowerCase();
-  return /green|climate|carbon|credit|rec\b|renewable|solar|wind|biochar|methane|hydrogen|net.?zero|esg|cbam|emission|co2|tco2|offset|nepra|aedb|otc|feasib|regulat|pakistan|oman|uae|energy transition|voluntary carbon|vcu|sequestr|forestry|nature-based/.test(
-    text
-  );
+  const q = String(question || "").toLowerCase();
+  const c = String(country || "").toLowerCase();
+  const p = String(product || "").toLowerCase();
+  const text = `${q} ${c} ${p}`;
+
+  // Green / climate topics only — do NOT treat country names alone as green questions
+  const greenTopic =
+    /green energy|climate|carbon|credit|rec\b|renewable|solar|wind|biochar|methane|hydrogen|net.?zero|esg|cbam|emission|co2|tco2|offset|nepra|aedb|otc|feasib|regulat|energy transition|voluntary carbon|vcu|sequestr|forestry|nature-based|clean energy|decarbon/.test(
+      text
+    );
+
+  // Country + green trade context (not “oman population”)
+  const countryWithGreenIntent =
+    /(pakistan|oman|uae|united arab emirates)/.test(text) &&
+    /(trade|trading|credit|solar|wind|renew|regulat|feasib|carbon|green|energy|rec\b|invest|market)/.test(
+      text
+    );
+
+  return greenTopic || countryWithGreenIntent || Boolean(p && /solar|wind|biochar|methane|carbon|rec|hydrogen|renew/.test(p));
 }
 
 function isExplainQuestion(question = "") {
@@ -43,6 +58,13 @@ function isTradeDecisionQuestion(question = "", country = "", product = "") {
   const text = `${question} ${country} ${product}`.toLowerCase();
   return /feasib|trade|trading|buy|sell|invest|restrict|regulat|long.?term|short.?term|otc|should i|is it (safe|ok|good)|proceed|outlook|risk/.test(
     text
+  );
+}
+
+function isGeneralFactQuestion(question = "") {
+  const q = String(question).toLowerCase();
+  return /\b(population|capital|currency|language|president|prime minister|weather|time zone|gdp|area|who is|when did|where is|how many people)\b/.test(
+    q
   );
 }
 
@@ -79,19 +101,22 @@ export async function runGreenIntelligence({
 }) {
   const plan = getPlan(subscription);
   const deepAnalysis = plan.deepAnalysis;
-  const greenMode = isGreenEnergyQuestion(question, country, product);
-  const explainMode = isExplainQuestion(question);
   const tradeMode = isTradeDecisionQuestion(question, country, product);
+  const explainMode = isExplainQuestion(question);
+  const generalFact = isGeneralFactQuestion(question);
+  // General facts (population, capital, etc.) stay general even if a country is mentioned
+  const greenMode =
+    !generalFact && isGreenEnergyQuestion(question, country, product);
   const system = buildSystemPrompt(subscription, deepAnalysis, greenMode);
 
   let instruction;
   if (!greenMode) {
     instruction =
-      "This is a GENERAL question. Answer clearly and helpfully like a strong general AI. Do not force a trading verdict unless relevant.";
+      "This is a GENERAL question. Answer clearly and helpfully like a strong general AI. Give the direct factual answer first when asked for population, capital, definitions, etc. Do NOT use trading Verdict/PROCEED templates.";
   } else if (explainMode && !tradeMode) {
     instruction =
       "This is a GREEN ENERGY LEARNING question. Explain clearly in natural language (like a great tutor). Do NOT use Verdict/PROCEED template.";
-  } else if (tradeMode || country || product) {
+  } else if (tradeMode || (country && product)) {
     instruction = deepAnalysis
       ? "This is a GREEN ENERGY trading/feasibility question. Deliver an outstanding regulatory/trading brief with clear verdict and horizon analysis."
       : "This is a GREEN ENERGY trading/feasibility question. Deliver a sharp verdict-led brief. Note Pro unlocks deeper horizon analysis.";
@@ -120,6 +145,7 @@ export async function runGreenIntelligence({
         greenMode,
         explainMode,
         tradeMode,
+        generalFact,
       }),
       deepAnalysis,
       plan: plan.id,
@@ -286,22 +312,57 @@ function localFallbackAnalysis({
   greenMode = true,
   explainMode = false,
   tradeMode = false,
+  generalFact = false,
 }) {
-  const keyNote = ""; // never expose server setup notes to end users
+  const q = String(question || "");
 
-  if (!greenMode) {
-    return `I can help with that.
+  // GENERAL MODE — answer facts plainly (no trading template)
+  if (!greenMode || generalFact) {
+    if (/oman/i.test(q) && /population|people|how many/i.test(q)) {
+      return `Yes — about **Oman’s population**:
 
-**Your question:** ${question}
+Recent estimates put Oman’s population at roughly **4.5 to 5.2 million** people (including residents and expatriates; figures vary by year and source).
 
-I can explain ideas, compare options, and help you plan next steps in plain language.
+For the most current official number, check Oman’s National Centre for Statistics and Information (NCSI).
 
-For CarbonAxis specialty questions (green energy, carbon markets, trading feasibility in Pakistan/Oman and beyond), ask directly and I’ll go deeper.${keyNote}`;
+If you meant Oman **green energy / carbon-market** potential instead, ask that next and I’ll go deeper.`;
+    }
+
+    if (/pakistan/i.test(q) && /population|people|how many/i.test(q)) {
+      return `Yes — about **Pakistan’s population**:
+
+Pakistan’s population is roughly **240+ million** people (approximate recent estimates; it changes with each census/update).
+
+For official figures, use the Pakistan Bureau of Statistics.
+
+Want Pakistan’s **green energy or carbon-credit** angle instead? Ask and I’ll switch to specialty mode.`;
+    }
+
+    if (/oman/i.test(q) && /capital/i.test(q)) {
+      return `**Muscat** is the capital of Oman.`;
+    }
+
+    if (/pakistan/i.test(q) && /capital/i.test(q)) {
+      return `**Islamabad** is the capital of Pakistan.`;
+    }
+
+    return `I can answer general questions too.
+
+**Your question:** ${q}
+
+Right now the server is running in **backup mode** (no live AI model key configured), so I can only answer a limited set of general facts offline.
+
+Once **OPENAI_API_KEY** is added on Render, I’ll answer general questions fully (population, news-style facts, writing help, etc.) and stay strongest on green energy.
+
+Try asking something like:
+- “What is the capital of Oman?”
+- “Explain carbon credits in simple words”
+- “Is solar REC trading in Oman feasible long term?”`;
   }
 
   // Learning / explain questions should sound natural — not a trading template
   if (explainMode && !tradeMode) {
-    if (/carbon credit/i.test(question)) {
+    if (/carbon credit/i.test(q)) {
       return `Carbon credits, in simple words:
 
 A carbon credit is like a certificate that represents **1 tonne of CO₂e** reduced or removed from the atmosphere.
@@ -320,12 +381,12 @@ A carbon credit is like a certificate that represents **1 tonne of CO₂e** redu
 CarbonAxis helps discover and trade verified climate assets — with stronger intelligence around green regulation and markets like **Pakistan** and **Oman**.
 
 If you want, ask a next question like:
-“Is solar REC trading in Oman feasible long term?”${keyNote}`;
+“Is solar REC trading in Oman feasible long term?”`;
     }
 
     return `Here’s a simple green-energy answer to your question:
 
-**${question}**
+**${q}**
 
 In plain terms: green energy and carbon-market topics are about cutting emissions, using cleaner power, and sometimes trading verified climate results (like carbon credits).
 
@@ -334,7 +395,7 @@ I can go deeper on:
 - country rules (especially Pakistan & Oman)
 - whether a product looks long-term or short-term under green regulation
 
-Ask me a more specific follow-up and I’ll answer clearly.${keyNote}`;
+Ask me a more specific follow-up and I’ll answer clearly.`;
   }
 
   const c = (country || "the selected market").trim() || "the selected market";
@@ -345,9 +406,9 @@ Ask me a more specific follow-up and I’ll answer clearly.${keyNote}`;
       ? "Oman Vision 2040 / energy transition and export-linked green pressure"
       : "global green-energy and voluntary carbon market practice (lower confidence outside PK/OM)";
 
-  const looksDirty = /coal|crude|diesel|furnace oil|petcoke/i.test(`${p} ${question}`);
+  const looksDirty = /coal|crude|diesel|furnace oil|petcoke/i.test(`${p} ${q}`);
   const looksGreenAsset = /solar|wind|hydrogen|biochar|methane|renewable|carbon credit|REC/i.test(
-    `${p} ${question}`
+    `${p} ${q}`
   );
 
   let verdict = "CAUTION";
@@ -371,7 +432,7 @@ Ask me a more specific follow-up and I’ll answer clearly.${keyNote}`;
 **Current feasibility:** Directionally workable if documentation, permits, and counterparty checks are clean. Focus lens: ${focus}.
 **Green regulation outlook:** ${horizon}
 **Why this timing:** CarbonAxis prioritizes Pakistan & Oman depth first, then worldwide. Products aligned with renewables / high-integrity credits tend to be longer-term; high-emission or soon-to-be-restricted activities may be short-term only.
-**User question addressed:** ${question}
+**User question addressed:** ${q}
 **CarbonAxis recommendation:** ${
     verdict === "PROCEED"
       ? "Pursue with verification-first structuring."
@@ -380,5 +441,5 @@ Ask me a more specific follow-up and I’ll answer clearly.${keyNote}`;
         : "Gather more product/country specifics before committing capital."
   }
 **Notes:** ${depthNote}
-**Disclaimer:** Not legal advice.${keyNote}`;
+**Disclaimer:** Not legal advice.`;
 }
