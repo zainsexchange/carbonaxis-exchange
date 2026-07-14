@@ -292,6 +292,43 @@ const aiQuerySchema = new mongoose.Schema(
 
 const AiQuery = mongoose.model("AiQuery", aiQuerySchema);
 
+const chatMessageSchema = new mongoose.Schema(
+  {
+    role: {
+      type: String,
+      enum: ["user", "assistant"],
+      required: true,
+    },
+    content: { type: String, required: true },
+    mode: { type: String, default: "" },
+  },
+  { timestamps: true }
+);
+
+const chatThreadSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    title: {
+      type: String,
+      default: "New chat",
+    },
+    messages: {
+      type: [chatMessageSchema],
+      default: [],
+    },
+  },
+  { timestamps: true }
+);
+
+chatThreadSchema.index({ userId: 1, updatedAt: -1 });
+
+const ChatThread = mongoose.model("ChatThread", chatThreadSchema);
+
 const dealSchema = new mongoose.Schema(
   {
     buyerId: {
@@ -1042,9 +1079,97 @@ app.get("/api/ai/quota", authenticateToken, async (req, res) => {
   }
 });
 
+/** Private GPT-style threads — only the owner can read/write/delete */
+app.get("/api/ai/threads", authenticateToken, async (req, res) => {
+  try {
+    const threads = await ChatThread.find({ userId: req.user.id })
+      .select("title createdAt updatedAt")
+      .sort({ updatedAt: -1 })
+      .limit(100);
+    res.json({ success: true, threads });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to load chats" });
+  }
+});
+
+app.post("/api/ai/threads", authenticateToken, async (req, res) => {
+  try {
+    const title = String(req.body?.title || "New chat").slice(0, 80);
+    const thread = await ChatThread.create({
+      userId: req.user.id,
+      title,
+      messages: [],
+    });
+    res.status(201).json({ success: true, thread });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to create chat" });
+  }
+});
+
+app.get("/api/ai/threads/:id", authenticateToken, async (req, res) => {
+  try {
+    const thread = await ChatThread.findOne({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
+    if (!thread) {
+      return res.status(404).json({ success: false, message: "Chat not found" });
+    }
+    res.json({ success: true, thread });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to load chat" });
+  }
+});
+
+app.patch("/api/ai/threads/:id", authenticateToken, async (req, res) => {
+  try {
+    const title = String(req.body?.title || "").trim().slice(0, 80);
+    if (!title) {
+      return res.status(400).json({ success: false, message: "Title required" });
+    }
+    const thread = await ChatThread.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id },
+      { title },
+      { new: true }
+    ).select("title createdAt updatedAt");
+    if (!thread) {
+      return res.status(404).json({ success: false, message: "Chat not found" });
+    }
+    res.json({ success: true, thread });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to rename chat" });
+  }
+});
+
+app.delete("/api/ai/threads/:id", authenticateToken, async (req, res) => {
+  try {
+    const deleted = await ChatThread.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: "Chat not found" });
+    }
+    res.json({ success: true, message: "Chat deleted" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to delete chat" });
+  }
+});
+
 app.post("/api/ai/ask", authenticateToken, async (req, res) => {
   try {
-    const { question, country = "", product = "", conversation = [] } = req.body;
+    const {
+      question,
+      country = "",
+      product = "",
+      conversation = [],
+      threadId = null,
+    } = req.body;
 
     if (!question || String(question).trim().length < 3) {
       return res.status(400).json({
@@ -1058,6 +1183,26 @@ app.post("/api/ai/ask", authenticateToken, async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
+    let thread = null;
+    if (threadId) {
+      thread = await ChatThread.findOne({
+        _id: threadId,
+        userId: req.user.id,
+      });
+      if (!thread) {
+        return res.status(404).json({
+          success: false,
+          message: "Chat thread not found",
+        });
+      }
+    } else {
+      thread = await ChatThread.create({
+        userId: user._id,
+        title: String(question).trim().slice(0, 60),
+        messages: [],
+      });
+    }
+
     const usage = await consumeAiQuery(user);
     if (!usage.allowed) {
       return res.status(402).json({
@@ -1068,12 +1213,20 @@ app.post("/api/ai/ask", authenticateToken, async (req, res) => {
       });
     }
 
+    const history =
+      Array.isArray(conversation) && conversation.length
+        ? conversation
+        : thread.messages.slice(-8).map((m) => ({
+            role: m.role,
+            content: m.content,
+          }));
+
     const result = await runGreenIntelligence({
       question: String(question).trim(),
       country: String(country || "").trim(),
       product: String(product || "").trim(),
       subscription: user.subscription,
-      conversation: Array.isArray(conversation) ? conversation : [],
+      conversation: history,
     });
 
     const verdictMatch = result.answer.match(
@@ -1091,6 +1244,20 @@ app.post("/api/ai/ask", authenticateToken, async (req, res) => {
       provider: result.provider,
     });
 
+    thread.messages.push({
+      role: "user",
+      content: String(question).trim(),
+    });
+    thread.messages.push({
+      role: "assistant",
+      content: result.answer,
+      mode: result.mode || "",
+    });
+    if (thread.title === "New chat") {
+      thread.title = String(question).trim().slice(0, 60);
+    }
+    await thread.save();
+
     res.json({
       success: true,
       answer: result.answer,
@@ -1099,6 +1266,8 @@ app.post("/api/ai/ask", authenticateToken, async (req, res) => {
       mode: result.mode || "general",
       quota: usage.quota,
       focusMarkets: getPlan(user.subscription).marketsPriority,
+      threadId: thread._id,
+      threadTitle: thread.title,
     });
   } catch (error) {
     console.error("AI ask error:", error);

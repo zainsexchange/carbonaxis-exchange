@@ -4239,6 +4239,159 @@ font-weight:600;
   }
 }
 
+/* GPT-style private threads workspace */
+.ai-workspace{
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 0;
+  min-height: calc(100vh - 90px);
+  max-width: 1280px;
+  margin: 90px auto 24px;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.ai-thread-sidebar{
+  background: rgba(8,18,16,0.9);
+  border: 1px solid rgba(0,229,176,0.14);
+  border-radius: 18px 0 0 18px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 70vh;
+}
+
+.ai-new-chat{
+  width: 100%;
+}
+
+.ai-thread-label{
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #8fa89f;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ai-thread-privacy{
+  margin-top: auto;
+  font-size: 12px;
+  color: #7f968d;
+}
+
+.ai-thread-list{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: auto;
+  max-height: 55vh;
+}
+
+.ai-thread-empty{
+  color: #8fa89f;
+  font-size: 13px;
+}
+
+.ai-thread-item{
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.ai-thread-item.active .ai-thread-open{
+  border-color: rgba(0,229,176,0.45);
+  background: rgba(0,229,176,0.1);
+}
+
+.ai-thread-open{
+  flex: 1;
+  text-align: left;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: #d7e7e1;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-thread-delete{
+  border: none;
+  background: transparent;
+  color: #889890;
+  cursor: pointer;
+  padding: 6px;
+}
+
+.ai-chat-main{
+  border: 1px solid rgba(0,229,176,0.14);
+  border-left: none;
+  border-radius: 0 18px 18px 0;
+  background: rgba(8,18,16,0.72);
+  padding: 14px;
+  min-width: 0;
+}
+
+.ai-chat-top{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.ai-threads-toggle{
+  display: none;
+}
+
+.ai-chat-panel-flex{
+  min-height: 65vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-chat-panel-flex .ai-chat-log{
+  flex: 1;
+  min-height: 360px;
+  max-height: none;
+}
+
+@media (max-width: 900px){
+  .ai-workspace{
+    grid-template-columns: 1fr;
+    margin-top: 100px;
+  }
+
+  .ai-thread-sidebar{
+    display: none;
+    position: fixed;
+    top: 90px;
+    left: 12px;
+    right: 12px;
+    z-index: 9000;
+    border-radius: 16px;
+    max-height: 70vh;
+  }
+
+  .ai-thread-sidebar.open{
+    display: flex;
+  }
+
+  .ai-chat-main{
+    border-left: 1px solid rgba(0,229,176,0.14);
+    border-radius: 18px;
+  }
+
+  .ai-threads-toggle{
+    display: inline-flex;
+  }
+}
+
 /* =========================================================
    MOBILE HOME + LOGGED-IN HEADER HARD FIX
    ========================================================= */

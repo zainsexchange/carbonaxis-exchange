@@ -287,8 +287,7 @@ function localFallbackAnalysis({
   explainMode = false,
   tradeMode = false,
 }) {
-  const keyNote =
-    "\n\n—\nSetup note: Add OPENAI_API_KEY in Render Environment for full ChatGPT-quality answers. Local backup mode is active now.";
+  const keyNote = ""; // never expose server setup notes to end users
 
   if (!greenMode) {
     return `I can help with that.

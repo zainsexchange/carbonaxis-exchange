@@ -16,6 +16,7 @@ const API = {
   plans: "/plans",
   aiAsk: "/ai/ask",
   aiQuota: "/ai/quota",
+  aiThreads: "/ai/threads",
   deals: "/deals",
   billingCheckout: "/billing/checkout",
   projectAnalyze: (id) => `/projects/${id}/analyze`,

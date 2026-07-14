@@ -4,7 +4,6 @@
     window.location.href = "/login.html";
     return;
   }
-  // keep storage clean
   localStorage.setItem("token", token);
 
   const chatLog = document.getElementById("aiChatLog");
@@ -16,7 +15,10 @@
   const planEl = document.getElementById("aiPlan");
   const modeBadge = document.getElementById("aiModeBadge");
   const sendBtn = document.getElementById("aiSendBtn");
+  const threadList = document.getElementById("aiThreadList");
+  const newChatBtn = document.getElementById("aiNewChatBtn");
 
+  let activeThreadId = null;
   const conversation = [];
 
   function authHeaders() {
@@ -59,6 +61,17 @@
     setTimeout(() => {
       window.location.href = "/login.html";
     }, 1200);
+  }
+
+  function clearChatLog(welcome = true) {
+    chatLog.innerHTML = "";
+    conversation.length = 0;
+    if (welcome) {
+      appendMessage(
+        "assistant",
+        "New private chat started. Only you can see this thread."
+      );
+    }
   }
 
   function appendMessage(role, text, { stream = false } = {}) {
@@ -104,9 +117,7 @@
     try {
       const base = API.BASE.replace(/\/api\/?$/, "");
       await fetch(base + "/", { method: "GET", mode: "cors", cache: "no-store" });
-    } catch (_) {
-      /* Render may still be waking */
-    }
+    } catch (_) {}
   }
 
   async function fetchJson(url, options, timeoutMs = 90000) {
@@ -126,6 +137,123 @@
       clearTimeout(timer);
     }
   }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  async function loadThreads() {
+    if (!threadList || !API.aiThreads) return;
+    try {
+      const { res, data } = await fetchJson(`${API.BASE}${API.aiThreads}`, {
+        headers: authHeaders(),
+      });
+      if (res.status === 401) {
+        forceRelogin("Invalid or expired token. Please login again.");
+        return;
+      }
+      const threads = data?.threads || [];
+      if (!threads.length) {
+        threadList.innerHTML =
+          '<p class="ai-thread-empty">No chats yet. Start a new one.</p>';
+        return;
+      }
+      threadList.innerHTML = threads
+        .map((t) => {
+          const active = String(t._id) === String(activeThreadId) ? "active" : "";
+          return `
+          <div class="ai-thread-item ${active}" data-id="${t._id}">
+            <button type="button" class="ai-thread-open" data-id="${t._id}">
+              ${escapeHtml(t.title || "New chat")}
+            </button>
+            <button type="button" class="ai-thread-delete" data-id="${t._id}" title="Delete">✕</button>
+          </div>`;
+        })
+        .join("");
+    } catch (err) {
+      console.error(err);
+      threadList.innerHTML = '<p class="ai-thread-empty">Unable to load chats.</p>';
+    }
+  }
+
+  async function openThread(id) {
+    const { res, data } = await fetchJson(
+      `${API.BASE}${API.aiThreads}/${id}`,
+      { headers: authHeaders() }
+    );
+    if (res.status === 401) {
+      forceRelogin("Invalid or expired token. Please login again.");
+      return;
+    }
+    if (!data?.success) return;
+
+    activeThreadId = data.thread._id;
+    clearChatLog(false);
+    conversation.length = 0;
+
+    (data.thread.messages || []).forEach((m) => {
+      appendMessage(m.role, m.content);
+      conversation.push({ role: m.role, content: m.content });
+    });
+
+    if (!(data.thread.messages || []).length) {
+      appendMessage(
+        "assistant",
+        "This chat is empty. Ask anything to continue."
+      );
+    }
+
+    document.getElementById("aiThreadSidebar")?.classList.remove("open");
+    loadThreads();
+  }
+
+  async function startNewChat() {
+    activeThreadId = null;
+    clearChatLog(true);
+    try {
+      const { data } = await fetchJson(`${API.BASE}${API.aiThreads}`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ title: "New chat" }),
+      });
+      if (data?.thread?._id) {
+        activeThreadId = data.thread._id;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    loadThreads();
+    document.getElementById("aiThreadSidebar")?.classList.remove("open");
+  }
+
+  async function deleteThread(id) {
+    if (!confirm("Delete this private chat?")) return;
+    await fetchJson(`${API.BASE}${API.aiThreads}/${id}`, {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
+    if (String(activeThreadId) === String(id)) {
+      activeThreadId = null;
+      clearChatLog(true);
+    }
+    loadThreads();
+  }
+
+  threadList?.addEventListener("click", (e) => {
+    const del = e.target.closest(".ai-thread-delete");
+    if (del) {
+      deleteThread(del.getAttribute("data-id"));
+      return;
+    }
+    const open = e.target.closest(".ai-thread-open");
+    if (open) openThread(open.getAttribute("data-id"));
+  });
+
+  newChatBtn?.addEventListener("click", startNewChat);
 
   async function loadQuota() {
     try {
@@ -195,10 +323,17 @@
         throw new Error("Missing api.js AI routes — re-upload js/api.js");
       }
 
-      // Wake Render (cold start is common on mobile)
       thinking.textContent = "Waking server…";
       await wakeApi();
       thinking.textContent = green ? "Analyzing…" : "Thinking…";
+
+      const body = {
+        question,
+        country,
+        product,
+        conversation: conversation.slice(-8),
+        threadId: activeThreadId,
+      };
 
       let result;
       try {
@@ -207,17 +342,11 @@
           {
             method: "POST",
             headers: authHeaders(),
-            body: JSON.stringify({
-              question,
-              country,
-              product,
-              conversation: conversation.slice(-8),
-            }),
+            body: JSON.stringify(body),
           },
           90000
         );
-      } catch (firstErr) {
-        // one retry after wake
+      } catch (_) {
         thinking.textContent = "Retrying… server was slow";
         await wakeApi();
         result = await fetchJson(
@@ -225,12 +354,7 @@
           {
             method: "POST",
             headers: authHeaders(),
-            body: JSON.stringify({
-              question,
-              country,
-              product,
-              conversation: conversation.slice(-8),
-            }),
+            body: JSON.stringify(body),
           },
           90000
         );
@@ -255,20 +379,15 @@
           stream: true,
         });
         if (data.quota) renderQuota(data.quota);
-        if (res.status === 402) {
-          await appendMessage(
-            "assistant",
-            "Upgrade on Pricing for more queries and deeper green analysis.",
-            { stream: true }
-          );
-        }
         return;
       }
 
+      if (data.threadId) activeThreadId = data.threadId;
       if (data.mode) setModeBadge(data.mode);
       await appendMessage("assistant", data.answer, { stream: true });
       conversation.push({ role: "assistant", content: data.answer });
       renderQuota(data.quota);
+      loadThreads();
     } catch (err) {
       thinking.remove();
       console.error(err);
@@ -276,7 +395,7 @@
       await appendMessage(
         "assistant",
         timedOut
-          ? "Request timed out. The server was slow (common on first mobile request). Please try again."
+          ? "Request timed out. Please try again."
           : err?.message
             ? `Connection issue: ${err.message}`
             : "Network error. Please try again.",
@@ -289,4 +408,5 @@
   });
 
   loadQuota();
+  loadThreads();
 })();
