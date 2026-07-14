@@ -1,9 +1,11 @@
 (() => {
-  const token = localStorage.getItem("token");
+  const token = (localStorage.getItem("token") || "").trim();
   if (!token) {
     window.location.href = "/login.html";
     return;
   }
+  // keep storage clean
+  localStorage.setItem("token", token);
 
   const chatLog = document.getElementById("aiChatLog");
   const form = document.getElementById("aiAskForm");
@@ -32,12 +34,8 @@
 
   function renderQuota(quota) {
     if (!quota) return;
-    if (quotaEl) {
-      quotaEl.textContent = `${quota.remaining}/${quota.limit} left`;
-    }
-    if (planEl) {
-      planEl.textContent = quota.planName || "Free";
-    }
+    if (quotaEl) quotaEl.textContent = `${quota.remaining}/${quota.limit} left`;
+    if (planEl) planEl.textContent = quota.planName || "Free";
   }
 
   function setModeBadge(mode) {
@@ -54,6 +52,15 @@
     }
   }
 
+  function forceRelogin(message) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    appendMessage("assistant", message || "Session expired. Please login again.");
+    setTimeout(() => {
+      window.location.href = "/login.html";
+    }, 1200);
+  }
+
   function appendMessage(role, text, { stream = false } = {}) {
     const bubble = document.createElement("div");
     bubble.className = `ai-bubble ai-bubble-${role}`;
@@ -68,7 +75,6 @@
       body.textContent = text;
       return Promise.resolve(body);
     }
-
     return typewriter(body, text);
   }
 
@@ -84,9 +90,8 @@
         i = Math.min(fullText.length, i + chunk);
         el.textContent = fullText.slice(0, i);
         chatLog.scrollTop = chatLog.scrollHeight;
-        if (i < fullText.length) {
-          setTimeout(tick, speed);
-        } else {
+        if (i < fullText.length) setTimeout(tick, speed);
+        else {
           el.classList.remove("typing");
           resolve(el);
         }
@@ -95,14 +100,46 @@
     });
   }
 
+  async function wakeApi() {
+    try {
+      const base = API.BASE.replace(/\/api\/?$/, "");
+      await fetch(base + "/", { method: "GET", mode: "cors", cache: "no-store" });
+    } catch (_) {
+      /* Render may still be waking */
+    }
+  }
+
+  async function fetchJson(url, options, timeoutMs = 90000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, { ...options, signal: controller.signal });
+      const raw = await res.text();
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        data = null;
+      }
+      return { res, data, raw };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   async function loadQuota() {
     try {
       if (!API.aiQuota) return;
-      const res = await fetch(`${API.BASE}${API.aiQuota}`, {
-        headers: authHeaders(),
-      });
-      const data = await res.json();
-      if (data.success) renderQuota(data.quota);
+      const { res, data } = await fetchJson(
+        `${API.BASE}${API.aiQuota}`,
+        { headers: authHeaders() },
+        45000
+      );
+      if (res.status === 401) {
+        forceRelogin("Invalid or expired token. Please login again.");
+        return;
+      }
+      if (data?.success) renderQuota(data.quota);
     } catch (err) {
       console.error(err);
     }
@@ -147,7 +184,9 @@
 
     const thinking = document.createElement("div");
     thinking.className = "ai-bubble ai-bubble-assistant ai-thinking";
-    thinking.textContent = green ? "Analyzing…" : "Thinking…";
+    thinking.textContent = green
+      ? "Connecting… preparing green analysis"
+      : "Connecting… thinking";
     chatLog.appendChild(thinking);
     chatLog.scrollTop = chatLog.scrollHeight;
 
@@ -155,20 +194,61 @@
       if (!API.aiAsk) {
         throw new Error("Missing api.js AI routes — re-upload js/api.js");
       }
-      const res = await fetch(`${API.BASE}${API.aiAsk}`, {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify({ question, country, product, conversation }),
-      });
 
-      const raw = await res.text();
-      let data;
+      // Wake Render (cold start is common on mobile)
+      thinking.textContent = "Waking server…";
+      await wakeApi();
+      thinking.textContent = green ? "Analyzing…" : "Thinking…";
+
+      let result;
       try {
-        data = JSON.parse(raw);
-      } catch {
+        result = await fetchJson(
+          `${API.BASE}${API.aiAsk}`,
+          {
+            method: "POST",
+            headers: authHeaders(),
+            body: JSON.stringify({
+              question,
+              country,
+              product,
+              conversation: conversation.slice(-8),
+            }),
+          },
+          90000
+        );
+      } catch (firstErr) {
+        // one retry after wake
+        thinking.textContent = "Retrying… server was slow";
+        await wakeApi();
+        result = await fetchJson(
+          `${API.BASE}${API.aiAsk}`,
+          {
+            method: "POST",
+            headers: authHeaders(),
+            body: JSON.stringify({
+              question,
+              country,
+              product,
+              conversation: conversation.slice(-8),
+            }),
+          },
+          90000
+        );
+      }
+
+      const { res, data } = result;
+      thinking.remove();
+
+      if (res.status === 401) {
+        forceRelogin(
+          data?.message || "Invalid or expired token. Please login again."
+        );
+        return;
+      }
+
+      if (!data) {
         throw new Error(`Bad server response (${res.status})`);
       }
-      thinking.remove();
 
       if (!data.success) {
         await appendMessage("assistant", data.message || "Unable to answer.", {
@@ -192,9 +272,14 @@
     } catch (err) {
       thinking.remove();
       console.error(err);
+      const timedOut = err?.name === "AbortError";
       await appendMessage(
         "assistant",
-        err?.message ? `Connection issue: ${err.message}` : "Network error. Try again.",
+        timedOut
+          ? "Request timed out. The server was slow (common on first mobile request). Please try again."
+          : err?.message
+            ? `Connection issue: ${err.message}`
+            : "Network error. Please try again.",
         { stream: true }
       );
     } finally {
