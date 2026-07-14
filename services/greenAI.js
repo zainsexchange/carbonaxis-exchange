@@ -11,13 +11,13 @@ const SYSTEM_BASE = `You are CarbonAxis Intelligence — the AI assistant of Car
 
 2) GREEN ENERGY / CLIMATE MODE (your signature strength — be outstanding here)
 Trigger when the user asks about green energy, carbon credits, RECs, climate finance, ESG, net zero, renewable power, biochar, methane, hydrogen, CBAM, environmental regulation, trading feasibility in climate markets, or restriction risk.
-In this mode you must be MORE impressive than a generic chatbot:
-- Give sharper, more structured, decision-ready answers
-- Lead with a clear verdict when trade/feasibility is asked: PROCEED | PROCEED_SHORT_TERM | CAUTION | AVOID
-- Cover current feasibility + near-term risk (months) + mid-term horizon (1–4 years)
+
+In this mode:
+- If the user is ASKING TO LEARN / EXPLAIN (what is, explain, meaning, simple words): answer in clear natural language. Do NOT force a trading verdict template.
+- If the user is ASKING ABOUT TRADING / FEASIBILITY / REGULATION RISK: be decision-ready and lead with PROCEED | PROCEED_SHORT_TERM | CAUTION | AVOID, plus horizon analysis (months to 3–4 years).
 - Prioritize Pakistan and Oman depth; still answer worldwide with honest confidence notes
-- Make the answer attractive: crisp headings, practical next steps, and confident but responsible language
-- Never invent fake statute numbers; if uncertain, say so and still give directional analysis
+- Make answers attractive, practical, and responsible
+- Never invent fake statute numbers; if uncertain, say so
 - Never claim guaranteed returns
 
 ## Product identity
@@ -32,10 +32,24 @@ function isGreenEnergyQuestion(question = "", country = "", product = "") {
   );
 }
 
+function isExplainQuestion(question = "") {
+  const q = String(question).toLowerCase();
+  return /^(what is|what's|whats|explain|define|meaning of|tell me about|how does|how do|simple words|in simple)/i.test(
+    q.trim()
+  ) || /\b(explain|what are|what is|in simple words|eli5|basics of)\b/i.test(q);
+}
+
+function isTradeDecisionQuestion(question = "", country = "", product = "") {
+  const text = `${question} ${country} ${product}`.toLowerCase();
+  return /feasib|trade|trading|buy|sell|invest|restrict|regulat|long.?term|short.?term|otc|should i|is it (safe|ok|good)|proceed|outlook|risk/.test(
+    text
+  );
+}
+
 function buildSystemPrompt(planId, deepAnalysis, greenMode) {
   const plan = getPlan(planId);
   const modeBlock = greenMode
-    ? `Active mode: GREEN ENERGY (premium depth). Be especially strong, clear, and decision-oriented. Make the analysis stand out.`
+    ? `Active mode: GREEN ENERGY (premium depth). Be especially strong and clear. Use verdict format ONLY for trading/feasibility questions — not for simple explain questions.`
     : `Active mode: GENERAL. Answer helpfully like a capable general assistant. If useful, you may briefly mention CarbonAxis context, but do not force it.`;
 
   return `${SYSTEM_BASE}
@@ -66,17 +80,31 @@ export async function runGreenIntelligence({
   const plan = getPlan(subscription);
   const deepAnalysis = plan.deepAnalysis;
   const greenMode = isGreenEnergyQuestion(question, country, product);
+  const explainMode = isExplainQuestion(question);
+  const tradeMode = isTradeDecisionQuestion(question, country, product);
   const system = buildSystemPrompt(subscription, deepAnalysis, greenMode);
+
+  let instruction;
+  if (!greenMode) {
+    instruction =
+      "This is a GENERAL question. Answer clearly and helpfully like a strong general AI. Do not force a trading verdict unless relevant.";
+  } else if (explainMode && !tradeMode) {
+    instruction =
+      "This is a GREEN ENERGY LEARNING question. Explain clearly in natural language (like a great tutor). Do NOT use Verdict/PROCEED template.";
+  } else if (tradeMode || country || product) {
+    instruction = deepAnalysis
+      ? "This is a GREEN ENERGY trading/feasibility question. Deliver an outstanding regulatory/trading brief with clear verdict and horizon analysis."
+      : "This is a GREEN ENERGY trading/feasibility question. Deliver a sharp verdict-led brief. Note Pro unlocks deeper horizon analysis.";
+  } else {
+    instruction =
+      "This is a GREEN ENERGY question. Answer naturally and helpfully with strong climate-market insight. Use verdict template only if a trading decision is implied.";
+  }
 
   const userPayload = [
     country ? `Focus country/market: ${country}` : null,
     product ? `Product / trade item: ${product}` : null,
     `User question: ${question}`,
-    greenMode
-      ? deepAnalysis
-        ? "This is a GREEN ENERGY question. Deliver an outstanding regulatory/trading feasibility brief with clear verdict and horizon analysis."
-        : "This is a GREEN ENERGY question. Deliver a sharp, attractive verdict-led brief. Note Pro unlocks deeper horizon analysis."
-      : "This is a GENERAL question. Answer clearly and helpfully like a strong general AI. Do not force a trading verdict unless relevant.",
+    instruction,
   ]
     .filter(Boolean)
     .join("\n");
@@ -90,6 +118,8 @@ export async function runGreenIntelligence({
         product,
         deepAnalysis,
         greenMode,
+        explainMode,
+        tradeMode,
       }),
       deepAnalysis,
       plan: plan.id,
@@ -254,17 +284,58 @@ function localFallbackAnalysis({
   product,
   deepAnalysis,
   greenMode = true,
+  explainMode = false,
+  tradeMode = false,
 }) {
+  const keyNote =
+    "\n\n—\nSetup note: Add OPENAI_API_KEY in Render Environment for full ChatGPT-quality answers. Local backup mode is active now.";
+
   if (!greenMode) {
     return `I can help with that.
 
 **Your question:** ${question}
 
-Here's a clear starting point: I can explain concepts, draft options, compare ideas, and help you plan next steps.
+I can explain ideas, compare options, and help you plan next steps in plain language.
 
-For CarbonAxis's specialty strength — green energy, carbon markets, and regulation (especially Pakistan & Oman) — ask a trading/feasibility question and I'll switch into premium decision mode with a clear verdict.
+For CarbonAxis specialty questions (green energy, carbon markets, trading feasibility in Pakistan/Oman and beyond), ask directly and I’ll go deeper.${keyNote}`;
+  }
 
-**Note:** Full model answers need OPENAI_API_KEY on the server. Local fallback is active right now.`;
+  // Learning / explain questions should sound natural — not a trading template
+  if (explainMode && !tradeMode) {
+    if (/carbon credit/i.test(question)) {
+      return `Carbon credits, in simple words:
+
+A carbon credit is like a certificate that represents **1 tonne of CO₂e** reduced or removed from the atmosphere.
+
+**How it works**
+1. A climate project (solar, biochar, methane capture, forestry, etc.) proves it cut or removed emissions.
+2. After verification, credits can be issued.
+3. A company that still produces emissions can buy those credits to support climate action and report progress toward climate goals.
+
+**Why people care**
+- Buyers want credible climate impact.
+- Project owners earn value from verified reductions/removals.
+- Markets need transparency, quality, and clear rules.
+
+**CarbonAxis angle**
+CarbonAxis helps discover and trade verified climate assets — with stronger intelligence around green regulation and markets like **Pakistan** and **Oman**.
+
+If you want, ask a next question like:
+“Is solar REC trading in Oman feasible long term?”${keyNote}`;
+    }
+
+    return `Here’s a simple green-energy answer to your question:
+
+**${question}**
+
+In plain terms: green energy and carbon-market topics are about cutting emissions, using cleaner power, and sometimes trading verified climate results (like carbon credits).
+
+I can go deeper on:
+- simple definitions
+- country rules (especially Pakistan & Oman)
+- whether a product looks long-term or short-term under green regulation
+
+Ask me a more specific follow-up and I’ll answer clearly.${keyNote}`;
   }
 
   const c = (country || "the selected market").trim() || "the selected market";
@@ -276,13 +347,13 @@ For CarbonAxis's specialty strength — green energy, carbon markets, and regula
       : "global green-energy and voluntary carbon market practice (lower confidence outside PK/OM)";
 
   const looksDirty = /coal|crude|diesel|furnace oil|petcoke/i.test(`${p} ${question}`);
-  const looksGreen = /solar|wind|hydrogen|biochar|methane|renewable|carbon credit|REC/i.test(
+  const looksGreenAsset = /solar|wind|hydrogen|biochar|methane|renewable|carbon credit|REC/i.test(
     `${p} ${question}`
   );
 
   let verdict = "CAUTION";
   let horizon = "Review case-by-case over the next 12–36 months.";
-  if (looksGreen) {
+  if (looksGreenAsset) {
     verdict = "PROCEED";
     horizon = "Likely longer-horizon alignment (multi-year), subject to verification quality.";
   } else if (looksDirty) {
@@ -310,5 +381,5 @@ For CarbonAxis's specialty strength — green energy, carbon markets, and regula
         : "Gather more product/country specifics before committing capital."
   }
 **Notes:** ${depthNote}
-**Disclaimer:** Not legal advice. Connect OPENAI_API_KEY on the server for full model-powered analysis. Local engine used because no AI key is configured.`;
+**Disclaimer:** Not legal advice.${keyNote}`;
 }
