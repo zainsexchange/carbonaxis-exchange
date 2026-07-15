@@ -6,7 +6,7 @@
 <title>Climate Intelligence Dashboard | CarbonAxis Exchange</title>
   <meta name="description" content="CarbonAxis Exchange is building institutional climate market infrastructure for transparent carbon trading, verified climate projects, and scalable climate finance." />
   <link rel="icon" type="image/png" href="/favicon.png" />
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/style.css?v=102">
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -194,7 +194,7 @@ Welcome back!
         <h2>Manage Carbon Assets & Market Activity</h2>
       </div>
       <p>
-        A future-ready dashboard for buyers, project owners and climate partners to track portfolios, watchlists and verified market activity.
+        Track portfolios and watchlists, then use CarbonAxis Intelligence for market research, compare, and listing analysis.
       </p>
     </div>
 
@@ -330,33 +330,47 @@ Welcome back!
   </div>
 
 </div>
-<div class="ai-insight-panel">
+<div class="ai-insight-panel" id="aiPulsePanel">
 
   <div class="activity-head">
-    <h3>AI Climate Intelligence</h3>
-    <span>Beta Signal</span>
+    <h3>CarbonAxis Intelligence Pulse</h3>
+    <span id="aiPulseBadge">Market signals</span>
   </div>
 
-  <div class="ai-insight-grid">
+  <p class="ai-pulse-lead">
+    Priority depth: Pakistan &amp; Oman · worldwide coverage. Open Intelligence for full research or market compare.
+  </p>
 
-    <div class="ai-card">
-      <span>Market Signal</span>
-      <h4>Carbon removal demand is trending upward.</h4>
-      <p>Biochar and long-duration removal assets are gaining stronger buyer attention across voluntary markets.</p>
+  <div class="ai-pulse-actions">
+    <button type="button" class="btn btn-outline" id="aiPulseRefreshBtn">Refresh pulse</button>
+    <a class="btn btn-primary" href="/ai-intelligence.html">Open Intelligence</a>
+    <a class="btn btn-outline" href="/ai-intelligence.html#compare">Compare Markets</a>
+  </div>
+
+  <div class="ai-insight-grid" id="aiPulseGrid">
+    <div class="ai-card" data-pulse="pk">
+      <span>Pakistan</span>
+      <h4>Renewable &amp; voluntary credit interest remains active</h4>
+      <p>NEPRA/AEDB direction and verification quality still drive medium-term feasibility.</p>
     </div>
-
-    <div class="ai-card">
-      <span>Risk Insight</span>
-      <h4>Verification quality remains a key pricing factor.</h4>
-      <p>Projects with transparent registry data and monitoring reports are likely to receive stronger institutional demand.</p>
+    <div class="ai-card" data-pulse="om">
+      <span>Oman</span>
+      <h4>Vision 2040 supports longer-horizon green assets</h4>
+      <p>Solar / hydrogen-adjacent pathways look stronger than high-emission short cycles.</p>
     </div>
-
-    <div class="ai-card">
-      <span>Net Zero Signal</span>
-      <h4>Corporate buyers are shifting toward higher-quality offsets.</h4>
-      <p>Net zero strategies increasingly favor measurable, durable and verified climate impact assets.</p>
+    <div class="ai-card" data-pulse="wx">
+      <span>Worldwide</span>
+      <h4>High-integrity credits keep institutional preference</h4>
+      <p>MRV, additionality and registry clarity continue to separate durable supply from weaker claims.</p>
     </div>
+  </div>
 
+  <div class="ai-pulse-live" id="aiPulseLive" hidden>
+    <div class="activity-head">
+      <h3>Live pulse brief</h3>
+      <span id="aiPulseLiveMeta">Intelligence</span>
+    </div>
+    <div class="ai-pulse-live-body" id="aiPulseLiveBody"></div>
   </div>
 
 </div>
@@ -888,6 +902,6 @@ if(_token){
 <script src="/js/api.js"></script>
 <script src="/js/navbar.js"></script>
 <script src="/js/auth.js"></script>
-<script src="/js/dashboard.js?v=101"></script>
+<script src="/js/dashboard.js?v=102"></script>
 </body>
 </html>

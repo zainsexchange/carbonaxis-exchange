@@ -729,5 +729,8 @@
   loadQuota();
   loadThreads().finally(() => {
     applyMarketplaceDeepLink();
+    if (window.location.hash === "#compare") {
+      document.getElementById("aiTabCompare")?.click();
+    }
   });
 })();
