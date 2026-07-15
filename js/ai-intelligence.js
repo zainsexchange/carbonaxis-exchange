@@ -94,18 +94,100 @@
       .replace(/"/g, "&quot;");
   }
 
-  /** Turn simple markdown (**bold**, lists, newlines) into safe HTML */
-  function formatAssistantHtml(text) {
+  function isMdTableRow(line) {
+    const t = String(line || "").trim();
+    return t.startsWith("|") && t.includes("|", 1);
+  }
+
+  function isMdTableSeparator(line) {
+    const t = String(line || "").trim();
+    return /^\|?[\s:-]+\|[\s|:-]*\|?$/.test(t) && /-/.test(t);
+  }
+
+  function splitMdTableCells(line) {
+    let t = String(line || "").trim();
+    if (t.startsWith("|")) t = t.slice(1);
+    if (t.endsWith("|")) t = t.slice(0, -1);
+    return t.split("|").map((c) => c.trim());
+  }
+
+  function inlineMd(text) {
     let html = escapeHtml(text);
-    // bold **text**
     html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-    // italic *text* (after bold, avoid leftover asterisks pairs)
     html = html.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
-    // inline code `code`
     html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
-    // newlines
-    html = html.replace(/\n/g, "<br>");
     return html;
+  }
+
+  function renderMdTable(rows) {
+    if (!rows.length) return "";
+    const header = splitMdTableCells(rows[0]);
+    const bodyRows = rows.slice(2).filter((r) => !isMdTableSeparator(r));
+    let html = '<div class="ai-table-wrap"><table class="ai-md-table"><thead><tr>';
+    header.forEach((cell) => {
+      html += `<th>${inlineMd(cell)}</th>`;
+    });
+    html += "</tr></thead><tbody>";
+    bodyRows.forEach((row) => {
+      const cells = splitMdTableCells(row);
+      html += "<tr>";
+      header.forEach((_, idx) => {
+        html += `<td>${inlineMd(cells[idx] || "")}</td>`;
+      });
+      html += "</tr>";
+    });
+    html += "</tbody></table></div>";
+    return html;
+  }
+
+  /** Turn markdown (**bold**, tables, lists, headings) into safe HTML */
+  function formatAssistantHtml(text) {
+    const rawLines = String(text ?? "").split(/\r?\n/);
+    const blocks = [];
+    let i = 0;
+
+    while (i < rawLines.length) {
+      const line = rawLines[i];
+      if (
+        isMdTableRow(line) &&
+        i + 1 < rawLines.length &&
+        isMdTableSeparator(rawLines[i + 1])
+      ) {
+        const tableRows = [];
+        while (i < rawLines.length && isMdTableRow(rawLines[i])) {
+          tableRows.push(rawLines[i]);
+          i += 1;
+        }
+        blocks.push(renderMdTable(tableRows));
+        continue;
+      }
+
+      const trimmed = line.trim();
+      if (/^###\s+/.test(trimmed)) {
+        blocks.push(`<h4 class="ai-md-h">${inlineMd(trimmed.replace(/^###\s+/, ""))}</h4>`);
+      } else if (/^##\s+/.test(trimmed)) {
+        blocks.push(`<h3 class="ai-md-h">${inlineMd(trimmed.replace(/^##\s+/, ""))}</h3>`);
+      } else if (/^#\s+/.test(trimmed)) {
+        blocks.push(`<h3 class="ai-md-h">${inlineMd(trimmed.replace(/^#\s+/, ""))}</h3>`);
+      } else if (/^[-*•]\s+/.test(trimmed)) {
+        const items = [];
+        while (i < rawLines.length && /^[-*•]\s+/.test(rawLines[i].trim())) {
+          items.push(
+            `<li>${inlineMd(rawLines[i].trim().replace(/^[-*•]\s+/, ""))}</li>`
+          );
+          i += 1;
+        }
+        blocks.push(`<ul class="ai-md-list">${items.join("")}</ul>`);
+        continue;
+      } else if (trimmed === "") {
+        blocks.push('<div class="ai-md-gap"></div>');
+      } else {
+        blocks.push(`<p class="ai-md-p">${inlineMd(line)}</p>`);
+      }
+      i += 1;
+    }
+
+    return blocks.join("");
   }
 
   function setAssistantBody(el, text) {

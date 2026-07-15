@@ -4253,6 +4253,70 @@ font-weight:600;
   padding: 1px 6px;
 }
 
+.ai-table-wrap{
+  width: 100%;
+  overflow-x: auto;
+  margin: 12px 0 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,229,176,0.18);
+}
+
+.ai-md-table{
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 480px;
+  font-size: 13px;
+}
+
+.ai-md-table th,
+.ai-md-table td{
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.45;
+}
+
+.ai-md-table th{
+  background: rgba(0,229,176,0.12);
+  color: #7cf7d4;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ai-md-table td{
+  color: rgba(255,255,255,0.86);
+}
+
+.ai-md-table tr:last-child td{
+  border-bottom: none;
+}
+
+.ai-md-h{
+  margin: 14px 0 8px;
+  font-size: 16px;
+  color: #fff;
+}
+
+.ai-md-p{
+  margin: 0 0 8px;
+  line-height: 1.65;
+}
+
+.ai-md-list{
+  margin: 8px 0 12px;
+  padding-left: 1.2em;
+}
+
+.ai-md-list li{
+  margin: 0 0 6px;
+  line-height: 1.55;
+}
+
+.ai-md-gap{
+  height: 8px;
+}
+
 @keyframes aiBlink{
   0%, 49%{ opacity: 1; }
   50%, 100%{ opacity: 0; }
