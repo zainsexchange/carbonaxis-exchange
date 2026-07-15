@@ -1081,24 +1081,31 @@ body::before{
   margin-bottom:20px;
 }
 
-.verified-tag{
-  background:rgba(0,224,164,0.10);
-
-  border:1px solid rgba(0,224,164,0.18);
-
-  color:var(--mint);
-
+.sample-tag{
+  background:rgba(255,196,80,0.10);
+  border:1px solid rgba(255,196,80,0.28);
+  color:#ffd27a;
   padding:8px 14px;
-
   border-radius:999px;
-
   font-size:12px;
-
   font-weight:800;
-
   letter-spacing:0.08em;
-
   text-transform:uppercase;
+}
+
+.sample-ribbon{
+  position:absolute;
+  top:16px;
+  left:16px;
+  z-index:2;
+  background:rgba(12,18,16,0.88);
+  border:1px solid rgba(255,196,80,0.35);
+  color:#ffd27a;
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:0.1em;
 }
 
 .price{
@@ -2954,7 +2961,8 @@ html{
 }
 
 .market-status,
-.verified-tag{
+.verified-tag,
+.sample-tag{
   white-space:nowrap;
   padding:7px 12px;
   font-size:11px;
