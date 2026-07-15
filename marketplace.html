@@ -258,6 +258,7 @@ data-description="This project focuses on biochar-based carbon removal and long-
     <button
       type="button"
       class="watchlist-btn"
+      data-item-key="Biochar Carbon Removal Project-Pakistan-Carbon Removal-98,000"
       onclick="toggleWatchlist(
         'Biochar Carbon Removal Project',
         'Pakistan',
@@ -357,6 +358,7 @@ data-description="Large-scale renewable energy certificates supporting clean ele
     <button
       type="button"
       class="watchlist-btn"
+      data-item-key="Solar Renewable Energy Credits-UAE-Renewable Energy-210,000"
       onclick="toggleWatchlist(
         'Solar Renewable Energy Credits',
         'UAE',
@@ -450,6 +452,7 @@ data-description="Methane capture and waste management initiative reducing green
             <button
               type="button"
               class="watchlist-btn"
+              data-item-key="Methane Avoidance Initiative-Malaysia-Waste Management-145,000"
               onclick="toggleWatchlist(
                 'Methane Avoidance Initiative',
                 'Malaysia',
@@ -535,8 +538,9 @@ data-description="Illustrative Oman pathway aligned with Vision 2040 themes — 
     <button
       type="button"
       class="watchlist-btn"
+      data-item-key="Oman Solar &amp; Green Hydrogen Pathway-Oman-Renewable Energy-120,000"
       onclick="toggleWatchlist(
-        'Oman Solar & Green Hydrogen Pathway',
+        'Oman Solar &amp; Green Hydrogen Pathway',
         'Oman',
         'Renewable Energy',
         'On request',
@@ -1056,7 +1060,7 @@ function openDynamicProjectModal(title, location, price, volume, description, im
   document.getElementById("projectModal").classList.add("active");
 }
 </script>
-<script src="/js/api.js?v=105"></script>
+<script src="/js/api.js?v=106"></script>
 <script>
 async function loadApprovedProjects() {
   const grid = document.getElementById("approvedProjectsGrid");
@@ -1130,12 +1134,18 @@ if (
     <button
       type="button"
       class="watchlist-btn"
+      data-item-key="${String(watchlistItemKey(
+        project.projectName || "Carbon Project",
+        project.country || "Global",
+        project.projectType || "Carbon Credits",
+        project.credits || "0"
+      )).replace(/"/g, "&quot;")}"
       onclick="toggleWatchlist(
-        '${project.projectName || "Carbon Project"}',
-        '${project.country || "Global"}',
-        '${project.projectType || "Carbon Credits"}',
-        '${project.price || "Request"}',
-        '${project.credits || "0"}',
+        '${(project.projectName || "Carbon Project").replace(/'/g, "\\'")}',
+        '${(project.country || "Global").replace(/'/g, "\\'")}',
+        '${(project.projectType || "Carbon Credits").replace(/'/g, "\\'")}',
+        '${(project.price || "Request").replace(/'/g, "\\'")}',
+        '${String(project.credits || "0").replace(/'/g, "\\'")}',
         '${projectImage}',
         this
       )">
@@ -1184,30 +1194,51 @@ if (
       `;
     });
 
+    // Re-apply hearts after dynamic cards are injected
+    if ((localStorage.getItem("token") || "").trim() && typeof API !== "undefined") {
+      fetch(`${API.BASE}${API.watchlist}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      })
+        .then((r) => r.json())
+        .then((data) => applySavedHearts(data.items || []))
+        .catch(() => {});
+    }
+
   } catch (error) {
     grid.innerHTML = "<p>Unable to load marketplace projects.</p>";
   }
 }
 
+function watchlistItemKey(projectName, country, projectType, credits) {
+  return `${projectName}-${country}-${projectType}-${credits}`;
+}
+
+function applySavedHearts(watchlist) {
+  const keys = new Set(
+    (watchlist || [])
+      .map((item) => String(item.itemKey || "").trim())
+      .filter(Boolean)
+  );
+
+  document.querySelectorAll(".watchlist-btn").forEach((btn) => {
+    const key = (btn.getAttribute("data-item-key") || "").trim();
+    const saved = key && keys.has(key);
+    btn.classList.toggle("saved", !!saved);
+    btn.innerText = saved ? "❤️" : "🤍";
+  });
+}
+
 loadApprovedProjects();
+
 window.addEventListener("load", async () => {
-  const token = localStorage.getItem("token");
-  if (!token) return;
+  const token = (localStorage.getItem("token") || "").trim();
+  if (!token || typeof API === "undefined") return;
   try {
     const res = await fetch(`${API.BASE}${API.watchlist}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();
-    const watchlist = data.items || [];
-    document.querySelectorAll(".watchlist-btn").forEach(btn => {
-      const onclick = btn.getAttribute("onclick") || "";
-      watchlist.forEach(item => {
-        if (onclick.includes(item.title) || onclick.includes(item.itemKey)) {
-          btn.classList.add("saved");
-          btn.innerText = "❤️";
-        }
-      });
-    });
+    applySavedHearts(data.items || []);
   } catch (e) {
     console.error(e);
   }
@@ -1301,7 +1332,13 @@ async function toggleWatchlist(
     return;
   }
 
-  const projectKey = `${projectName}-${country}-${projectType}-${credits}`;
+  const projectKey =
+    (btn && btn.getAttribute("data-item-key")) ||
+    watchlistItemKey(projectName, country, projectType, credits);
+
+  if (btn && !btn.getAttribute("data-item-key")) {
+    btn.setAttribute("data-item-key", projectKey);
+  }
 
   try {
     if (btn && btn.classList.contains("saved")) {
@@ -1333,6 +1370,7 @@ async function toggleWatchlist(
         category: projectType,
         price,
         volume: credits,
+        image: image || "",
         source: "marketplace"
       })
     });

@@ -305,7 +305,7 @@ window.addEventListener("resize", () => {
   canvas.height = window.innerHeight;
 });
 </script>
-<script src="/js/api.js?v=105"></script>
+<script src="/js/api.js?v=106"></script>
 <script>
 async function loadWatchlist(){
   const grid = document.getElementById("watchlistGrid");
@@ -358,8 +358,25 @@ async function loadWatchlist(){
       const category = String(item.category || "-").replace(/</g, "&lt;");
       const price = String(item.price || "-").replace(/</g, "&lt;");
       const volume = String(item.volume || "-").replace(/</g, "&lt;");
+      const imageRaw = String(item.image || "").trim();
+      const fallbackByTitle = (() => {
+        const t = `${item.title || ""} ${item.country || ""}`.toLowerCase();
+        if (t.includes("methane")) return "/images/methane.png";
+        if (t.includes("biochar") || t.includes("forest") || t.includes("removal")) {
+          return "/images/forest.png";
+        }
+        if (t.includes("solar") || t.includes("oman") || t.includes("renewable")) {
+          return "/images/solar.png";
+        }
+        return "/images/default.png";
+      })();
+      const image = imageRaw || fallbackByTitle;
+      const safeImage = image.replace(/"/g, "&quot;").replace(/</g, "");
       grid.innerHTML += `
         <div class="listing-card">
+          <div class="listing-image">
+            <img src="${safeImage}" alt="${title}">
+          </div>
           <div class="listing-top">
             <span class="market-status active-status">Saved</span>
             <span class="sample-tag">Watchlist</span>

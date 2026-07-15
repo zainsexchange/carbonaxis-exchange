@@ -282,6 +282,7 @@ const watchlistSchema = new mongoose.Schema(
     category: String,
     price: String,
     volume: String,
+    image: { type: String, default: "" },
     source: { type: String, default: "marketplace" },
   },
   { timestamps: true }
@@ -1643,7 +1644,7 @@ app.post("/api/watchlist", authenticateToken, async (req, res) => {
     const plan = getPlan(user.subscription);
     const count = await WatchlistItem.countDocuments({ userId: user._id });
 
-    const { itemKey, title, country, category, price, volume, source } = req.body;
+    const { itemKey, title, country, category, price, volume, image, source } = req.body;
     if (!itemKey || !title) {
       return res.status(400).json({
         success: false,
@@ -1674,6 +1675,7 @@ app.post("/api/watchlist", authenticateToken, async (req, res) => {
         category,
         price,
         volume,
+        image: image || "",
         source: source || "marketplace",
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
