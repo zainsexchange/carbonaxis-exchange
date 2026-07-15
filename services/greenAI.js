@@ -62,18 +62,37 @@ function isExplainQuestion(question = "") {
   ) || /\b(explain|what are|what is|in simple words|eli5|basics of)\b/i.test(q);
 }
 
-function isTradeDecisionQuestion(question = "", country = "", product = "") {
+/** Policy / research overview — natural brief, not verdict template */
+function isResearchQuestion(question = "") {
+  const q = String(question).toLowerCase();
+  return /\b(policy|policies|framework|strategy|roadmap|overview|research|analysis|brief|update|rules?|regulation|regulations|law|laws|how does .+ work)\b/.test(
+    q
+  ) && !/\b(should i|buy|sell|feasib|go\/no-go|proceed|invest now|restrict me)\b/.test(q);
+}
+
+/** Explicit go/no-go or deal decision — only then use verdict template */
+function isDecisionQuestion(question = "", country = "", product = "") {
   const text = `${question} ${country} ${product}`.toLowerCase();
-  return /feasib|trade|trading|buy|sell|invest|restrict|regulat|long.?term|short.?term|otc|should i|is it (safe|ok|good)|proceed|outlook|risk/.test(
+  return /\b(feasib|go\/?no-?go|should i|buy|sell|invest now|proceed|long.?term vs|short.?term only|otc deal|is it (safe|ok|good) to)\b/.test(
     text
-  );
+  ) || /\b(restrict|outlook|risk)\b/.test(text) && /\b(for (this|my)|trade|trading|project|invest)\b/.test(text);
 }
 
 function isGeneralFactQuestion(question = "") {
   const q = String(question).toLowerCase();
-  return /\b(population|capital|currency|language|president|prime minister|weather|time zone|gdp|area|who is|when did|where is|how many people)\b/.test(
+  return /\b(population|capital|currency|language|president|prime minister|weather|time zone|gdp|area|who is|when did|where is|how many people|calculate)\b/.test(
     q
   );
+}
+
+function detectCountryFromText(question = "", country = "") {
+  if (String(country || "").trim()) return String(country).trim();
+  const q = String(question || "").toLowerCase();
+  if (/\b(uae|united arab emirates|dubai|abu dhabi)\b/.test(q)) return "UAE";
+  if (/\boman\b/.test(q)) return "Oman";
+  if (/\bpakistan\b/.test(q)) return "Pakistan";
+  if (/\bsaudi|ksa\b/.test(q)) return "Saudi Arabia";
+  return "";
 }
 
 function buildSystemPrompt(planId, deepAnalysis, greenMode) {
@@ -109,32 +128,35 @@ export async function runGreenIntelligence({
 }) {
   const plan = getPlan(subscription);
   const deepAnalysis = plan.deepAnalysis;
-  const tradeMode = isTradeDecisionQuestion(question, country, product);
+  const inferredCountry = detectCountryFromText(question, country);
+  const decisionMode = isDecisionQuestion(question, inferredCountry, product);
   const explainMode = isExplainQuestion(question);
+  const researchMode = isResearchQuestion(question);
   const generalFact = isGeneralFactQuestion(question);
   // General facts (population, capital, etc.) stay general even if a country is mentioned
   const greenMode =
-    !generalFact && isGreenEnergyQuestion(question, country, product);
+    !generalFact && isGreenEnergyQuestion(question, inferredCountry, product);
+  const naturalGreen = greenMode && (explainMode || researchMode) && !decisionMode;
   const system = buildSystemPrompt(subscription, deepAnalysis, greenMode);
 
   let instruction;
   if (!greenMode) {
     instruction =
       "This is a GENERAL question. Answer clearly and helpfully like a strong general AI. Give the direct factual answer first when asked for population, capital, definitions, calculations, etc. Do NOT use Verdict/PROCEED templates. Do NOT mention trading or carbon markets unless the user asked.";
-  } else if (explainMode && !tradeMode) {
+  } else if (naturalGreen) {
     instruction =
-      "This is a GREEN ENERGY LEARNING question. Explain clearly in natural language (like a great tutor). Do NOT use Verdict/PROCEED template. Avoid unnecessary trading language.";
-  } else if (tradeMode || (country && product)) {
+      "This is a GREEN ENERGY RESEARCH / POLICY / LEARNING question. Write a clear natural-language brief (like a strong analyst). Cover key points, known directions, and honest confidence. Do NOT use Verdict/PROCEED template. Do not sound trader-only.";
+  } else if (decisionMode || (inferredCountry && product)) {
     instruction = deepAnalysis
-      ? "This is a GREEN ENERGY feasibility / regulation / analysis question. Deliver an outstanding research-style brief with clear verdict and horizon analysis. Trading may be one angle — focus on intelligence and decision support for any stakeholder."
-      : "This is a GREEN ENERGY feasibility / regulation / analysis question. Deliver a sharp verdict-led brief. Note Pro unlocks deeper horizon analysis. Avoid making it sound trader-only.";
+      ? "This is a GREEN ENERGY feasibility / go-no-go analysis question. Deliver an outstanding research-style brief with clear verdict and horizon analysis. Focus on intelligence for any stakeholder — not traders only."
+      : "This is a GREEN ENERGY feasibility / go-no-go analysis question. Deliver a sharp verdict-led brief. Note Pro unlocks deeper horizon analysis.";
   } else {
     instruction =
-      "This is a GREEN ENERGY question. Answer naturally with strong climate-market insight for researchers, developers, policy users, and markets. Use verdict template only if a go/no-go decision is implied.";
+      "This is a GREEN ENERGY question. Answer naturally with strong climate-market insight for researchers, developers, policy users, and markets. Use verdict template only if a go/no-go decision is clearly implied.";
   }
 
   const userPayload = [
-    country ? `Focus country/market: ${country}` : null,
+    inferredCountry ? `Focus country/market: ${inferredCountry}` : null,
     product ? `Product / activity / topic: ${product}` : null,
     `User question: ${question}`,
     instruction,
@@ -149,12 +171,13 @@ export async function runGreenIntelligence({
       provider: "local",
       answer: localFallbackAnalysis({
         question,
-        country,
+        country: inferredCountry,
         product,
         deepAnalysis,
         greenMode,
         explainMode,
-        tradeMode,
+        tradeMode: decisionMode,
+        researchMode,
         generalFact,
       }),
       deepAnalysis,
@@ -193,12 +216,13 @@ export async function runGreenIntelligence({
         provider: "local",
         answer: localFallbackAnalysis({
           question,
-          country,
+          country: inferredCountry,
           product,
           deepAnalysis,
           greenMode,
           explainMode,
-          tradeMode,
+          tradeMode: decisionMode,
+          researchMode,
           generalFact,
         }),
         deepAnalysis,
@@ -227,12 +251,13 @@ export async function runGreenIntelligence({
       provider: "local",
       answer: localFallbackAnalysis({
         question,
-        country,
+        country: inferredCountry,
         product,
         deepAnalysis,
         greenMode,
         explainMode,
-        tradeMode,
+        tradeMode: decisionMode,
+        researchMode,
         generalFact,
       }),
       deepAnalysis,
@@ -358,11 +383,13 @@ function localFallbackAnalysis({
   greenMode = true,
   explainMode = false,
   tradeMode = false,
+  researchMode = false,
   generalFact = false,
 }) {
   const q = String(question || "");
+  const detected = detectCountryFromText(q, country);
 
-  // GENERAL MODE — answer facts plainly (no trading template)
+  // GENERAL MODE — answer facts plainly (no verdict template)
   if (!greenMode || generalFact) {
     if (/oman/i.test(q) && /population|people|how many/i.test(q)) {
       return `Yes — about **Oman’s population**:
@@ -419,8 +446,33 @@ Examples:
 - “Is solar in Oman realistic for the next 5 years under green policy?”`;
   }
 
-  // Learning / explain questions should sound natural — not a trading template
-  if (explainMode && !tradeMode) {
+  // Research / policy / learn — natural brief (NOT verdict template)
+  if ((explainMode || researchMode) && !tradeMode) {
+    if (/(uae|united arab emirates)/i.test(q) && /carbon|climate|green|esg|net.?zero|policy/i.test(q)) {
+      return `**UAE carbon / climate policy — short research brief**
+
+The UAE is advancing a national climate and energy-transition agenda. In practical terms:
+
+**What it is aiming for**
+- Net-zero style pathway and cleaner energy mix over time
+- Large renewable build-out (especially solar)
+- Growing interest in hydrogen and industrial decarbonization
+- Stronger ESG / climate reporting expectations for companies and projects
+
+**Carbon-market angle**
+- Voluntary carbon market activity is rising across the region
+- High-integrity credits (clear MRV, additionality, registry path) matter more than quantity alone
+- Export-linked projects may feel destination-market pressure (e.g. EU CBAM-style rules)
+
+**CarbonAxis confidence note**
+Pakistan & Oman remain our deepest markets. For UAE we can give solid directional research, but treat details as changing — always verify against current UAE government and authority publications.
+
+**Useful next questions**
+- “Compare UAE vs Oman renewable strategy”
+- “What should a UAE solar project check for carbon-credit readiness?”
+- “Is this UAE project feasible long term under green regulation?” (for a go/no-go style brief)`;
+    }
+
     if (/carbon credit/i.test(q)) {
       return `Carbon credits, in simple words:
 
@@ -443,27 +495,26 @@ Ask a next question like:
 “Is solar in Oman realistic for the next 5 years under green policy?”`;
     }
 
-    return `Here’s a simple green-energy answer to your question:
+    return `Here’s a research-style answer to your question:
 
 **${q}**
+${detected ? `\n**Focus market:** ${detected}\n` : ""}
+In plain terms: green energy and climate-policy topics cover cleaner power, emissions rules, project readiness, and verified climate results (like carbon credits).
 
-In plain terms: green energy and carbon-market topics are about cleaner power, cutting emissions, climate rules, and verified climate results (like carbon credits).
+CarbonAxis is strongest on **Pakistan** and **Oman**, with useful worldwide coverage including UAE/GCC themes.
 
-I can go deeper on:
-- simple definitions and research-style explainers
-- country rules (especially Pakistan & Oman)
-- whether a project or activity looks longer-term or shorter-term under green regulation
-
-Ask a more specific follow-up and I’ll answer clearly.`;
+Ask a more specific follow-up (country + topic + time horizon) and I’ll go deeper.`;
   }
 
-  const c = (country || "the selected market").trim() || "the selected market";
+  const c = (detected || "the selected market").trim() || "the selected market";
   const p = (product || "this activity").trim() || "this activity";
   const focus = /pakistan/i.test(c)
     ? "Pakistan renewable / carbon pathways (NEPRA/AEDB direction, voluntary credit integrity, permitting)"
     : /oman/i.test(c)
       ? "Oman Vision 2040 / energy transition and export-linked green pressure"
-      : "global green-energy and voluntary carbon market practice (lower confidence outside PK/OM)";
+      : /uae/i.test(c)
+        ? "UAE energy transition / net-zero direction and voluntary carbon market practice (moderate confidence)"
+        : "global green-energy and voluntary carbon market practice (lower confidence outside PK/OM)";
 
   const looksDirty = /coal|crude|diesel|furnace oil|petcoke/i.test(`${p} ${q}`);
   const looksGreenAsset = /solar|wind|hydrogen|biochar|methane|renewable|carbon credit|REC/i.test(
@@ -497,7 +548,7 @@ Ask a more specific follow-up and I’ll answer clearly.`;
       ? "Pursue with verification-first structuring."
       : verdict === "PROCEED_SHORT_TERM"
         ? "Near-term only — plan for regulatory change risk."
-        : "Gather more activity/country specifics before committing capital."
+        : "Gather more activity/country specifics before a final recommendation."
   }
 **Notes:** ${depthNote}
 **Disclaimer:** Not legal advice.`;
