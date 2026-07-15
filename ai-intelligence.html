@@ -74,6 +74,10 @@
     <section class="ai-chat-main">
       <div class="ai-chat-top">
         <button type="button" class="btn btn-outline ai-threads-toggle" id="aiThreadsToggle">Chats</button>
+        <div class="ai-view-tabs" role="tablist">
+          <button type="button" class="ai-view-tab is-active" data-ai-view="chat" id="aiTabChat">Chat</button>
+          <button type="button" class="ai-view-tab" data-ai-view="compare" id="aiTabCompare">Compare Markets</button>
+        </div>
         <div class="ai-quota-bar" style="margin:0;">
           <span><strong id="aiPlan">Free</strong> · <span id="aiQuota">…</span></span>
           <span id="aiModeBadge" class="ai-mode-badge">Ready</span>
@@ -84,11 +88,11 @@
         <div id="aiChatLog" class="ai-chat-log">
           <div class="ai-bubble ai-bubble-assistant">
             <div class="ai-bubble-label">CarbonAxis</div>
-            <div class="ai-bubble-body">Hi — ask me anything. I’m a general AI, and especially strong on green energy research and climate analysis (Pakistan & Oman depth first). Your chats stay private in threads.</div>
+            <div class="ai-bubble-body">Hi — ask me anything. I’m especially strong on green energy research and climate analysis (Pakistan &amp; Oman depth first, worldwide coverage). Use <strong>Compare Markets</strong> for side-by-side country briefs.</div>
           </div>
         </div>
 
-        <div class="ai-suggestion-row">
+        <div class="ai-suggestion-row" id="aiSuggestionRow">
           <button type="button" data-ai-example="Explain carbon credits in simple words.">Explain carbon credits</button>
           <button type="button" data-ai-example="Is solar in Oman realistic for the next 5 years under green policy?">Oman solar outlook</button>
           <button type="button" data-ai-example="How do green rules affect fuel oil projects in Pakistan over 3–4 years?">Pakistan policy horizon</button>
@@ -96,20 +100,61 @@
 
         <form id="aiAskForm" class="ai-ask-form">
           <div class="ai-compose-bar">
-            <textarea id="aiQuestion" placeholder="Message CarbonAxis AI..." required></textarea>
+            <textarea id="aiQuestion" placeholder="Message CarbonAxis Intelligence..." required></textarea>
             <button id="aiSendBtn" class="btn btn-primary" type="submit">Send</button>
           </div>
           <input id="aiCountry" type="hidden" value="" />
           <input id="aiProduct" type="hidden" value="" />
         </form>
+
+        <form id="aiCompareForm" class="ai-compare-form" hidden>
+          <p class="ai-compare-lead">Compare green energy / climate-market conditions across two countries. Uses one Intelligence query.</p>
+          <div class="ai-compare-grid">
+            <label>
+              Market A
+              <select id="compareCountryA" required>
+                <option value="Pakistan">Pakistan</option>
+                <option value="Oman" selected>Oman</option>
+                <option value="UAE">UAE</option>
+                <option value="Saudi Arabia">Saudi Arabia</option>
+                <option value="India">India</option>
+                <option value="European Union">European Union</option>
+                <option value="United States">United States</option>
+              </select>
+            </label>
+            <label>
+              Market B
+              <select id="compareCountryB" required>
+                <option value="Pakistan" selected>Pakistan</option>
+                <option value="Oman">Oman</option>
+                <option value="UAE">UAE</option>
+                <option value="Saudi Arabia">Saudi Arabia</option>
+                <option value="India">India</option>
+                <option value="European Union">European Union</option>
+                <option value="United States">United States</option>
+              </select>
+            </label>
+            <label class="ai-compare-full">
+              Focus (optional)
+              <input id="compareProduct" type="text" placeholder="e.g. solar, biochar, carbon credits, hydrogen" />
+            </label>
+            <label class="ai-compare-full">
+              Extra note (optional)
+              <input id="compareNote" type="text" placeholder="e.g. export-linked project, 3–4 year horizon" />
+            </label>
+          </div>
+          <div class="ai-compare-actions">
+            <button type="submit" class="btn btn-primary" id="aiCompareBtn">Run compare</button>
+          </div>
+        </form>
       </div>
     </section>
   </main>
 
-  <script src="/js/api.js?v=246403"></script>
+  <script src="/js/api.js?v=246405"></script>
   <script src="/js/navbar.js"></script>
-  <script src="/js/auth.js?v=246403"></script>
-  <script src="/js/ai-intelligence.js?v=246404"></script>
+  <script src="/js/auth.js?v=246405"></script>
+  <script src="/js/ai-intelligence.js?v=246405"></script>
   <script>
     const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
     const mobileMenu = document.querySelector(".mobile-menu");

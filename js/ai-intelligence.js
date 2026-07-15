@@ -54,6 +54,9 @@
     if (mode === "green") {
       modeBadge.textContent = "Green specialty";
       modeBadge.classList.add("is-green");
+    } else if (mode === "compare") {
+      modeBadge.textContent = "Market compare";
+      modeBadge.classList.add("is-green");
     } else if (mode === "general") {
       modeBadge.textContent = "General";
       modeBadge.classList.remove("is-green");
@@ -438,6 +441,125 @@
     } finally {
       sendBtn.disabled = false;
       sendBtn.textContent = "Send";
+    }
+  });
+
+  const compareForm = document.getElementById("aiCompareForm");
+  const compareBtn = document.getElementById("aiCompareBtn");
+  const suggestionRow = document.getElementById("aiSuggestionRow");
+  const tabChat = document.getElementById("aiTabChat");
+  const tabCompare = document.getElementById("aiTabCompare");
+
+  function setAiView(view) {
+    const isCompare = view === "compare";
+    tabChat?.classList.toggle("is-active", !isCompare);
+    tabCompare?.classList.toggle("is-active", isCompare);
+    if (form) form.hidden = isCompare;
+    if (suggestionRow) suggestionRow.hidden = isCompare;
+    if (compareForm) compareForm.hidden = !isCompare;
+    setModeBadge(isCompare ? "compare" : "ready");
+  }
+
+  tabChat?.addEventListener("click", () => setAiView("chat"));
+  tabCompare?.addEventListener("click", () => setAiView("compare"));
+
+  compareForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const countryA = document.getElementById("compareCountryA")?.value || "";
+    const countryB = document.getElementById("compareCountryB")?.value || "";
+    const product = document.getElementById("compareProduct")?.value.trim() || "";
+    const note = document.getElementById("compareNote")?.value.trim() || "";
+
+    if (!countryA || !countryB) return;
+    if (countryA === countryB) {
+      await appendMessage(
+        "assistant",
+        "Please choose two different markets to compare.",
+        { stream: true }
+      );
+      return;
+    }
+
+    const userLine = `Compare markets: ${countryA} vs ${countryB}${
+      product ? ` · focus: ${product}` : ""
+    }${note ? ` · note: ${note}` : ""}`;
+
+    setModeBadge("compare");
+    appendMessage("user", userLine);
+    conversation.push({ role: "user", content: userLine });
+
+    if (compareBtn) {
+      compareBtn.disabled = true;
+      compareBtn.textContent = "Comparing…";
+    }
+
+    const thinking = document.createElement("div");
+    thinking.className = "ai-bubble ai-bubble-assistant ai-thinking";
+    thinking.textContent = "Comparing markets…";
+    chatLog.appendChild(thinking);
+    chatLog.scrollTop = chatLog.scrollHeight;
+
+    try {
+      if (!API.aiCompare) {
+        throw new Error("Missing compare API — re-upload js/api.js");
+      }
+      await wakeApi();
+      thinking.textContent = "Building compare brief…";
+
+      const { res, data } = await fetchJson(
+        `${API.BASE}${API.aiCompare}`,
+        {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({
+            countryA,
+            countryB,
+            product,
+            note,
+            threadId: activeThreadId,
+          }),
+        },
+        90000
+      );
+
+      thinking.remove();
+
+      if (res.status === 401) {
+        forceRelogin(data?.message || "Session expired. Please login again.");
+        return;
+      }
+
+      if (!data?.success) {
+        await appendMessage(
+          "assistant",
+          data?.message || "Unable to compare markets.",
+          { stream: true }
+        );
+        if (data?.quota) renderQuota(data.quota);
+        return;
+      }
+
+      if (data.threadId) activeThreadId = data.threadId;
+      setModeBadge("compare");
+      await appendMessage("assistant", data.answer, { stream: true });
+      conversation.push({ role: "assistant", content: data.answer });
+      renderQuota(data.quota);
+      loadThreads();
+    } catch (err) {
+      thinking.remove();
+      console.error(err);
+      await appendMessage(
+        "assistant",
+        err?.name === "AbortError"
+          ? "Compare timed out. Please try again."
+          : err?.message || "Network error. Please try again.",
+        { stream: true }
+      );
+    } finally {
+      if (compareBtn) {
+        compareBtn.disabled = false;
+        compareBtn.textContent = "Run compare";
+      }
     }
   });
 

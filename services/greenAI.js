@@ -267,6 +267,172 @@ export async function runGreenIntelligence({
   }
 }
 
+function localCompareFallback({ countryA, countryB, product, deepAnalysis }) {
+  const a = countryA;
+  const b = countryB;
+  const focus = product || "green energy / carbon-market activity";
+  const depthOf = (c) =>
+    /pakistan|oman/i.test(c)
+      ? "Higher (priority market)"
+      : /uae|saudi|gcc/i.test(c)
+        ? "Medium (regional coverage)"
+        : "Directional (worldwide coverage)";
+
+  return `**Market compare · ${a} vs ${b}**
+**Focus:** ${focus}
+
+### Snapshot
+| Lens | ${a} | ${b} |
+| --- | --- | --- |
+| CarbonAxis depth | ${depthOf(a)} | ${depthOf(b)} |
+| Policy / transition theme | Energy transition + voluntary carbon interest | Energy transition + voluntary carbon interest |
+| Near-term feasibility | Case-by-case — permits, MRV, counterpart checks | Case-by-case — permits, MRV, counterpart checks |
+| 1–4 year horizon | Greener / high-integrity assets more durable; high-emission activities tighter over time | Similar pressure path; pace differs by country policy |
+
+### Where ${a} may be stronger
+- Local project pipeline fit if aligned with renewables / verified climate outcomes
+- Use Pakistan & Oman depth when that market is ${a}
+
+### Where ${b} may be stronger
+- Diversification of destination rules, buyer access, or industrial demand
+- Cross-check export / CBAM-style exposure if credits or products leave the country
+
+### Practical recommendation
+Compare **documentation quality**, registry/methodology path, and regulatory horizon for *this specific* ${focus} — not country labels alone.
+${deepAnalysis ? "Deep mode: dig into MRV, additionality, offtake, and destination-market rules next." : "Pro unlocks deeper horizon briefs."}
+
+**Disclaimer:** Research brief only — not legal advice. Live OpenAI improves detail when connected.`;
+}
+
+/**
+ * Side-by-side green-energy / climate market comparison.
+ */
+export async function compareMarkets({
+  countryA,
+  countryB,
+  product = "",
+  note = "",
+  subscription = "free",
+}) {
+  const a = String(countryA || "").trim();
+  const b = String(countryB || "").trim();
+  const focus = String(product || "").trim();
+  const extra = String(note || "").trim();
+
+  if (!a || !b) {
+    throw new Error("Two markets are required for comparison");
+  }
+  if (a.toLowerCase() === b.toLowerCase()) {
+    throw new Error("Choose two different markets");
+  }
+
+  const plan = getPlan(subscription);
+  const deepAnalysis = plan.deepAnalysis;
+  const system = `${SYSTEM_BASE}
+
+Active mode: MARKET COMPARE (research brief).
+Compare green energy / climate / carbon-market conditions for two countries.
+Do NOT use trading Verdict/PROCEED templates.
+Write for researchers, project owners, policy/ESG teams, and market participants.
+Prioritize Pakistan & Oman depth when those markets are selected; be honest about lower confidence elsewhere.
+Deep analysis: ${deepAnalysis ? "ON — richer horizon and diligence notes" : "OFF — concise but useful; mention Pro for deeper briefs"}.
+`;
+
+  const userPayload = `Compare these markets for CarbonAxis Intelligence:
+
+Market A: ${a}
+Market B: ${b}
+Focus activity / product (optional): ${focus || "general green energy & carbon markets"}
+User note (optional): ${extra || "n/a"}
+
+Return a clear research brief with:
+1) Short snapshot table or bullets (policy direction, feasibility climate, 12–36 month horizon, CarbonAxis confidence)
+2) Where A is relatively stronger
+3) Where B is relatively stronger
+4) Shared risks / what to verify next
+5) Practical recommendation (not legal advice)
+Keep language professional. Avoid sounding trader-only.`;
+
+  const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
+  if (!apiKey) {
+    return {
+      provider: "local",
+      answer: localCompareFallback({
+        countryA: a,
+        countryB: b,
+        product: focus,
+        deepAnalysis,
+      }),
+      deepAnalysis,
+      plan: plan.id,
+      mode: "compare",
+    };
+  }
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+        temperature: 0.35,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: userPayload },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("OpenAI compare error:", response.status, errText.slice(0, 500));
+      return {
+        provider: "local",
+        answer: localCompareFallback({
+          countryA: a,
+          countryB: b,
+          product: focus,
+          deepAnalysis,
+        }),
+        deepAnalysis,
+        plan: plan.id,
+        mode: "compare",
+      };
+    }
+
+    const data = await response.json();
+    const answer = data.choices?.[0]?.message?.content?.trim();
+    if (!answer) {
+      throw new Error("Empty compare response");
+    }
+
+    return {
+      provider: "openai",
+      answer,
+      deepAnalysis,
+      plan: plan.id,
+      mode: "compare",
+    };
+  } catch (err) {
+    console.error("Compare request failed:", err?.message || err);
+    return {
+      provider: "local",
+      answer: localCompareFallback({
+        countryA: a,
+        countryB: b,
+        product: focus,
+        deepAnalysis,
+      }),
+      deepAnalysis,
+      plan: plan.id,
+      mode: "compare",
+    };
+  }
+}
+
 export async function analyzeProjectForAI(project, subscription = "free") {
   const question = `Analyze this climate / carbon project for market opportunity, regulatory restriction risk, and listing readiness.
 

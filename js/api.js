@@ -18,6 +18,7 @@ const API = {
   watchlist: "/watchlist",
   plans: "/plans",
   aiAsk: "/ai/ask",
+  aiCompare: "/ai/compare",
   aiQuota: "/ai/quota",
   aiThreads: "/ai/threads",
   deals: "/deals",

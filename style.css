@@ -4272,6 +4272,104 @@ font-weight:600;
   }
 }
 
+.ai-chat-top{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+
+.ai-view-tabs{
+  display:inline-flex;
+  gap:6px;
+  padding:4px;
+  border-radius:999px;
+  border:1px solid rgba(0,229,176,0.18);
+  background:rgba(0,0,0,0.25);
+}
+
+.ai-view-tab{
+  border:none;
+  background:transparent;
+  color:rgba(255,255,255,0.72);
+  font:inherit;
+  font-size:13px;
+  font-weight:700;
+  padding:8px 14px;
+  border-radius:999px;
+  cursor:pointer;
+}
+
+.ai-view-tab.is-active{
+  background:rgba(0,229,176,0.18);
+  color:#00e5b0;
+}
+
+.ai-compare-form{
+  margin-top:10px;
+  padding:16px;
+  border:1px solid rgba(0,229,176,0.16);
+  border-radius:18px;
+  background:rgba(8,18,16,0.55);
+}
+
+.ai-compare-lead{
+  margin:0 0 14px;
+  color:rgba(255,255,255,0.72);
+  font-size:14px;
+  line-height:1.5;
+}
+
+.ai-compare-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.ai-compare-grid label{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  font-size:12px;
+  color:#8fa89f;
+  text-transform:uppercase;
+  letter-spacing:0.04em;
+}
+
+.ai-compare-grid select,
+.ai-compare-grid input{
+  border:1px solid rgba(255,255,255,0.12);
+  background:rgba(255,255,255,0.04);
+  color:#fff;
+  border-radius:12px;
+  padding:12px 14px;
+  font:inherit;
+  text-transform:none;
+  letter-spacing:normal;
+}
+
+.ai-compare-full{
+  grid-column:1 / -1;
+}
+
+.ai-compare-actions{
+  margin-top:14px;
+  display:flex;
+  justify-content:flex-end;
+}
+
+@media (max-width: 768px){
+  .ai-compare-grid{
+    grid-template-columns:1fr;
+  }
+  .ai-view-tabs{
+    order:3;
+    width:100%;
+    justify-content:center;
+  }
+}
+
 /* GPT-style private threads workspace */
 .ai-workspace{
   display: grid;
@@ -4376,6 +4474,7 @@ font-weight:600;
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 
 .ai-threads-toggle{

@@ -8,7 +8,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { authenticateToken, requireAdminRole } from "./middleware/auth.js";
 import { PLANS, getPlan } from "./config/plans.js";
-import { runGreenIntelligence, analyzeProjectForAI } from "./services/greenAI.js";
+import { runGreenIntelligence, analyzeProjectForAI, compareMarkets } from "./services/greenAI.js";
 import {
   ensureAiUsagePeriod,
   getAiQuota,
@@ -1452,6 +1452,117 @@ app.post("/api/ai/ask", authenticateToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "CarbonAxis AI temporarily unavailable. Try again shortly.",
+    });
+  }
+});
+
+app.post("/api/ai/compare", authenticateToken, async (req, res) => {
+  try {
+    const {
+      countryA = "",
+      countryB = "",
+      product = "",
+      note = "",
+      threadId = null,
+    } = req.body;
+
+    const a = String(countryA).trim();
+    const b = String(countryB).trim();
+    if (!a || !b) {
+      return res.status(400).json({
+        success: false,
+        message: "Select two markets to compare.",
+      });
+    }
+    if (a.toLowerCase() === b.toLowerCase()) {
+      return res.status(400).json({
+        success: false,
+        message: "Choose two different markets.",
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const usage = await consumeAiQuery(user);
+    if (!usage.allowed) {
+      return res.status(402).json({
+        success: false,
+        message: usage.message,
+        quota: usage.quota,
+        upgradeUrl: "/pricing.html",
+      });
+    }
+
+    const aiPlan = getEffectiveAiPlan(user);
+    const result = await compareMarkets({
+      countryA: a,
+      countryB: b,
+      product: String(product || "").trim(),
+      note: String(note || "").trim(),
+      subscription: aiPlan.id,
+    });
+
+    const title = `Compare: ${a} vs ${b}`.slice(0, 60);
+    let thread = null;
+    if (threadId) {
+      thread = await ChatThread.findOne({
+        _id: threadId,
+        userId: req.user.id,
+      });
+    }
+    if (!thread) {
+      thread = await ChatThread.create({
+        userId: user._id,
+        title,
+        messages: [],
+      });
+    }
+
+    const userLine = `Compare markets: ${a} vs ${b}${
+      product ? ` · focus: ${product}` : ""
+    }${note ? ` · note: ${note}` : ""}`;
+
+    thread.messages.push({ role: "user", content: userLine });
+    thread.messages.push({
+      role: "assistant",
+      content: result.answer,
+      mode: "compare",
+    });
+    if (thread.title === "New chat") thread.title = title;
+    await thread.save();
+
+    await AiQuery.create({
+      userId: user._id,
+      question: userLine,
+      country: `${a} vs ${b}`,
+      product: String(product || "").trim(),
+      answer: result.answer,
+      verdictHint: "",
+      plan: aiPlan.id,
+      provider: result.provider,
+    });
+
+    res.json({
+      success: true,
+      answer: result.answer,
+      provider: result.provider,
+      deepAnalysis: result.deepAnalysis,
+      mode: "compare",
+      quota: usage.quota,
+      focusMarkets: aiPlan.marketsPriority,
+      threadId: thread._id,
+      threadTitle: thread.title,
+      countryA: a,
+      countryB: b,
+    });
+  } catch (error) {
+    console.error("AI compare error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Market compare temporarily unavailable.",
     });
   }
 });
