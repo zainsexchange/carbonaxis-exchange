@@ -3735,7 +3735,17 @@ table{
 .listing-actions{
   display:flex;
   align-items:center;
+  flex-wrap:wrap;
   gap:10px;
+  justify-content:flex-end;
+}
+
+.listing-btn-ai{
+  color:#7cf7d4 !important;
+}
+
+.listing-btn-ai:hover{
+  color:#fff !important;
 }
 
 .watchlist-btn{

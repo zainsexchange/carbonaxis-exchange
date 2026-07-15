@@ -692,6 +692,42 @@
     }
   });
 
+  function applyMarketplaceDeepLink() {
+    const params = new URLSearchParams(window.location.search || "");
+    if (params.get("from") !== "marketplace") return;
+
+    const q = (params.get("q") || "").trim();
+    const country = (params.get("country") || "").trim();
+    const product = (params.get("product") || "").trim();
+    const title = (params.get("title") || "").trim();
+
+    // Stay on chat view
+    document.getElementById("aiTabChat")?.click();
+
+    if (countryInput) countryInput.value = country;
+    if (productInput) productInput.value = product;
+    if (questionInput && q) {
+      questionInput.value = q;
+      setModeBadge("green");
+    }
+
+    if (title) {
+      appendMessage(
+        "assistant",
+        `Marketplace listing loaded: **${title}** (${country || "market"}). Running CarbonAxis Intelligence brief…`
+      );
+    }
+
+    // Clean URL so refresh doesn’t re-fire
+    window.history.replaceState({}, "", "/ai-intelligence.html");
+
+    if (q && form) {
+      setTimeout(() => form.requestSubmit(), 350);
+    }
+  }
+
   loadQuota();
-  loadThreads();
+  loadThreads().finally(() => {
+    applyMarketplaceDeepLink();
+  });
 })();

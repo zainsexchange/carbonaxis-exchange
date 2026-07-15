@@ -277,6 +277,17 @@ data-description="This project focuses on biochar-based carbon removal and long-
     </button>
     <button
       type="button"
+      class="listing-btn listing-btn-ai"
+      onclick="askIntelligence(
+        'Biochar Carbon Removal Project',
+        'Pakistan',
+        'Biochar Carbon Removal'
+      )"
+    >
+      Ask Intelligence
+    </button>
+    <button
+      type="button"
       class="listing-btn"
       onclick="openDealRequest(
         'Biochar Carbon Removal Project',
@@ -364,6 +375,17 @@ data-description="Large-scale renewable energy certificates supporting clean ele
     </button>
     <button
       type="button"
+      class="listing-btn listing-btn-ai"
+      onclick="askIntelligence(
+        'Solar Renewable Energy Credits',
+        'UAE',
+        'Solar Renewable Energy'
+      )"
+    >
+      Ask Intelligence
+    </button>
+    <button
+      type="button"
       class="listing-btn"
       onclick="openDealRequest(
         'Solar Renewable Energy Credits',
@@ -442,6 +464,17 @@ data-description="Methane capture and waste management initiative reducing green
 
             <button type="button" class="listing-btn">
               View Details
+            </button>
+            <button
+              type="button"
+              class="listing-btn listing-btn-ai"
+              onclick="askIntelligence(
+                'Methane Avoidance Initiative',
+                'Malaysia',
+                'Methane Avoidance'
+              )"
+            >
+              Ask Intelligence
             </button>
             <button
               type="button"
@@ -1040,6 +1073,17 @@ if (
     </button>
     <button
       type="button"
+      class="listing-btn listing-btn-ai"
+      onclick="askIntelligence(
+        '${(project.projectName || "Carbon Project").replace(/'/g, "\\'")}',
+        '${(project.country || "Global").replace(/'/g, "\\'")}',
+        '${(project.projectType || "Carbon Credits").replace(/'/g, "\\'")}'
+      )"
+    >
+      Ask Intelligence
+    </button>
+    <button
+      type="button"
       class="listing-btn"
       onclick="openDealRequest(
         '${(project.projectName || "Carbon Project").replace(/'/g, "\\'")}',
@@ -1215,6 +1259,40 @@ async function toggleWatchlist(
 }
 
 let pendingDeal = null;
+
+function askIntelligence(projectName, country, productType) {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    window.location.href =
+      "/login.html?next=" +
+      encodeURIComponent(
+        `/ai-intelligence.html?from=marketplace&title=${encodeURIComponent(
+          projectName || ""
+        )}&country=${encodeURIComponent(country || "")}&product=${encodeURIComponent(
+          productType || ""
+        )}`
+      );
+    return;
+  }
+
+  const params = new URLSearchParams({
+    from: "marketplace",
+    title: projectName || "",
+    country: country || "",
+    product: productType || "",
+  });
+  params.set(
+    "q",
+    `Analyze this marketplace listing for green-energy / carbon-market feasibility and risks.
+
+Project: ${projectName || "n/a"}
+Country / market: ${country || "n/a"}
+Type: ${productType || "n/a"}
+
+Give a clear research-style brief (not a trading sales pitch): current feasibility, regulation outlook over 12–36 months, key risks, and practical next checks.`
+  );
+  window.location.href = `/ai-intelligence.html?${params.toString()}`;
+}
 
 function openDealRequest(projectName, country, projectType, price, credits) {
   const token = localStorage.getItem("token");
