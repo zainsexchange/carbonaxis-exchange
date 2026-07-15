@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings | CarbonAxis Exchange</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/css/profile.css" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+</head>
+<body>
+  <header>
+    <div class="navbar">
+      <a href="/index.html" class="logo">
+        <img src="/logo.png" alt="CarbonAxis Exchange" />
+      </a>
+      <nav>
+        <a href="/index.html">Home</a>
+        <a href="/ai-intelligence.html">Intelligence</a>
+        <a href="/marketplace.html">Marketplace</a>
+        <a href="/dashboard.html">Dashboard</a>
+      </nav>
+      <a class="btn btn-primary nav-btn" href="/dashboard.html">Dashboard</a>
+      <div class="profile-menu">
+        <button class="profile-btn" type="button">
+          <span class="profile-avatar">C</span>
+          <span>Account</span>
+          <span class="profile-arrow">▼</span>
+        </button>
+        <div class="profile-dropdown">
+          <a href="/dashboard.html">Dashboard</a>
+          <a href="/profile.html">Profile</a>
+          <a href="/settings.html">Settings</a>
+          <a href="#" onclick="logout()">Logout</a>
+        </div>
+      </div>
+      <a class="btn btn-outline login-open" href="/login.html">Login</a>
+    </div>
+  </header>
+
+  <main class="profile-page">
+    <section class="profile-hero">
+      <div class="container">
+        <p class="section-label">Account</p>
+        <h1>Settings</h1>
+        <p class="profile-subtitle">
+          Manage password and account preferences for CarbonAxis Intelligence and Exchange.
+        </p>
+      </div>
+    </section>
+
+    <section class="profile-section">
+      <div class="container" style="display:grid;gap:24px;max-width:820px">
+        <div class="profile-card">
+          <div class="profile-card-head">
+            <div>
+              <h2>Account</h2>
+              <p>Quick links for your CarbonAxis account.</p>
+            </div>
+          </div>
+          <p id="settingsUser" style="color:#b8b8b8;margin-bottom:16px"></p>
+          <div class="profile-actions">
+            <a href="/profile.html" class="btn btn-primary">Edit profile</a>
+            <a href="/pricing.html" class="btn btn-secondary">Plans & billing</a>
+            <a href="/dashboard.html" class="btn btn-secondary">Dashboard</a>
+          </div>
+        </div>
+
+        <div class="profile-card">
+          <div class="profile-card-head">
+            <div>
+              <h2>Change password</h2>
+              <p>Use a strong password (8+ chars, upper, lower, number, special).</p>
+            </div>
+          </div>
+          <form id="passwordForm" class="profile-form">
+            <div class="form-grid">
+              <label class="full-width">
+                Current password
+                <input type="password" id="currentPassword" required autocomplete="current-password" />
+              </label>
+              <label>
+                New password
+                <input type="password" id="newPassword" required autocomplete="new-password" />
+              </label>
+              <label>
+                Confirm new password
+                <input type="password" id="confirmPassword" required autocomplete="new-password" />
+              </label>
+            </div>
+            <div class="profile-actions">
+              <button type="submit" class="btn btn-primary">Update password</button>
+              <p id="passwordMessage" class="profile-message"></p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/navbar.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/settings.js"></script>
+</body>
+</html>

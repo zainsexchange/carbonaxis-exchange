@@ -28,6 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "dashboard.html",
     "watchlist.html",
     "profile.html",
+    "settings.html",
     "ai-intelligence.html",
     "deals.html",
   ];
@@ -70,6 +71,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   } else if (navBtn) {
     navBtn.textContent = "Get Access";
-    navBtn.href = "/index.html#early-access";
+    navBtn.href = "/register.html";
   }
 });

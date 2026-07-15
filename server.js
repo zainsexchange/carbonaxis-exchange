@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { authenticateToken, requireAdminRole } from "./middleware/auth.js";
 import { PLANS, getPlan } from "./config/plans.js";
 import { runGreenIntelligence, analyzeProjectForAI } from "./services/greenAI.js";
@@ -15,6 +16,20 @@ import {
   getEffectiveAiPlan,
 } from "./services/usage.js";
 dotenv.config();
+
+const SITE_URL = (
+  process.env.SITE_URL || "https://www.carbonaxisexchange.com"
+).replace(/\/$/, "");
+
+function passwordMeetsRules(password = "") {
+  return (
+    password.length >= 8 &&
+    /[A-Z]/.test(password) &&
+    /[a-z]/.test(password) &&
+    /\d/.test(password) &&
+    /[!@#$%^&*(),.?":{}|<>]/.test(password)
+  );
+}
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
@@ -173,6 +188,9 @@ profileImage: String,
       type: Boolean,
       default: false,
     },
+
+    resetPasswordToken: { type: String, default: "" },
+    resetPasswordExpires: { type: Date },
   },
   { timestamps: true }
 );
@@ -920,6 +938,164 @@ email = email.toLowerCase().trim();
     res.status(500).json({
       success: false,
       message: "Login failed",
+    });
+  }
+});
+
+app.post("/api/forgot-password", async (req, res) => {
+  try {
+    const email = String(req.body?.email || "")
+      .toLowerCase()
+      .trim();
+
+    const okMessage =
+      "If that email is registered, we sent a password reset link. Check your inbox.";
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter your email address.",
+      });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.json({ success: true, message: okMessage });
+    }
+
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    user.resetPasswordToken = crypto
+      .createHash("sha256")
+      .update(rawToken)
+      .digest("hex");
+    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
+    await user.save();
+
+    const resetUrl = `${SITE_URL}/reset-password.html?token=${rawToken}`;
+
+    try {
+      await transporter.sendMail({
+        from: `"CarbonAxis Exchange" <${process.env.EMAIL_USER}>`,
+        to: user.email,
+        subject: "Reset your CarbonAxis password",
+        html: `
+          <p>Hi ${user.name || "there"},</p>
+          <p>We received a request to reset your CarbonAxis Exchange password.</p>
+          <p><a href="${resetUrl}">Reset password</a></p>
+          <p>This link expires in 1 hour. If you did not request this, you can ignore this email.</p>
+        `,
+      });
+    } catch (mailErr) {
+      console.error("Forgot password email failed:", mailErr.message);
+      return res.status(500).json({
+        success: false,
+        message: "Could not send reset email. Try again shortly.",
+      });
+    }
+
+    res.json({ success: true, message: okMessage });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Password reset request failed",
+    });
+  }
+});
+
+app.post("/api/reset-password", async (req, res) => {
+  try {
+    const token = String(req.body?.token || "").trim();
+    const password = String(req.body?.password || "");
+
+    if (!token || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Reset token and new password are required.",
+      });
+    }
+
+    if (!passwordMeetsRules(password)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Password must be 8+ characters with upper, lower, number, and special character.",
+      });
+    }
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: new Date() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Reset link is invalid or expired. Request a new one.",
+      });
+    }
+
+    user.password = await bcrypt.hash(password, 10);
+    user.resetPasswordToken = "";
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Password updated. You can log in now.",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Password reset failed",
+    });
+  }
+});
+
+app.post("/api/change-password", authenticateToken, async (req, res) => {
+  try {
+    const currentPassword = String(req.body?.currentPassword || "");
+    const newPassword = String(req.body?.newPassword || "");
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Current and new password are required.",
+      });
+    }
+
+    if (!passwordMeetsRules(newPassword)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "New password must be 8+ characters with upper, lower, number, and special character.",
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const ok = await bcrypt.compare(currentPassword, user.password);
+    if (!ok) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password is incorrect.",
+      });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.json({ success: true, message: "Password changed successfully." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Could not change password",
     });
   }
 });

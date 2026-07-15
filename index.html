@@ -34,9 +34,9 @@
         <a href="/projects.html">Projects</a>
         <a href="/how-it-works.html">How It Works</a>
         <a href="/about.html">About</a>
-        <a href="/index.html#early-access">Early Access</a>
+        <a href="/index.html#early-access" class="nav-early-access">Early Access</a>
       </nav>
-      <a class="btn btn-primary nav-btn" href="/index.html#early-access">
+      <a class="btn btn-primary nav-btn" href="/register.html">
   Get Access
 </a>
      <div class="notification-menu">
@@ -126,6 +126,8 @@
 
     <a href="/ai-intelligence.html">Intelligence</a>
 
+    <a href="/settings.html">Settings</a>
+
     <a href="#" onclick="logout()">Logout</a>
 
   </div>
@@ -145,7 +147,7 @@
       <a href="/ai-intelligence.html">Intelligence</a>
   <a href="/marketplace.html">Marketplace</a>
   <a href="/projects.html">Projects</a>
-  <a href="#early-access">Early Access</a>
+  <a href="#early-access" class="nav-early-access">Early Access</a>
   <a href="/dashboard.html">Dashboard</a>
 </div>
   <div class="market-ticker">
@@ -198,10 +200,10 @@
           <h1>Global Infrastructure for Carbon Markets</h1>
           <p class="hero-text">CarbonAxis Exchange is building a trusted digital marketplace for verified carbon credits, climate project discovery, transparent pricing, and scalable climate finance.</p>
           <div class="hero-actions">
-            <a href="#marketplace" class="btn btn-primary">Explore Marketplace Preview</a>
-            <a href="#early-access" class="btn btn-outline">Join Early Access</a>
+            <a href="/marketplace.html" class="btn btn-primary">Explore Marketplace</a>
+            <a href="/register.html" class="btn btn-outline hide-when-logged-in">Create Account</a>
+            <a href="/ai-intelligence.html" class="btn btn-outline show-when-logged-in">Open Intelligence</a>
           </div>
-          <div class="launch-note"><span></span>Early access opening soon for project owners, buyers, brokers and climate partners.</div>
         </div>
 
         <div class="market-panel fade-up delay">
@@ -680,12 +682,12 @@ data-description="Methane capture and waste management initiative reducing green
     </div>
   </div>
 </section>
-    <section id="early-access" class="section cta-section">
+    <section id="early-access" class="section cta-section hide-when-logged-in">
       <div class="container">
         <div class="cta-card">
-          <p class="section-label">Early Access</p>
+          <p class="section-label">Partner with us</p>
           <h2>Powering the Next Generation of Climate Finance</h2>
-          <p>CarbonAxis Exchange is launching soon. Join early access as a buyer, project owner, broker, registry partner or climate-finance stakeholder.</p>
+          <p>CarbonAxis Exchange is live for Intelligence, projects, and OTC discovery. Tell us how you want to work with us as a buyer, project owner, broker, or climate partner.</p>
           <form class="early-form" id="earlyAccessForm">
   <input id="name" name="name" placeholder="Full Name" required>
 
@@ -700,7 +702,7 @@ data-description="Methane capture and waste management initiative reducing green
 
   <textarea id="message" name="message" placeholder="Tell us how you want to work with CarbonAxis"></textarea>
 
-  <button type="submit" class="btn btn-primary">Request Early Access</button>
+  <button type="submit" class="btn btn-primary">Request Contact</button>
 </form>
         </div>
       </div>

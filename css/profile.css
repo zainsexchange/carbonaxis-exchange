@@ -140,11 +140,14 @@
 }
 
 .profile-message{
-
-    color:#00e5b0;
-
+    margin-top:12px;
     font-weight:600;
-
+}
+.profile-message.success{
+    color:#00e5b0;
+}
+.profile-message.error{
+    color:#ff5c5c;
 }
 @media(max-width:768px){
 

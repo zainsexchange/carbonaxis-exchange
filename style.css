@@ -4420,6 +4420,17 @@ body.user-logged-in .navbar .notification-menu{
 body.user-logged-in .login-open{
   display: none !important;
 }
+body.user-logged-in .nav-early-access,
+body.user-logged-in .hide-when-logged-in,
+body.user-logged-in .launch-note{
+  display: none !important;
+}
+body.user-guest .show-when-logged-in{
+  display: none !important;
+}
+body.user-logged-in .show-when-logged-in{
+  display: inline-flex !important;
+}
 body.user-guest .profile-menu,
 body.user-guest .notification-menu{
   display: none !important;
