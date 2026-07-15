@@ -145,11 +145,66 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;");
 }
 
-function formatPulseHtml(text) {
-  let html = escapeHtml(text);
+function inlinePulseMd(text) {
+  let html = escapeHtml(String(text ?? ""));
+  html = html.replace(/#{1,6}\s*/g, "");
   html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-  html = html.replace(/\n/g, "<br>");
+  html = html.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
   return html;
+}
+
+function stripPulseHeading(line) {
+  return String(line || "")
+    .trim()
+    .replace(/^#{1,6}\s*/, "")
+    .replace(/^\*\*(.+)\*\*$/, "$1")
+    .trim();
+}
+
+/** Render pulse markdown like Intelligence (no raw ### or - shown) */
+function formatPulseHtml(text) {
+  const lines = String(text ?? "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .split("\n");
+  const blocks = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const trimmed = lines[i].trim();
+
+    if (/^#{1,6}/.test(trimmed)) {
+      const title = stripPulseHeading(trimmed);
+      if (title) blocks.push(`<h4 class="ai-md-h">${inlinePulseMd(title)}</h4>`);
+    } else if (/^[-*•]\s+/.test(trimmed)) {
+      const items = [];
+      while (i < lines.length && /^[-*•]\s+/.test(lines[i].trim())) {
+        items.push(
+          `<li>${inlinePulseMd(lines[i].trim().replace(/^[-*•]\s+/, ""))}</li>`
+        );
+        i += 1;
+      }
+      blocks.push(`<ul class="ai-md-list">${items.join("")}</ul>`);
+      continue;
+    } else if (/^\d+[.)]\s+/.test(trimmed)) {
+      const items = [];
+      while (i < lines.length && /^\d+[.)]\s+/.test(lines[i].trim())) {
+        items.push(
+          `<li>${inlinePulseMd(lines[i].trim().replace(/^\d+[.)]\s+/, ""))}</li>`
+        );
+        i += 1;
+      }
+      blocks.push(`<ol class="ai-md-list">${items.join("")}</ol>`);
+      continue;
+    } else if (trimmed === "" || trimmed === "---" || trimmed === "***") {
+      blocks.push('<div class="ai-md-gap"></div>');
+    } else if (trimmed) {
+      blocks.push(`<p class="ai-md-p">${inlinePulseMd(trimmed)}</p>`);
+    }
+    i += 1;
+  }
+
+  return blocks.join("");
 }
 
 async function refreshIntelligencePulse() {
@@ -183,7 +238,7 @@ Cover:
 2) Oman green-energy / carbon-market signal
 3) One worldwide caution or opportunity
 
-Use clear bullets. Research tone. No Verdict/PROCEED trading template. Not legal advice.`;
+Use clear bullets with bold labels. Do not use markdown headings (no # / ## / ###). Research tone. No Verdict/PROCEED trading template. Not legal advice.`;
 
     const res = await fetch(`${API.BASE}${API.aiAsk}`, {
       method: "POST",
