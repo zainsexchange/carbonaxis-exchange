@@ -34,7 +34,7 @@
     if (/\b(population|capital|currency|language|gdp|how many people)\b/i.test(t)) {
       return false;
     }
-    return /green energy|climate|carbon|credit|rec\b|renewable|solar|wind|biochar|methane|hydrogen|net.?zero|esg|emission|co2|feasib|regulat|trade|trading|otc|offset/i.test(
+    return /green energy|climate|carbon|credit|rec\b|renewable|solar|wind|biochar|methane|hydrogen|net.?zero|esg|emission|co2|feasib|regulat|offset|policy|research/i.test(
       t
     );
   }
