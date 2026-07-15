@@ -1081,6 +1081,18 @@ body::before{
   margin-bottom:20px;
 }
 
+.verified-tag{
+  background:rgba(0,224,164,0.10);
+  border:1px solid rgba(0,224,164,0.18);
+  color:var(--mint);
+  padding:8px 14px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+}
+
 .sample-tag{
   background:rgba(255,196,80,0.10);
   border:1px solid rgba(255,196,80,0.28);
