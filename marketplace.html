@@ -1290,9 +1290,14 @@ async function toggleWatchlist(
   image,
   btn
 ){
-  const token = localStorage.getItem("token");
+  const token = (localStorage.getItem("token") || "").trim();
   if (!token) {
     window.location.href = "/login.html";
+    return;
+  }
+
+  if (!window.API?.BASE || !window.API?.watchlist) {
+    alert("API not loaded. Re-upload js/api.js");
     return;
   }
 
@@ -1300,10 +1305,15 @@ async function toggleWatchlist(
 
   try {
     if (btn && btn.classList.contains("saved")) {
-      await fetch(`${API.BASE}${API.watchlist}/${encodeURIComponent(projectKey)}`, {
+      const delRes = await fetch(`${API.BASE}${API.watchlist}/${encodeURIComponent(projectKey)}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
+      const delData = await delRes.json().catch(() => ({}));
+      if (!delRes.ok || delData.success === false) {
+        alert(delData.message || "Could not remove from watchlist");
+        return;
+      }
       btn.classList.remove("saved");
       btn.innerText = "🤍";
       alert("Removed from Watchlist");
@@ -1326,8 +1336,8 @@ async function toggleWatchlist(
         source: "marketplace"
       })
     });
-    const data = await res.json();
-    if (!data.success) {
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) {
       alert(data.message || "Could not save watchlist item");
       return;
     }

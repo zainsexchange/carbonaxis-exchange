@@ -1622,7 +1622,8 @@ app.post("/api/projects/:id/analyze", authenticateToken, async (req, res) => {
 
 app.get("/api/watchlist", authenticateToken, async (req, res) => {
   try {
-    const items = await WatchlistItem.find({ userId: req.user.id }).sort({
+    const userId = req.user.id;
+    const items = await WatchlistItem.find({ userId }).sort({
       createdAt: -1,
     });
     res.json({ success: true, items });
@@ -1641,19 +1642,25 @@ app.post("/api/watchlist", authenticateToken, async (req, res) => {
 
     const plan = getPlan(user.subscription);
     const count = await WatchlistItem.countDocuments({ userId: user._id });
-    if (count >= plan.maxWatchlist) {
-      return res.status(402).json({
-        success: false,
-        message: `Watchlist limit reached for ${plan.name} (${plan.maxWatchlist}). Upgrade for more.`,
-        upgradeUrl: "/pricing.html",
-      });
-    }
 
     const { itemKey, title, country, category, price, volume, source } = req.body;
     if (!itemKey || !title) {
       return res.status(400).json({
         success: false,
         message: "itemKey and title are required",
+      });
+    }
+
+    const existing = await WatchlistItem.findOne({
+      userId: user._id,
+      itemKey: String(itemKey),
+    });
+
+    if (!existing && count >= plan.maxWatchlist) {
+      return res.status(402).json({
+        success: false,
+        message: `Watchlist limit reached for ${plan.name} (${plan.maxWatchlist}). Upgrade for more.`,
+        upgradeUrl: "/pricing.html",
       });
     }
 
@@ -1681,11 +1688,19 @@ app.post("/api/watchlist", authenticateToken, async (req, res) => {
 
 app.delete("/api/watchlist/:itemKey", authenticateToken, async (req, res) => {
   try {
-    await WatchlistItem.findOneAndDelete({
+    let itemKey = req.params.itemKey || "";
+    try {
+      itemKey = decodeURIComponent(itemKey);
+    } catch (_) {}
+
+    const deleted = await WatchlistItem.findOneAndDelete({
       userId: req.user.id,
-      itemKey: req.params.itemKey,
+      itemKey,
     });
-    res.json({ success: true, message: "Removed from watchlist" });
+    res.json({
+      success: true,
+      message: deleted ? "Removed from watchlist" : "Item already removed",
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Failed to remove watchlist item" });

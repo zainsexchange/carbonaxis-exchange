@@ -305,12 +305,20 @@ window.addEventListener("resize", () => {
   canvas.height = window.innerHeight;
 });
 </script>
+<script src="/js/api.js"></script>
   <script>
 async function loadWatchlist(){
   const grid = document.getElementById("watchlistGrid");
-  const token = localStorage.getItem("token");
+  if (!grid) return;
+
+  const token = (localStorage.getItem("token") || "").trim();
   if(!token){
     window.location.href = "/login.html";
+    return;
+  }
+
+  if (!window.API?.BASE || !window.API?.watchlist) {
+    grid.innerHTML = "<p>Watchlist API not loaded. Re-upload js/api.js</p>";
     return;
   }
 
@@ -319,6 +327,12 @@ async function loadWatchlist(){
       headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();
+
+    if (!data.success) {
+      grid.innerHTML = `<p>${data.message || "Unable to load watchlist."}</p>`;
+      return;
+    }
+
     const watchlist = data.items || [];
 
     if(watchlist.length === 0){
@@ -338,30 +352,41 @@ async function loadWatchlist(){
 
     grid.innerHTML = "";
     watchlist.forEach(item => {
-      const safeKey = encodeURIComponent(item.itemKey);
+      const safeKey = encodeURIComponent(item.itemKey || "");
+      const title = String(item.title || "Saved listing").replace(/</g, "&lt;");
+      const country = String(item.country || "-").replace(/</g, "&lt;");
+      const category = String(item.category || "-").replace(/</g, "&lt;");
+      const price = String(item.price || "-").replace(/</g, "&lt;");
+      const volume = String(item.volume || "-").replace(/</g, "&lt;");
       grid.innerHTML += `
         <div class="listing-card">
           <div class="listing-top">
             <span class="market-status active-status">Saved</span>
-            <span class="verified-tag">Watchlist</span>
-            <span class="price">${item.price || "-"}</span>
+            <span class="sample-tag">Watchlist</span>
+            <span class="price">${price}</span>
           </div>
-          <h3>${item.title}</h3>
+          <h3>${title}</h3>
           <p class="listing-location">
-            ${item.country || "-"} · ${item.category || "-"}
+            ${country} · ${category}
           </p>
           <div class="listing-specs">
-            <span>Volume: ${item.volume || "-"}</span>
+            <span>Volume: ${volume}</span>
             <span>Status: Saved</span>
           </div>
           <div class="listing-footer">
-            <span>${item.volume || ""}</span>
-            <button class="listing-btn" onclick="removeFromWatchlist('${safeKey}')">
+            <span>${volume}</span>
+            <button type="button" class="listing-btn" data-item-key="${safeKey}">
               Remove
             </button>
           </div>
         </div>
       `;
+    });
+
+    grid.querySelectorAll("button[data-item-key]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        removeFromWatchlist(btn.getAttribute("data-item-key") || "");
+      });
     });
   } catch (err) {
     console.error(err);
@@ -370,7 +395,11 @@ async function loadWatchlist(){
 }
 
 async function removeFromWatchlist(encodedKey){
-  const token = localStorage.getItem("token");
+  const token = (localStorage.getItem("token") || "").trim();
+  if (!token) {
+    window.location.href = "/login.html";
+    return;
+  }
   const itemKey = decodeURIComponent(encodedKey);
   await fetch(`${API.BASE}${API.watchlist}/${encodeURIComponent(itemKey)}`, {
     method: "DELETE",
@@ -381,7 +410,11 @@ async function removeFromWatchlist(encodedKey){
 
 async function clearWatchlist(){
   if(!confirm("Clear all saved projects?")) return;
-  const token = localStorage.getItem("token");
+  const token = (localStorage.getItem("token") || "").trim();
+  if (!token) {
+    window.location.href = "/login.html";
+    return;
+  }
   const res = await fetch(`${API.BASE}${API.watchlist}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
@@ -438,7 +471,6 @@ if (userToken) {
   if (notificationMenuBox) notificationMenuBox.style.display = "none";
 }
 </script>
-<script src="/js/api.js"></script>
 <script src="/js/navbar.js"></script>
 <script src="/js/auth.js"></script>
 </body>
