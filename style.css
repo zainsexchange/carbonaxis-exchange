@@ -1494,12 +1494,21 @@ body::before{
   display:grid;
   grid-template-columns:1.4fr 1fr 1fr;
   gap:22px;
+  align-items:stretch;
 }
 
 .dash-card{
-    display:flex;
-    flex-direction:column;
-    height:640px;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  height:auto;
+  min-height:160px;
+  border:1px solid var(--line);
+  background:linear-gradient(145deg,rgba(255,255,255,0.06),rgba(255,255,255,0.025));
+  border-radius:28px;
+  padding:28px;
+  overflow:hidden;
+  box-sizing:border-box;
 }
 
 .dash-card::before{
@@ -1526,27 +1535,27 @@ body::before{
   text-transform:uppercase;
 }
 
-.dash-card h3{
-    font-size:48px;
-    line-height:1.05;
-    min-height:110px;
-
-    display:-webkit-box;
-    -webkit-line-clamp:2;
-    -webkit-box-orient:vertical;
-
-    overflow:hidden;
+.dash-card h3,
+.dash-card h2{
+  font-size:clamp(28px, 3.5vw, 42px);
+  line-height:1.1;
+  min-height:0;
+  margin:10px 0 12px;
+  overflow:hidden;
+  word-break:break-word;
 }
 
 .dash-card p{
   color:var(--muted);
   line-height:1.7;
+  margin:0;
 }
 
 .large-dash{
   grid-row:span 2;
-  min-height:402px;
+  min-height:0;
 }
+
 .dash-card .hero-actions{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -1574,6 +1583,7 @@ body::before{
   }
 
   .large-dash{
+    grid-column:1 / -1;
     grid-row:auto;
   }
 }
@@ -1583,6 +1593,17 @@ body::before{
     grid-template-columns:1fr;
   }
 }
+
+.activity-panel,
+.watchlist-panel,
+.ai-insight-panel{
+  width:100%;
+  max-width:1180px;
+  margin-left:auto;
+  margin-right:auto;
+  box-sizing:border-box;
+}
+
 .activity-panel{
   margin-top:28px;
 
