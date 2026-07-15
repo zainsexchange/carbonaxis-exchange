@@ -96,12 +96,14 @@
 
   function isMdTableRow(line) {
     const t = String(line || "").trim();
-    return t.startsWith("|") && t.includes("|", 1);
+    if (!t.includes("|")) return false;
+    return (t.match(/\|/g) || []).length >= 2;
   }
 
   function isMdTableSeparator(line) {
     const t = String(line || "").trim();
-    return /^\|?[\s:-]+\|[\s|:-]*\|?$/.test(t) && /-/.test(t);
+    if (!t.includes("-") || !t.includes("|")) return false;
+    return /^[\s|:=-]+$/.test(t);
   }
 
   function splitMdTableCells(line) {
@@ -112,7 +114,9 @@
   }
 
   function inlineMd(text) {
-    let html = escapeHtml(text);
+    let html = escapeHtml(String(text ?? ""));
+    // remove leftover markdown heading marks anywhere in the line
+    html = html.replace(/#{1,6}\s*/g, "");
     html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
     html = html.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
     html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
@@ -121,8 +125,10 @@
 
   function renderMdTable(rows) {
     if (!rows.length) return "";
-    const header = splitMdTableCells(rows[0]);
-    const bodyRows = rows.slice(2).filter((r) => !isMdTableSeparator(r));
+    const dataRows = rows.filter((r) => !isMdTableSeparator(r));
+    if (!dataRows.length) return "";
+    const header = splitMdTableCells(dataRows[0]);
+    const bodyRows = dataRows.slice(1);
     let html = '<div class="ai-table-wrap"><table class="ai-md-table"><thead><tr>';
     header.forEach((cell) => {
       html += `<th>${inlineMd(cell)}</th>`;
@@ -140,14 +146,41 @@
     return html;
   }
 
-  /** Turn markdown (**bold**, tables, lists, headings) into safe HTML */
+  function stripHeadingMarks(line) {
+    return String(line || "")
+      .trim()
+      .replace(/^#{1,6}\s*/, "")
+      .replace(/^\*\*(.+)\*\*$/, "$1")
+      .trim();
+  }
+
+  /** Turn markdown into safe aligned HTML (hide ### and raw pipes) */
   function formatAssistantHtml(text) {
-    const rawLines = String(text ?? "").split(/\r?\n/);
+    const rawLines = String(text ?? "")
+      .replace(/\r\n/g, "\n")
+      .replace(/\r/g, "\n")
+      .split("\n");
     const blocks = [];
     let i = 0;
 
     while (i < rawLines.length) {
       const line = rawLines[i];
+      const trimmed = line.trim();
+
+      if (trimmed.startsWith("```")) {
+        const codeLines = [];
+        i += 1;
+        while (i < rawLines.length && !rawLines[i].trim().startsWith("```")) {
+          codeLines.push(rawLines[i]);
+          i += 1;
+        }
+        if (i < rawLines.length) i += 1;
+        blocks.push(
+          `<pre class="ai-md-pre"><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`
+        );
+        continue;
+      }
+
       if (
         isMdTableRow(line) &&
         i + 1 < rawLines.length &&
@@ -162,13 +195,13 @@
         continue;
       }
 
-      const trimmed = line.trim();
-      if (/^###\s+/.test(trimmed)) {
-        blocks.push(`<h4 class="ai-md-h">${inlineMd(trimmed.replace(/^###\s+/, ""))}</h4>`);
-      } else if (/^##\s+/.test(trimmed)) {
-        blocks.push(`<h3 class="ai-md-h">${inlineMd(trimmed.replace(/^##\s+/, ""))}</h3>`);
-      } else if (/^#\s+/.test(trimmed)) {
-        blocks.push(`<h3 class="ai-md-h">${inlineMd(trimmed.replace(/^#\s+/, ""))}</h3>`);
+      if (/^#{1,6}/.test(trimmed)) {
+        const title = stripHeadingMarks(trimmed);
+        if (title) blocks.push(`<h4 class="ai-md-h">${inlineMd(title)}</h4>`);
+      } else if (/^\*\*[^*].*\*\*$/.test(trimmed)) {
+        blocks.push(
+          `<h4 class="ai-md-h">${inlineMd(stripHeadingMarks(trimmed))}</h4>`
+        );
       } else if (/^[-*•]\s+/.test(trimmed)) {
         const items = [];
         while (i < rawLines.length && /^[-*•]\s+/.test(rawLines[i].trim())) {
@@ -179,15 +212,29 @@
         }
         blocks.push(`<ul class="ai-md-list">${items.join("")}</ul>`);
         continue;
-      } else if (trimmed === "") {
+      } else if (/^\d+[.)]\s+/.test(trimmed)) {
+        const items = [];
+        while (i < rawLines.length && /^\d+[.)]\s+/.test(rawLines[i].trim())) {
+          items.push(
+            `<li>${inlineMd(rawLines[i].trim().replace(/^\d+[.)]\s+/, ""))}</li>`
+          );
+          i += 1;
+        }
+        blocks.push(`<ol class="ai-md-list">${items.join("")}</ol>`);
+        continue;
+      } else if (trimmed === "" || trimmed === "---" || trimmed === "***") {
         blocks.push('<div class="ai-md-gap"></div>');
       } else {
-        blocks.push(`<p class="ai-md-p">${inlineMd(line)}</p>`);
+        blocks.push(`<p class="ai-md-p">${inlineMd(trimmed)}</p>`);
       }
       i += 1;
     }
 
     return blocks.join("");
+  }
+
+  function shouldSkipTypewriter(text) {
+    return /#{1,6}|\|[^\n]+\|/.test(String(text || ""));
   }
 
   function setAssistantBody(el, text) {
@@ -209,13 +256,13 @@
       return Promise.resolve(body);
     }
 
-    if (!stream) {
+    // Never typewriter tables/headings — avoids flashing raw ### and | pipes
+    if (!stream || shouldSkipTypewriter(text)) {
       setAssistantBody(body, text);
       return Promise.resolve(body);
     }
     return typewriter(body, text);
   }
-
   function typewriter(el, fullText) {
     return new Promise((resolve) => {
       el.textContent = "";

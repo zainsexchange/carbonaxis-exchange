@@ -346,12 +346,17 @@ Focus activity / product (optional): ${focus || "general green energy & carbon m
 User note (optional): ${extra || "n/a"}
 
 Return a clear research brief with:
-1) Short snapshot table or bullets (policy direction, feasibility climate, 12–36 month horizon, CarbonAxis confidence)
+1) Short snapshot (markdown table OR clean bullets) covering policy direction, feasibility climate, 12–36 month horizon, CarbonAxis confidence
 2) Where A is relatively stronger
 3) Where B is relatively stronger
 4) Shared risks / what to verify next
 5) Practical recommendation (not legal advice)
-Keep language professional. Avoid sounding trader-only.`;
+
+Formatting rules:
+- Use markdown headings with a space after hashes if needed (## Title), but prefer bold section titles like **Market Snapshot**
+- Never leave raw ### / ## / # characters as visible text for end users
+- Keep columns short and aligned in tables
+- Keep language professional. Avoid sounding trader-only.`;
 
   const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
   if (!apiKey) {
