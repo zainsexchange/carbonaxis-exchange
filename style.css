@@ -1018,8 +1018,9 @@ body::before{
 
 .listing-grid{
   display:grid;
-  grid-template-columns:repeat(3,1fr);
+  grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));
   gap:24px;
+  align-items:stretch;
 }
 
 .listing-card{
@@ -1107,25 +1108,26 @@ body::before{
 
 .sample-ribbon{
   position:absolute;
-  top:16px;
-  left:16px;
-  z-index:2;
-  background:rgba(12,18,16,0.88);
-  border:1px solid rgba(255,196,80,0.35);
+  top:12px;
+  left:12px;
+  z-index:5;
+  display:inline-flex;
+  align-items:center;
+  background:rgba(12,18,16,0.92);
+  border:1px solid rgba(255,196,80,0.45);
   color:#ffd27a;
   padding:6px 12px;
   border-radius:999px;
   font-size:11px;
   font-weight:800;
   letter-spacing:0.1em;
+  pointer-events:none;
 }
 
 .price{
   color:var(--teal);
-
-  font-size:26px;
-
-  font-weight:900;
+  font-size:18px;
+  font-weight:800;
 }
 
 .listing-card h3{
@@ -2895,25 +2897,36 @@ html{
   position:relative;
   z-index:2;
 }
+
 .listing-image{
+  position:relative;
   width:100%;
   height:180px;
   border-radius:22px;
   overflow:hidden;
-  margin-bottom:22px;
+  margin-bottom:18px;
   border:1px solid rgba(255,255,255,0.08);
+  z-index:1;
+}
+
+.listing-image .sample-ribbon,
+.listing-image .featured-ribbon{
+  position:absolute;
+  z-index:5;
 }
 
 .listing-image img{
   width:100%;
   height:100%;
   object-fit:cover;
+  display:block;
   transition:0.4s ease;
 }
 
 .listing-card:hover .listing-image img{
   transform:scale(1.06);
 }
+
 .listing-specs{
   display:grid;
   gap:8px;
@@ -2961,22 +2974,26 @@ html{
   color:#5aa0ff;
 }
 .listing-top{
-  display:grid;
-  grid-template-columns:auto auto 1fr;
+  display:flex;
+  flex-wrap:wrap;
   align-items:center;
-  gap:12px;
+  gap:8px;
+  margin-bottom:14px;
 }
 
 .listing-top .price{
-  justify-self:end;
+  margin-left:auto;
   white-space:nowrap;
+  font-size:18px;
+  font-weight:800;
+  line-height:1.2;
 }
 
 .market-status,
 .verified-tag,
 .sample-tag{
   white-space:nowrap;
-  padding:7px 12px;
+  padding:6px 10px;
   font-size:11px;
 }
 .featured-ribbon{
@@ -3226,7 +3243,7 @@ footer h4{
 }
 #approvedProjectsGrid{
   display:grid;
-  grid-template-columns:repeat(3,1fr);
+  grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));
   gap:24px;
 }
 
@@ -3791,17 +3808,26 @@ table{
 }
 .listing-footer{
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   justify-content:space-between;
   gap:14px;
+  flex-wrap:wrap;
 }
 
 .listing-actions{
   display:flex;
   align-items:center;
   flex-wrap:wrap;
-  gap:10px;
+  gap:8px;
   justify-content:flex-end;
+  max-width:100%;
+}
+
+.listing-actions .listing-btn{
+  min-height:38px;
+  padding:8px 12px;
+  font-size:12px;
+  white-space:nowrap;
 }
 
 .listing-btn-ai{
@@ -3835,6 +3861,8 @@ table{
 .watchlist-btn.saved{
   background:#00e0a4;
   color:#06110e;
+}
+
 @media(max-width:768px){
   .market-ticker{
     display:block;
