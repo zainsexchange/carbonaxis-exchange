@@ -26,3 +26,8 @@ const API = {
   projectAnalyze: (id) => `/projects/${id}/analyze`,
   subscriptionSet: "/subscription/set",
 };
+
+// Expose for pages that check window.API (const is not on window by default)
+if (typeof window !== "undefined") {
+  window.API = API;
+}

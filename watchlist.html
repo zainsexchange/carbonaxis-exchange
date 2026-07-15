@@ -317,7 +317,7 @@ async function loadWatchlist(){
     return;
   }
 
-  if (!window.API?.BASE || !window.API?.watchlist) {
+  if (typeof API === "undefined" || !API.BASE || !API.watchlist) {
     grid.innerHTML = "<p>Watchlist API not loaded. Re-upload js/api.js</p>";
     return;
   }

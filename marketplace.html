@@ -1296,7 +1296,7 @@ async function toggleWatchlist(
     return;
   }
 
-  if (!window.API?.BASE || !window.API?.watchlist) {
+  if (typeof API === "undefined" || !API.BASE || !API.watchlist) {
     alert("API not loaded. Re-upload js/api.js");
     return;
   }
