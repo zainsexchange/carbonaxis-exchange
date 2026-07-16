@@ -5,6 +5,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const notificationMenu = document.querySelector(".notification-menu");
   const notificationBtn = document.querySelector(".notification-btn");
 
+  // Use cropped navbar logo so mark fills the brand plate
+  document.querySelectorAll(".navbar .site-logo").forEach((img) => {
+    const current = img.getAttribute("src") || "";
+    if (!current.includes("logo-nav.png")) {
+      img.setAttribute("src", "/logo-nav.png");
+    }
+    img.setAttribute("alt", "CarbonAxis Exchange");
+  });
+
   // Account menu only — Marketplace / Intelligence stay in main nav
   const profileDropdown = document.querySelector(".profile-dropdown");
   if (profileDropdown) {
