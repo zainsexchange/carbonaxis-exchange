@@ -1,33 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="icon" type="image/png" href="/favicon.png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My OTC Deals | CarbonAxis Exchange</title>
-  <link rel="stylesheet" href="/style.css?v=109" />
-  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="stylesheet" href="/style.css?v=110" />
 </head>
 <body>
-  <script>
-    if (!localStorage.getItem("token")) {
-      window.location.href = "/login.html";
-    }
-  </script>
-
   <header class="navbar">
     <div class="container nav-inner">
       <a href="/index.html" class="brand">
         <img src="/logo.png" alt="CarbonAxis Exchange Logo" class="site-logo" />
       </a>
       <nav>
-        <a href="/marketplace.html">Marketplace</a>
-        <a href="/deals.html" class="active">My Deals</a>
+        <a href="/index.html">Home</a>
         <a href="/ai-intelligence.html">Intelligence</a>
+        <a href="/marketplace.html">Marketplace</a>
+        <a href="/projects.html">Projects</a>
+        <a href="/deals.html" class="active">My Deals</a>
         <a href="/dashboard.html">Dashboard</a>
       </nav>
       <a class="btn btn-primary nav-btn" href="/marketplace.html">Browse Listings</a>
+      <a class="btn btn-outline login-open" href="/login.html">Login</a>
     </div>
+    <button class="mobile-menu-btn" aria-label="Open Menu">
+      <span></span><span></span><span></span>
+    </button>
   </header>
+
+  <div class="mobile-overlay"></div>
+  <div class="mobile-menu">
+    <a href="/marketplace.html">Marketplace</a>
+    <a href="/deals.html">My Deals</a>
+    <a href="/ai-intelligence.html">Intelligence</a>
+    <a href="/dashboard.html">Dashboard</a>
+  </div>
 
   <main>
     <section class="section marketplace-page-hero">
@@ -35,63 +43,234 @@
         <p class="section-label">OTC Desk</p>
         <h1>My deal requests</h1>
         <p class="hero-text">
-          Track RFQ / OTC requests you submitted from the marketplace.
+          Track RFQ / OTC requests from Marketplace. CarbonAxis reviews each request and updates status here.
         </p>
+        <div class="deals-stats" id="dealsStats">
+          <div><h3 id="statAll">0</h3><p>Total</p></div>
+          <div><h3 id="statOpen">0</h3><p>Open / Review</p></div>
+          <div><h3 id="statDone">0</h3><p>Accepted / Closed</p></div>
+        </div>
       </div>
     </section>
 
     <section class="section">
-      <div class="container">
-        <div class="card" style="overflow:auto;">
-          <table style="width:100%; border-collapse:collapse;">
-            <thead>
-              <tr>
-                <th style="text-align:left;color:#00e5b0;padding:10px;">Listing</th>
-                <th style="text-align:left;color:#00e5b0;padding:10px;">Volume</th>
-                <th style="text-align:left;color:#00e5b0;padding:10px;">Bid</th>
-                <th style="text-align:left;color:#00e5b0;padding:10px;">Status</th>
-                <th style="text-align:left;color:#00e5b0;padding:10px;">Date</th>
-              </tr>
-            </thead>
-            <tbody id="myDealsTable"></tbody>
-          </table>
+      <div class="container deals-layout">
+        <div>
+          <div class="deals-toolbar">
+            <div class="deals-filters" id="dealsFilters">
+              <button type="button" class="active" data-filter="all">All</button>
+              <button type="button" data-filter="Open">Open</button>
+              <button type="button" data-filter="Under Review">Under Review</button>
+              <button type="button" data-filter="Countered">Countered</button>
+              <button type="button" data-filter="Accepted">Accepted</button>
+              <button type="button" data-filter="Rejected">Rejected</button>
+              <button type="button" data-filter="Closed">Closed</button>
+            </div>
+            <a class="btn btn-outline" href="/marketplace.html">Request new deal</a>
+          </div>
+          <div class="deals-grid" id="dealsGrid">
+            <p class="deals-loading">Loading your deals…</p>
+          </div>
         </div>
+
+        <aside class="deals-side">
+          <div class="deals-side-card">
+            <h3>What happens next</h3>
+            <ol class="deals-steps">
+              <li><strong>Open</strong> — request received</li>
+              <li><strong>Under Review</strong> — CarbonAxis desk checking</li>
+              <li><strong>Countered</strong> — revised price/volume offered</li>
+              <li><strong>Accepted / Rejected / Closed</strong> — final outcome</li>
+            </ol>
+          </div>
+          <div class="deals-side-card">
+            <h3>Due-diligence checklist</h3>
+            <ul class="deals-check">
+              <li>Confirm country &amp; project type fit</li>
+              <li>Ask Intelligence for regulation outlook</li>
+              <li>Clarify volume, delivery, and registry path</li>
+              <li>Keep bid notes short and commercial</li>
+            </ul>
+            <a class="btn btn-primary" href="/ai-intelligence.html">Open Intelligence</a>
+          </div>
+        </aside>
       </div>
     </section>
   </main>
 
-  <script src="/js/api.js"></script>
+  <footer>
+    <div class="container">
+      <div class="footer-bottom">© 2026 CarbonAxis Exchange.</div>
+    </div>
+  </footer>
+
+  <script src="/js/api.js?v=110"></script>
+  <script src="/js/navbar.js?v=110"></script>
   <script src="/js/auth.js"></script>
   <script>
+    let allDeals = [];
+    let activeFilter = "all";
+
+    function statusClass(status) {
+      const s = String(status || "").toLowerCase();
+      if (s.includes("accept")) return "deal-status-ok";
+      if (s.includes("reject") || s.includes("closed")) return "deal-status-bad";
+      if (s.includes("counter")) return "deal-status-warn";
+      if (s.includes("review")) return "deal-status-info";
+      return "deal-status-open";
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function updateStats(deals) {
+      const openish = deals.filter((d) =>
+        ["Open", "Under Review", "Countered"].includes(d.status)
+      ).length;
+      const done = deals.filter((d) =>
+        ["Accepted", "Rejected", "Closed"].includes(d.status)
+      ).length;
+      document.getElementById("statAll").textContent = String(deals.length);
+      document.getElementById("statOpen").textContent = String(openish);
+      document.getElementById("statDone").textContent = String(done);
+    }
+
+    function renderDeals() {
+      const grid = document.getElementById("dealsGrid");
+      const deals =
+        activeFilter === "all"
+          ? allDeals
+          : allDeals.filter((d) => d.status === activeFilter);
+
+      if (!allDeals.length) {
+        grid.innerHTML = `
+          <div class="deal-card deal-empty">
+            <h3>No deal requests yet</h3>
+            <p>Open Marketplace, pick a listing, and click <strong>Request Deal</strong>.</p>
+            <a class="btn btn-primary" href="/marketplace.html">Browse Marketplace</a>
+          </div>`;
+        return;
+      }
+
+      if (!deals.length) {
+        grid.innerHTML = `
+          <div class="deal-card deal-empty">
+            <h3>No deals in this filter</h3>
+            <p>Try another status, or submit a new RFQ from Marketplace.</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = deals
+        .map((d) => {
+          const country = escapeHtml(d.country || "—");
+          const category = escapeHtml(d.category || "—");
+          const title = escapeHtml(d.listingTitle || "Listing");
+          const volume = escapeHtml(d.volumeRequested || "—");
+          const bid = escapeHtml(d.bidPrice || "On request");
+          const listed = escapeHtml(d.listedPrice || "—");
+          const status = escapeHtml(d.status || "Open");
+          const when = d.createdAt
+            ? new Date(d.createdAt).toLocaleString()
+            : "—";
+          const message = escapeHtml(d.message || "");
+          const counterBits = [
+            d.counterPrice ? `Counter price: ${escapeHtml(d.counterPrice)}` : "",
+            d.counterVolume ? `Counter volume: ${escapeHtml(d.counterVolume)}` : "",
+            d.adminNotes ? `Desk note: ${escapeHtml(d.adminNotes)}` : "",
+          ]
+            .filter(Boolean)
+            .join(" · ");
+
+          const iq = encodeURIComponent(
+            `Brief OTC due diligence for this deal request.
+
+Listing: ${d.listingTitle || "n/a"}
+Country: ${d.country || "n/a"}
+Category: ${d.category || "n/a"}
+Requested volume: ${d.volumeRequested || "n/a"}
+Bid: ${d.bidPrice || "n/a"}
+
+Give a short research-style note: feasibility, key risks, and checks before proceeding. Not legal advice.`
+          );
+
+          return `
+          <article class="deal-card">
+            <div class="deal-card-top">
+              <span class="deal-status ${statusClass(d.status)}">${status}</span>
+              <span class="deal-date">${when}</span>
+            </div>
+            <h3>${title}</h3>
+            <p class="deal-meta">${country} · ${category}</p>
+            <div class="deal-metrics">
+              <div><span>Listed</span><strong>${listed}</strong></div>
+              <div><span>Your volume</span><strong>${volume}</strong></div>
+              <div><span>Your bid</span><strong>${bid}</strong></div>
+            </div>
+            ${
+              message
+                ? `<p class="deal-note">${message}</p>`
+                : ""
+            }
+            ${
+              counterBits
+                ? `<p class="deal-counter">${counterBits}</p>`
+                : ""
+            }
+            <div class="deal-actions">
+              <a class="btn btn-outline" href="/marketplace.html">View Marketplace</a>
+              <a class="btn btn-primary" href="/ai-intelligence.html?q=${iq}&country=${encodeURIComponent(
+                d.country || ""
+              )}&product=${encodeURIComponent(d.category || "")}">Ask Intelligence</a>
+            </div>
+          </article>`;
+        })
+        .join("");
+    }
+
     async function loadMyDeals() {
-      const token = localStorage.getItem("token");
-      const table = document.getElementById("myDealsTable");
+      const token = (localStorage.getItem("token") || "").trim();
+      if (!token) {
+        window.location.href = "/login.html?next=" + encodeURIComponent("/deals.html");
+        return;
+      }
+      const grid = document.getElementById("dealsGrid");
       try {
-        const res = await fetch(`${API.BASE}/deals`, {
+        const res = await fetch(`${API.BASE}${API.deals}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-        const deals = data.deals || [];
-        if (!deals.length) {
-          table.innerHTML = `<tr><td colspan="5" style="padding:16px;color:#9db0a9;">No deal requests yet. Open a listing and click Request Deal.</td></tr>`;
+        if (!data.success) {
+          grid.innerHTML = `<div class="deal-card deal-empty"><p>${escapeHtml(
+            data.message || "Unable to load deals."
+          )}</p></div>`;
           return;
         }
-        table.innerHTML = deals
-          .map(
-            (d) => `
-          <tr>
-            <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.08);">${d.listingTitle}</td>
-            <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.08);">${d.volumeRequested || "-"}</td>
-            <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.08);">${d.bidPrice || "-"}</td>
-            <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.08);">${d.status}</td>
-            <td style="padding:10px;border-bottom:1px solid rgba(255,255,255,.08);">${new Date(d.createdAt).toLocaleString()}</td>
-          </tr>`
-          )
-          .join("");
+        allDeals = data.deals || [];
+        updateStats(allDeals);
+        renderDeals();
       } catch (e) {
-        table.innerHTML = `<tr><td colspan="5" style="padding:16px;">Unable to load deals.</td></tr>`;
+        console.error(e);
+        grid.innerHTML =
+          '<div class="deal-card deal-empty"><p>Unable to load deals.</p></div>';
       }
     }
+
+    document.getElementById("dealsFilters").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-filter]");
+      if (!btn) return;
+      activeFilter = btn.getAttribute("data-filter") || "all";
+      document
+        .querySelectorAll("#dealsFilters button")
+        .forEach((b) => b.classList.toggle("active", b === btn));
+      renderDeals();
+    });
+
     loadMyDeals();
   </script>
 </body>

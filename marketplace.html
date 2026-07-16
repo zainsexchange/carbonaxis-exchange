@@ -1498,16 +1498,18 @@ async function submitDealRequest() {
 <div class="deal-modal broker-modal" id="dealModal">
   <div class="broker-overlay" onclick="closeDealRequest()"></div>
   <div class="broker-box">
-    <button class="close-broker" onclick="closeDealRequest()">âœ•</button>
+    <button class="close-broker" onclick="closeDealRequest()">✕</button>
     <p class="section-label">OTC Deal / RFQ</p>
     <h2 id="dealListingTitle">Request Deal</h2>
-    <input type="text" id="dealVolume" placeholder="Requested volume (tCOâ‚‚e)" />
+    <input type="text" id="dealVolume" placeholder="Requested volume (tCO₂e)" />
     <input type="text" id="dealBid" placeholder="Your bid price (optional)" />
     <textarea id="dealMessage" placeholder="Counterparty notes / delivery preferences"></textarea>
     <button class="btn btn-primary" onclick="submitDealRequest()">Submit Deal Request</button>
     <p style="margin-top:10px;font-size:13px;color:#9db0a9;">
-      Or ask Green Energy AI first about regulatory fit:
-      <a href="/ai-intelligence.html">Open AI Intelligence</a>
+      Track status anytime in
+      <a href="/deals.html">My Deals</a>
+      · or research first in
+      <a href="/ai-intelligence.html">Intelligence</a>
     </p>
   </div>
 </div>
