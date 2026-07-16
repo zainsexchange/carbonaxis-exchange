@@ -3844,7 +3844,7 @@ table{
   border-radius:50%;
   border:1px solid rgba(0,224,164,.35);
   background:rgba(0,224,164,.06);
-  color:#00e0a4;
+  color:rgba(255,255,255,0.72);
   cursor:pointer;
   font-size:18px;
   display:flex;
@@ -3856,11 +3856,19 @@ table{
 .watchlist-btn:hover{
   transform:scale(1.08);
   background:rgba(0,224,164,.16);
+  color:#fff;
 }
 
 .watchlist-btn.saved{
-  background:#00e0a4;
-  color:#06110e;
+  background:rgba(229,57,53,0.16);
+  border-color:rgba(229,57,53,0.55);
+  color:#ff3b30 !important;
+  box-shadow:0 0 0 1px rgba(229,57,53,0.18);
+}
+
+.watchlist-btn.saved:hover{
+  background:rgba(229,57,53,0.24);
+  color:#ff5248 !important;
 }
 
 @media(max-width:768px){
