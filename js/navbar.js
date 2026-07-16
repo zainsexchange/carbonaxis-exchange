@@ -5,6 +5,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const notificationMenu = document.querySelector(".notification-menu");
   const notificationBtn = document.querySelector(".notification-btn");
 
+  // Account menu only — Marketplace / Intelligence stay in main nav
+  const profileDropdown = document.querySelector(".profile-dropdown");
+  if (profileDropdown) {
+    profileDropdown.innerHTML = `
+      <a href="/dashboard.html">Dashboard</a>
+      <a href="/profile.html">Profile</a>
+      <a href="/watchlist.html">Watchlist</a>
+      <a href="/deals.html">My Deals</a>
+      <a href="/settings.html">Settings</a>
+      <a href="#" onclick="logout(); return false;">Logout</a>
+    `;
+  }
+
   if (profileBtn && profileMenu) {
     profileBtn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -28,58 +41,47 @@ document.addEventListener("DOMContentLoaded", () => {
       notificationMenu.classList.toggle("active");
     });
   }
-  // Close menus when clicking anywhere outside
-document.addEventListener("click", (e) => {
 
-  if (profileMenu && !profileMenu.contains(e.target)) {
-    profileMenu.classList.remove("active");
-  }
-
-  if (notificationMenu && !notificationMenu.contains(e.target)) {
-    notificationMenu.classList.remove("active");
-  }
-
-});
-document.querySelectorAll(".profile-dropdown a").forEach(link => {
-
-  link.addEventListener("click", () => {
-
-    if (profileMenu) {
+  document.addEventListener("click", (e) => {
+    if (profileMenu && !profileMenu.contains(e.target)) {
       profileMenu.classList.remove("active");
     }
 
-  });
-
-});
-
-// Close menus when pressing ESC
-document.addEventListener("keydown", (e) => {
-
-  if (e.key === "Escape") {
-
-    if (profileMenu) {
-      profileMenu.classList.remove("active");
-    }
-
-    if (notificationMenu) {
+    if (notificationMenu && !notificationMenu.contains(e.target)) {
       notificationMenu.classList.remove("active");
     }
+  });
 
-  }
+  document.querySelectorAll(".profile-dropdown a").forEach((link) => {
+    link.addEventListener("click", () => {
+      if (profileMenu) {
+        profileMenu.classList.remove("active");
+      }
+    });
+  });
 
-});
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      if (profileMenu) {
+        profileMenu.classList.remove("active");
+      }
+
+      if (notificationMenu) {
+        notificationMenu.classList.remove("active");
+      }
+    }
+  });
+
   const token = localStorage.getItem("token");
 
-if (token) {
-
+  if (token && typeof API !== "undefined") {
     fetch(`${API.BASE}${API.profile}`, {
-        headers: {
-            Authorization: `Bearer ${token}`
-        }
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
-    .then(res => res.json())
-    .then(data => {
-
+      .then((res) => res.json())
+      .then((data) => {
         if (!data.success) return;
 
         const user = data.user;
@@ -89,19 +91,19 @@ if (token) {
         const avatar = document.querySelector(".profile-avatar");
         const accountText = document.querySelector(".profile-btn span:nth-child(2)");
 
-        if (avatar) {
-            avatar.innerText = user.name
-                .split(" ")
-                .map(n => n[0])
-                .join("")
-                .substring(0,2)
-                .toUpperCase();
+        if (avatar && user.name) {
+          avatar.innerText = user.name
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .substring(0, 2)
+            .toUpperCase();
         }
 
-        if (accountText) {
-            accountText.innerText = user.name;
+        if (accountText && user.name) {
+          accountText.innerText = user.name;
         }
-
-    });
-}
+      })
+      .catch(() => {});
+  }
 });
