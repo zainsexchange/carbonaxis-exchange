@@ -29,8 +29,15 @@
     .admin-top{
       display:flex;
       justify-content:space-between;
-      align-items:center;
+      align-items:flex-start;
+      gap:16px;
+      flex-wrap:wrap;
       margin-bottom:30px;
+    }
+    .admin-top-meta{
+      color:rgba(255,255,255,.65);
+      font-size:14px;
+      margin-top:8px;
     }
 
     h1{
@@ -72,6 +79,22 @@
       color:#00e0a4;
       margin:10px 0 0;
       font-size:34px;
+    }
+    .stat-card h2 small{
+      display:block;
+      margin-top:6px;
+      font-size:13px;
+      color:rgba(255,255,255,.6);
+      font-weight:600;
+    }
+    .stat-card.clickable{
+      cursor:pointer;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .stat-card.clickable:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 0 18px rgba(0,224,164,.18);
+      border-color: rgba(0,224,164,.25);
     }
 
     .admin-grid{
@@ -199,6 +222,80 @@
   font-size:12px;
   margin-right:5px;
 }
+.muted{
+  color: rgba(255,255,255,.65);
+}
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.2px;
+  border:1px solid rgba(255,255,255,.12);
+}
+.pill.open{ background: rgba(0,224,164,.10); color:#00e0a4; border-color: rgba(0,224,164,.25); }
+.pill.under-review{ background: rgba(0,224,164,.08); color:#bdfae8; border-color: rgba(0,224,164,.18); }
+.pill.countered{ background: rgba(255,204,51,.12); color:#ffcc33; border-color: rgba(255,204,51,.25); }
+.pill.accepted{ background: rgba(0,224,164,.16); color:#00e0a4; border-color: rgba(0,224,164,.28); }
+.pill.rejected{ background: rgba(255,77,77,.12); color:#ff7b7b; border-color: rgba(255,77,77,.22); }
+.pill.closed{ background: rgba(255,255,255,.08); color: rgba(255,255,255,.75); border-color: rgba(255,255,255,.14); }
+.pill.pending{ background: rgba(255,204,51,.10); color:#ffcc33; border-color: rgba(255,204,51,.22); }
+.pill.approved{ background: rgba(0,224,164,.16); color:#00e0a4; border-color: rgba(0,224,164,.28); }
+.pill.rejected-proj{ background: rgba(255,77,77,.12); color:#ff7b7b; border-color: rgba(255,77,77,.22); }
+.toast-host{
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  z-index: 9999;
+  pointer-events: none;
+}
+.toast{
+  pointer-events: auto;
+  min-width: 260px;
+  max-width: 420px;
+  background: rgba(13,28,24,.98);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  padding: 12px 14px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.35);
+}
+.toast .title{
+  font-weight: 900;
+  color: #00e0a4;
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+.toast .body{
+  margin:0;
+  font-size: 13px;
+  color: rgba(255,255,255,.8);
+  line-height: 1.4;
+}
+.toast.error .title{ color:#ff7b7b; }
+.toast.warn .title{ color:#ffcc33; }
+.toast .actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:10px;
+}
+.toast button{
+  background: rgba(255,255,255,.08);
+  color: white;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.section-anchor{
+  scroll-margin-top: 18px;
+}
 #projectTable{
   table-layout: fixed;
 }
@@ -225,22 +322,133 @@
 
 #projectTable th:nth-child(5),
 #projectTable td:nth-child(5){
-  width: 38%;
-  max-width: 520px;
+  width: 8%;
+}
+
+#projectTable th:nth-child(6),
+#projectTable td:nth-child(6){
+  width: 28%;
+  max-width: 420px;
   white-space: normal;
   word-break: break-word;
   line-height: 1.45;
 }
 
-#projectTable th:nth-child(6),
-#projectTable td:nth-child(6){
-  width: 12%;
-}
-
 #projectTable th:nth-child(7),
 #projectTable td:nth-child(7){
   width: 12%;
+}
+
+#projectTable th:nth-child(8),
+#projectTable td:nth-child(8){
+  width: 12%;
   min-width: 170px;
+}
+.row-btn{
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.14);
+  padding:6px 10px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:12px;
+  font-weight:700;
+}
+.deal-drawer-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  z-index:8000;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .2s ease;
+}
+.deal-drawer-backdrop.open{
+  opacity:1;
+  pointer-events:auto;
+}
+.deal-drawer{
+  position:fixed;
+  top:0;
+  right:0;
+  width:min(480px,100vw);
+  height:100vh;
+  background:#0b1814;
+  border-left:1px solid rgba(0,224,164,.2);
+  z-index:8100;
+  transform:translateX(100%);
+  transition:transform .25s ease;
+  display:flex;
+  flex-direction:column;
+  box-shadow:-12px 0 40px rgba(0,0,0,.4);
+}
+.deal-drawer.open{ transform:translateX(0); }
+.deal-drawer-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  padding:20px 22px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.deal-drawer-head h3{
+  margin:0;
+  color:#00e0a4;
+  font-size:20px;
+}
+.deal-drawer-body{
+  padding:20px 22px;
+  overflow:auto;
+  flex:1;
+}
+.deal-drawer-body dl{
+  margin:0 0 16px;
+  display:grid;
+  grid-template-columns:110px 1fr;
+  gap:8px 12px;
+  font-size:14px;
+}
+.deal-drawer-body dt{ color:rgba(255,255,255,.55); margin:0; }
+.deal-drawer-body dd{ margin:0; word-break:break-word; }
+.deal-drawer-foot{
+  padding:16px 22px 22px;
+  border-top:1px solid rgba(255,255,255,.08);
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.deal-drawer-foot label{
+  font-size:12px;
+  color:rgba(255,255,255,.65);
+  display:block;
+  margin-bottom:4px;
+}
+.deal-drawer-foot input,
+.deal-drawer-foot textarea{
+  width:100%;
+  box-sizing:border-box;
+  background:#06110e;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:8px;
+  color:#fff;
+  padding:10px;
+  font-family:inherit;
+}
+.deal-drawer-foot textarea{ min-height:72px; resize:vertical; }
+.deal-drawer-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:6px;
+}
+.close-drawer-btn{
+  background:transparent;
+  border:1px solid rgba(255,255,255,.2);
+  color:#fff;
+  border-radius:8px;
+  padding:8px 12px;
+  cursor:pointer;
+  font-weight:700;
 }
 
 .action-buttons{
@@ -274,15 +482,91 @@
   background:#00e0a4;
   color:#06110e;
 }
+.billing-banner{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px 20px;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 18px;
+  border-radius:14px;
+  margin-bottom:18px;
+  border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.04);
+}
+.billing-banner.ready{
+  border-color:rgba(0,224,164,.28);
+  background:rgba(0,224,164,.08);
+}
+.billing-banner.pending{
+  border-color:rgba(255,204,51,.25);
+  background:rgba(255,204,51,.08);
+}
+.billing-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin:0 0 18px;
+}
+.billing-chip{
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  padding:10px 14px;
+  min-width:120px;
+}
+.billing-chip strong{
+  display:block;
+  color:#00e0a4;
+  font-size:22px;
+  margin-top:4px;
+}
+.billing-chip span{
+  font-size:12px;
+  color:rgba(255,255,255,.65);
+}
+.plan-pill{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.3px;
+}
+.plan-pill.free{ background:rgba(255,255,255,.1); color:rgba(255,255,255,.8); }
+.plan-pill.pro{ background:rgba(0,224,164,.18); color:#00e0a4; }
+.plan-pill.enterprise{ background:rgba(255,204,51,.15); color:#ffcc33; }
+.plan-select{
+  background:#06110e;
+  color:#fff;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:6px;
+  padding:5px 8px;
+  font-size:12px;
+  margin-right:6px;
+}
+.stats-grid.five{
+  grid-template-columns:repeat(5,1fr);
+}
+@media(max-width:1200px){
+  .stats-grid.five{ grid-template-columns:repeat(2,1fr); }
+}
+@media(max-width:700px){
+  .stats-grid.five{ grid-template-columns:1fr; }
+}
   </style>
 </head>
 
 <body>
 
   <div class="admin-top">
-    <h1>CarbonAxis Admin Dashboard</h1>
     <div>
-  <button class="refresh-btn" onclick="location.reload()">
+    <h1>CarbonAxis Admin Dashboard</h1>
+    <p class="admin-top-meta">Signed in as <strong id="adminUserLabel">Admin</strong> · Operations desk</p>
+    </div>
+    <div>
+  <button class="refresh-btn" onclick="window.refreshAdminData?.()">
     Refresh
   </button>
 
@@ -292,34 +576,96 @@
 </div>
   </div>
 
-  <div class="stats-grid">
-    <div class="stat-card">
+  <div class="stats-grid five">
+    <div class="stat-card clickable" onclick="window.jumpToSection?.('early')">
       <span>✉ Early Access Requests</span>
       <h2 id="earlyCount">0</h2>
     </div>
 
-    <div class="stat-card">
+    <div class="stat-card clickable" onclick="window.jumpToSection?.('projects')">
       <span>📁 Project Submissions</span>
       <h2 id="projectCount">0</h2>
     </div>
 
-    <div class="stat-card">
+    <div class="stat-card clickable" onclick="window.jumpToSection?.('brokers')">
   <span>✉ Broker Inquiries</span>
   <h2 id="brokerCount">0</h2>
 </div>
 
-    <div class="stat-card">
+    <div class="stat-card clickable" onclick="window.jumpToSection?.('deals')">
       <span>🤝 OTC Deal Requests</span>
       <h2 id="dealCount">0</h2>
     </div>
+
+    <div class="stat-card clickable" onclick="window.jumpToSection?.('users')">
+      <span>👤 Registered Users</span>
+      <h2 id="userCount">0</h2>
+    </div>
   </div>
   <p class="last-updated">
-  Last updated: <span id="lastUpdated">--</span>
+  Last updated: <span id="lastUpdated">--</span> <span class="muted">• Auto refresh every 60s</span>
 </p>
 
   <div class="admin-grid">
 
-    <div class="card">
+    <div class="card section-anchor" id="section-users">
+      <h2>
+        Users &amp; Billing
+        (<span id="userCountText">0</span>)
+      </h2>
+
+      <div id="billingBanner" class="billing-banner pending">
+        <div>
+          <strong id="billingBannerTitle">Checking Stripe…</strong>
+          <p class="muted" id="billingBannerBody" style="margin:6px 0 0;font-size:13px;"></p>
+        </div>
+        <span class="plan-pill free" id="billingStripePill">Stripe</span>
+      </div>
+
+      <div class="billing-chips" id="billingChips">
+        <div class="billing-chip"><span>Free</span><strong id="planCountFree">0</strong></div>
+        <div class="billing-chip"><span>Pro</span><strong id="planCountPro">0</strong></div>
+        <div class="billing-chip"><span>Enterprise</span><strong id="planCountEnterprise">0</strong></div>
+        <div class="billing-chip"><span>New (7 days)</span><strong id="planCountNew">0</strong></div>
+        <div class="billing-chip"><span>Stripe linked</span><strong id="planCountStripe">0</strong></div>
+        <div class="billing-chip"><span>Pro MRR est.</span><strong id="planMrrEst">$0</strong></div>
+      </div>
+
+      <div class="status-filters" id="userPlanFilters">
+        <button type="button" data-plan="all" class="active">All</button>
+        <button type="button" data-plan="free">Free</button>
+        <button type="button" data-plan="pro">Pro</button>
+        <button type="button" data-plan="enterprise">Enterprise</button>
+      </div>
+
+      <div class="table-tools">
+        <button type="button" onclick="exportUsers()" class="export-btn">Export CSV</button>
+        <input
+          type="text"
+          id="userSearch"
+          class="search-box"
+          placeholder="Search users by name, email, company, country..."
+        >
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Company</th>
+            <th>Country</th>
+            <th>Plan</th>
+            <th>Stripe</th>
+            <th>Joined</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="userTable"></tbody>
+      </table>
+    </div>
+
+    <div class="card section-anchor" id="section-early">
       <h2>
   Early Access Requests
   (<span id="earlyCountText">0</span>)
@@ -351,16 +697,16 @@
       </table>
     </div>
 
-    <div class="card">
+    <div class="card section-anchor" id="section-projects">
       <h2>
   Project Submissions
   (<span id="projectCountText">0</span>)
 </h2>
-<div class="status-filters">
-  <button onclick="filterProjectsByStatus('all')" class="active">All</button>
-  <button onclick="filterProjectsByStatus('Pending')">Pending</button>
-  <button onclick="filterProjectsByStatus('Approved')">Approved</button>
-  <button onclick="filterProjectsByStatus('Rejected')">Rejected</button>
+<div class="status-filters" id="projectStatusFilters">
+  <button type="button" data-status="all">All</button>
+  <button type="button" data-status="Pending" class="active">Pending</button>
+  <button type="button" data-status="Approved">Approved</button>
+  <button type="button" data-status="Rejected">Rejected</button>
 </div>
       <div class="table-tools">
   <button onclick="exportProjects()" class="export-btn">
@@ -380,6 +726,7 @@
             <th>Project</th>
             <th>Country</th>
             <th>Type</th>
+            <th>Status</th>
             <th>Credits</th>
             <th>Description</th>
             <th>Date</th>
@@ -392,12 +739,20 @@
 
   </div>
 
-<div class="card">
+<div class="card section-anchor" id="section-deals">
   <h2>
     OTC Deal / RFQ Requests
     (<span id="dealCountText">0</span>)
   </h2>
 
+  <div class="status-filters" id="dealStatusFilters">
+    <button type="button" data-status="all">All</button>
+    <button type="button" data-status="Open" class="active">Open</button>
+    <button type="button" data-status="Under Review">Under Review</button>
+    <button type="button" data-status="Countered">Countered</button>
+    <button type="button" data-status="Accepted">Accepted</button>
+    <button type="button" data-status="Rejected">Rejected</button>
+  </div>
   <div class="table-tools">
     <input
       type="text"
@@ -423,7 +778,7 @@
   </table>
 </div>
 
-<div class="card">
+<div class="card section-anchor" id="section-brokers">
   <h2>
     Broker Inquiries
     (<span id="brokerCountText">0</span>)
@@ -458,7 +813,20 @@
   </table>
 </div>
 <script src="/js/api.js"></script>
-<script src="/js/admin.js"></script>
+<script src="/js/admin.js?v=113"></script>
+<div class="deal-drawer-backdrop" id="dealDrawerBackdrop" onclick="window.closeDealDrawer?.()"></div>
+<aside class="deal-drawer" id="dealDrawer" aria-hidden="true">
+  <div class="deal-drawer-head">
+    <div>
+      <h3 id="dealDrawerTitle">Deal desk</h3>
+      <p class="muted" id="dealDrawerSubtitle" style="margin:6px 0 0;font-size:13px;"></p>
+    </div>
+    <button type="button" class="close-drawer-btn" onclick="window.closeDealDrawer?.()">Close</button>
+  </div>
+  <div class="deal-drawer-body" id="dealDrawerBody"></div>
+  <div class="deal-drawer-foot" id="dealDrawerFoot"></div>
+</aside>
+<div class="toast-host" id="toastHost" aria-live="polite" aria-atomic="true"></div>
 <div class="footer">
   CarbonAxis Exchange Admin Panel © 2026
 </div>

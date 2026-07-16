@@ -21,6 +21,119 @@ const SITE_URL = (
   process.env.SITE_URL || "https://www.carbonaxisexchange.com"
 ).replace(/\/$/, "");
 
+function escapeEmailHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function dealStatusEmailContent(deal, buyerName) {
+  const listing = escapeEmailHtml(deal.listingTitle);
+  const status = deal.status;
+  const dealsUrl = `${SITE_URL}/deals.html`;
+  const note = deal.adminNotes
+    ? `<p><b>Desk note:</b> ${escapeEmailHtml(deal.adminNotes)}</p>`
+    : "";
+
+  const details = `
+    <p><b>Listing:</b> ${listing}</p>
+    <p><b>Volume requested:</b> ${escapeEmailHtml(deal.volumeRequested)}</p>
+    <p><b>Your bid:</b> ${escapeEmailHtml(deal.bidPrice || "-")} ${escapeEmailHtml(deal.currency || "USD")}</p>
+  `;
+
+  const templates = {
+    "Under Review": {
+      subject: `Deal under review — ${deal.listingTitle}`,
+      headline: "Your RFQ is under review",
+      body: `<p>Hi ${escapeEmailHtml(buyerName)},</p>
+        <p>CarbonAxis is reviewing your marketplace deal request.</p>
+        ${details}
+        ${note}
+        <p><a href="${dealsUrl}">View My Deals</a></p>`,
+    },
+    Countered: {
+      subject: `Counter offer — ${deal.listingTitle}`,
+      headline: "CarbonAxis sent a counter offer",
+      body: `<p>Hi ${escapeEmailHtml(buyerName)},</p>
+        <p>We reviewed your RFQ and prepared a counter offer:</p>
+        ${details}
+        <p><b>Counter price:</b> ${escapeEmailHtml(deal.counterPrice || "-")}</p>
+        <p><b>Counter volume:</b> ${escapeEmailHtml(deal.counterVolume || "-")}</p>
+        ${note}
+        <p><a href="${dealsUrl}">View My Deals</a></p>`,
+    },
+    Accepted: {
+      subject: `Deal accepted — ${deal.listingTitle}`,
+      headline: "Your deal request was accepted",
+      body: `<p>Hi ${escapeEmailHtml(buyerName)},</p>
+        <p>Good news — CarbonAxis accepted your RFQ. Our desk will follow up on next steps.</p>
+        ${details}
+        ${note}
+        <p><a href="${dealsUrl}">View My Deals</a></p>`,
+    },
+    Rejected: {
+      subject: `Deal update — ${deal.listingTitle}`,
+      headline: "Deal request not progressed",
+      body: `<p>Hi ${escapeEmailHtml(buyerName)},</p>
+        <p>Thank you for your interest. We are not progressing this RFQ at this time.</p>
+        ${details}
+        ${note}
+        <p>You can submit another request from the marketplace or <a href="${dealsUrl}">view My Deals</a>.</p>`,
+    },
+    Closed: {
+      subject: `Deal closed — ${deal.listingTitle}`,
+      headline: "Deal marked closed",
+      body: `<p>Hi ${escapeEmailHtml(buyerName)},</p>
+        <p>Your deal request has been closed on CarbonAxis Exchange.</p>
+        ${details}
+        ${note}
+        <p><a href="${dealsUrl}">View My Deals</a></p>`,
+    },
+    Open: {
+      subject: `Deal reopened — ${deal.listingTitle}`,
+      headline: "Deal request reopened",
+      body: `<p>Hi ${escapeEmailHtml(buyerName)},</p>
+        <p>Your deal request is open again in our queue.</p>
+        ${details}
+        ${note}
+        <p><a href="${dealsUrl}">View My Deals</a></p>`,
+    },
+  };
+
+  return templates[status] || null;
+}
+
+async function notifyBuyerDealStatus(deal, buyer) {
+  if (!process.env.EMAIL_USER || !buyer?.email) {
+    return { sent: false, reason: "email_not_configured" };
+  }
+
+  const template = dealStatusEmailContent(
+    deal,
+    buyer.name || deal.contactName || "there"
+  );
+  if (!template) {
+    return { sent: false, reason: "no_template" };
+  }
+
+  await transporter.sendMail({
+    from: `"CarbonAxis Exchange" <${process.env.EMAIL_USER}>`,
+    to: buyer.email,
+    subject: template.subject,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111;">
+        <h2 style="color:#0a7f5c;">${template.headline}</h2>
+        ${template.body}
+        <p style="color:#666;font-size:12px;">CarbonAxis Exchange · OTC desk notification</p>
+      </div>
+    `,
+  });
+
+  return { sent: true };
+}
+
 function passwordMeetsRules(password = "") {
   return (
     password.length >= 8 &&
@@ -1872,25 +1985,130 @@ app.patch("/api/deals/:id/status", requireAdmin, async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid status" });
     }
 
-    const deal = await Deal.findByIdAndUpdate(
-      req.params.id,
-      {
-        status,
-        adminNotes: adminNotes || "",
-        counterPrice,
-        counterVolume,
-      },
-      { new: true }
+    const existing = await Deal.findById(req.params.id).populate(
+      "buyerId",
+      "name email"
     );
-
-    if (!deal) {
+    if (!existing) {
       return res.status(404).json({ success: false, message: "Deal not found" });
     }
 
-    res.json({ success: true, deal });
+    const update = {
+      status,
+      adminNotes: adminNotes ?? existing.adminNotes ?? "",
+    };
+    if (counterPrice !== undefined) update.counterPrice = counterPrice;
+    if (counterVolume !== undefined) update.counterVolume = counterVolume;
+
+    const deal = await Deal.findByIdAndUpdate(req.params.id, update, {
+      new: true,
+    }).populate("buyerId", "name email");
+
+    let buyerNotified = false;
+    let notifyError = "";
+
+    if (existing.status !== status) {
+      try {
+        const buyer = deal.buyerId || {
+          email: deal.contactEmail,
+          name: deal.contactName,
+        };
+        const result = await notifyBuyerDealStatus(deal, buyer);
+        buyerNotified = Boolean(result.sent);
+        if (!result.sent && result.reason === "email_not_configured") {
+          notifyError = "Email not configured on server";
+        }
+      } catch (emailErr) {
+        console.error("Deal status email failed:", emailErr);
+        notifyError = emailErr.message || "Email failed";
+      }
+    }
+
+    res.json({
+      success: true,
+      deal,
+      buyerNotified,
+      notifyError: notifyError || undefined,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Failed to update deal" });
+  }
+});
+
+/** Admin — billing summary & user management */
+app.get("/api/admin/billing/summary", requireAdmin, async (req, res) => {
+  try {
+    const users = await User.find({ role: { $ne: "admin" } }).select(
+      "subscription stripeCustomerId createdAt"
+    );
+    const counts = { free: 0, pro: 0, enterprise: 0, total: users.length };
+    let stripeLinked = 0;
+
+    users.forEach((u) => {
+      const plan = PLANS[u.subscription] ? u.subscription : "free";
+      counts[plan] += 1;
+      if (u.stripeCustomerId) stripeLinked += 1;
+    });
+
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const newUsers7d = users.filter((u) => u.createdAt >= sevenDaysAgo).length;
+
+    res.json({
+      success: true,
+      stripeReady: Boolean(stripe && process.env.STRIPE_PRICE_PRO),
+      counts,
+      stripeLinked,
+      newUsers7d,
+      proMrrLabel: `$${counts.pro * 49}/mo est.`,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to load billing summary" });
+  }
+});
+
+app.get("/api/admin/users", requireAdmin, async (req, res) => {
+  try {
+    const users = await User.find({ role: { $ne: "admin" } })
+      .select(
+        "-password -resetPasswordToken -resetPasswordExpires"
+      )
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, users });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to load users" });
+  }
+});
+
+app.patch("/api/admin/users/:id/subscription", requireAdmin, async (req, res) => {
+  try {
+    const { plan } = req.body;
+    if (!PLANS[plan]) {
+      return res.status(400).json({ success: false, message: "Invalid plan" });
+    }
+
+    const user = await User.findOneAndUpdate(
+      { _id: req.params.id, role: { $ne: "admin" } },
+      { subscription: plan },
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.json({
+      success: true,
+      message: `Plan set to ${PLANS[plan].name}`,
+      user,
+      plan: getPlan(plan),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to update plan" });
   }
 });
 
