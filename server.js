@@ -87,6 +87,23 @@ app.post("/api/billing/webhook", express.raw({ type: "application/json" }), asyn
       }
     }
 
+    if (event.type === "customer.subscription.updated") {
+      const sub = event.data.object;
+      const priceId = sub.items?.data?.[0]?.price?.id || "";
+      let plan = "pro";
+      if (priceId && priceId === process.env.STRIPE_PRICE_ENTERPRISE) {
+        plan = "enterprise";
+      } else if (priceId && priceId === process.env.STRIPE_PRICE_PRO) {
+        plan = "pro";
+      }
+      if (sub.status === "active" || sub.status === "trialing") {
+        await User.findOneAndUpdate(
+          { stripeSubscriptionId: sub.id },
+          { subscription: plan }
+        );
+      }
+    }
+
     if (event.type === "customer.subscription.deleted") {
       const sub = event.data.object;
       await User.findOneAndUpdate(
@@ -1877,34 +1894,55 @@ app.patch("/api/deals/:id/status", requireAdmin, async (req, res) => {
   }
 });
 
-/** Stripe Checkout for Pro / Enterprise */
+/** Public billing readiness (no secrets) */
+app.get("/api/billing/status", (_req, res) => {
+  const stripeReady = Boolean(stripe && process.env.STRIPE_PRICE_PRO);
+  res.json({
+    success: true,
+    stripeReady,
+    proCheckout: stripeReady,
+    enterpriseCheckout: false,
+    enterpriseContact: "/contact.html",
+  });
+});
+
+/** Stripe Checkout for Pro (Enterprise = contact sales) */
 app.post("/api/billing/checkout", authenticateToken, async (req, res) => {
   try {
+    const { plan } = req.body;
+
+    if (plan === "enterprise") {
+      return res.status(200).json({
+        success: false,
+        contactSales: true,
+        message:
+          "Enterprise is custom. Contact CarbonAxis sales for team access and pricing.",
+        contactUrl: "/contact.html",
+      });
+    }
+
+    if (plan !== "pro") {
+      return res.status(400).json({
+        success: false,
+        message: "Only the Pro plan can be purchased online.",
+      });
+    }
+
     if (!stripe) {
       return res.status(503).json({
         success: false,
         message:
-          "Stripe is not configured yet. Add STRIPE_SECRET_KEY on the server, or request an upgrade manually.",
+          "Stripe is not configured yet. Add STRIPE_SECRET_KEY and STRIPE_PRICE_PRO on Render, or request an upgrade via Contact.",
+        contactUrl: "/contact.html",
       });
     }
 
-    const { plan } = req.body;
-    if (!["pro", "enterprise"].includes(plan)) {
-      return res.status(400).json({
-        success: false,
-        message: "Only pro or enterprise can be purchased.",
-      });
-    }
-
-    const priceId =
-      plan === "pro"
-        ? process.env.STRIPE_PRICE_PRO
-        : process.env.STRIPE_PRICE_ENTERPRISE;
-
+    const priceId = process.env.STRIPE_PRICE_PRO;
     if (!priceId) {
       return res.status(503).json({
         success: false,
-        message: `Missing Stripe price id for ${plan}. Set STRIPE_PRICE_PRO / STRIPE_PRICE_ENTERPRISE.`,
+        message: "Missing STRIPE_PRICE_PRO on the server.",
+        contactUrl: "/contact.html",
       });
     }
 
@@ -1915,17 +1953,25 @@ app.post("/api/billing/checkout", authenticateToken, async (req, res) => {
 
     const siteUrl = process.env.SITE_URL || "https://www.carbonaxisexchange.com";
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig = {
       mode: "subscription",
-      customer_email: user.email,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${siteUrl}/dashboard.html?billing=success&plan=${plan}`,
+      success_url: `${siteUrl}/dashboard.html?billing=success&plan=pro`,
       cancel_url: `${siteUrl}/pricing.html?billing=cancel`,
       metadata: {
         userId: String(user._id),
-        plan,
+        plan: "pro",
       },
-    });
+      allow_promotion_codes: true,
+    };
+
+    if (user.stripeCustomerId) {
+      sessionConfig.customer = user.stripeCustomerId;
+    } else {
+      sessionConfig.customer_email = user.email;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     res.json({ success: true, url: session.url, sessionId: session.id });
   } catch (error) {

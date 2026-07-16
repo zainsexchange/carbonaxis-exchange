@@ -321,4 +321,17 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("aiPulseRefreshBtn")
     ?.addEventListener("click", refreshIntelligencePulse);
+
+  const params = new URLSearchParams(window.location.search);
+  const banner = document.getElementById("billingBanner");
+  if (banner && params.get("billing") === "success") {
+    const plan = params.get("plan") || "Pro";
+    banner.hidden = false;
+    banner.textContent = `Payment received — ${String(plan).toUpperCase()} will activate shortly. Refresh if your plan label has not updated yet.`;
+    // clean URL without reload
+    try {
+      const clean = window.location.pathname;
+      window.history.replaceState({}, "", clean);
+    } catch (_) {}
+  }
 });

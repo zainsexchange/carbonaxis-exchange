@@ -23,6 +23,7 @@ const API = {
   aiThreads: "/ai/threads",
   deals: "/deals",
   billingCheckout: "/billing/checkout",
+  billingStatus: "/billing/status",
   projectAnalyze: (id) => `/projects/${id}/analyze`,
   subscriptionSet: "/subscription/set",
 };

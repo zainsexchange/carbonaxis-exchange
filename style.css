@@ -4166,6 +4166,35 @@ font-weight:600;
   line-height:1.7;
 }
 
+.billing-note{
+  margin-top:24px;
+  color:#9db0a9;
+  font-size:14px;
+  line-height:1.6;
+}
+
+.billing-banner{
+  margin-top:18px;
+  padding:12px 16px;
+  border-radius:14px;
+  border:1px solid rgba(0,229,176,0.28);
+  background:rgba(0,229,176,0.08);
+  color:#c9fff0;
+  font-size:14px;
+}
+
+.billing-banner-warn{
+  border-color:rgba(255,196,80,0.35);
+  background:rgba(255,196,80,0.08);
+  color:#ffe6b0;
+}
+
+.billing-banner-ok{
+  border-color:rgba(0,229,176,0.4);
+  background:rgba(0,229,176,0.12);
+  color:#b8ffe8;
+}
+
 .ai-compose-row{
   display:flex;
   gap:10px;

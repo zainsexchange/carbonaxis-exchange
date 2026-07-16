@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pricing Plans | CarbonAxis Exchange</title>
   <meta name="description" content="CarbonAxis plans for Free, Pro and Enterprise — Green Energy AI limits and marketplace tools.">
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/style.css?v=106">
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -34,19 +34,19 @@
     <section class="section marketplace-page-hero">
       <div class="container">
         <p class="section-label">Plans</p>
-        <h1>Everyone can use the engine. Plans change the limits.</h1>
+        <h1>Everyone can use Intelligence. Plans change the limits.</h1>
         <p class="hero-text">
-          Free users get starter access. Pro and Enterprise unlock deeper regulatory analysis,
-          more AI queries, and stronger project intelligence.
+          Free gets starter access. Pro unlocks deeper analysis and higher AI limits via Stripe Checkout.
+          Enterprise is custom for teams — contact sales.
         </p>
+        <div id="billingBanner" class="billing-banner" hidden></div>
       </div>
     </section>
 
     <section class="section">
       <div class="container pricing-grid" id="pricingGrid"></div>
-      <div class="container" style="margin-top:24px;color:#9db0a9;font-size:14px;">
-        Stripe Checkout is wired in the API. Until Stripe keys/prices are set on Render,
-        upgrade buttons will ask you to request access manually.
+      <div class="container billing-note" id="billingNote">
+        Checking payment status…
       </div>
     </section>
   </main>
@@ -57,18 +57,40 @@
     </div>
   </footer>
 
-  <script src="/js/api.js"></script>
+  <script src="/js/api.js?v=106"></script>
+  <script src="/js/navbar.js"></script>
+  <script src="/js/auth.js"></script>
   <script>
+    let billingStatus = { stripeReady: false, proCheckout: false };
+
     function authToken() {
-      return localStorage.getItem("token");
+      return (localStorage.getItem("token") || "").trim();
+    }
+
+    function showBillingBanner() {
+      const params = new URLSearchParams(window.location.search);
+      const banner = document.getElementById("billingBanner");
+      if (!banner) return;
+      if (params.get("billing") === "cancel") {
+        banner.hidden = false;
+        banner.className = "billing-banner billing-banner-warn";
+        banner.textContent = "Checkout cancelled. You can upgrade anytime.";
+      }
     }
 
     async function startCheckout(plan) {
-      const token = authToken();
-      if (!token) {
-        window.location.href = "/login.html";
+      if (plan === "enterprise") {
+        window.location.href = "/contact.html";
         return;
       }
+
+      const token = authToken();
+      if (!token) {
+        window.location.href =
+          "/login.html?next=" + encodeURIComponent("/pricing.html");
+        return;
+      }
+
       try {
         const res = await fetch(`${API.BASE}${API.billingCheckout}`, {
           method: "POST",
@@ -79,18 +101,44 @@
           body: JSON.stringify({ plan }),
         });
         const data = await res.json();
+
+        if (data.contactSales || data.contactUrl) {
+          window.location.href = data.contactUrl || "/contact.html";
+          return;
+        }
+
         if (data.url) {
           window.location.href = data.url;
           return;
         }
+
         alert(
           data.message ||
-            "Checkout is not live yet. Request upgrade via Early Access / contact."
+            "Checkout is not live yet. Contact CarbonAxis to upgrade."
         );
-        window.location.href = "/index.html#early-access";
+        window.location.href = "/contact.html";
       } catch (e) {
         console.error(e);
         alert("Unable to start checkout");
+      }
+    }
+
+    async function loadBillingStatus() {
+      const note = document.getElementById("billingNote");
+      try {
+        const res = await fetch(`${API.BASE}${API.billingStatus}`);
+        const data = await res.json();
+        billingStatus = data;
+        if (note) {
+          note.textContent = data.proCheckout
+            ? "Pro upgrades use secure Stripe Checkout. Enterprise is arranged with CarbonAxis sales."
+            : "Stripe Pro checkout is not live on the server yet. Contact us to upgrade, or add STRIPE_SECRET_KEY + STRIPE_PRICE_PRO on Render.";
+        }
+      } catch (_) {
+        if (note) {
+          note.textContent =
+            "Unable to check billing status. You can still start Free or contact sales for Pro/Enterprise.";
+        }
       }
     }
 
@@ -102,14 +150,17 @@
         const plans = data.plans || [];
         grid.innerHTML = plans
           .map((p) => {
-            const cta =
-              p.id === "free"
-                ? `<a class="btn btn-outline" href="/register.html">Start Free</a>`
-                : `<button class="btn ${
-                    p.id === "pro" ? "btn-primary" : "btn-outline"
-                  }" type="button" onclick="startCheckout('${p.id}')">
-                    ${p.id === "pro" ? "Upgrade to Pro" : "Go Enterprise"}
-                  </button>`;
+            let cta = "";
+            if (p.id === "free") {
+              cta = `<a class="btn btn-outline" href="/register.html">Start Free</a>`;
+            } else if (p.id === "pro") {
+              const label = billingStatus.proCheckout
+                ? "Upgrade to Pro"
+                : "Request Pro access";
+              cta = `<button class="btn btn-primary" type="button" onclick="startCheckout('pro')">${label}</button>`;
+            } else {
+              cta = `<a class="btn btn-outline" href="/contact.html">Contact sales</a>`;
+            }
             return `
           <article class="pricing-card ${p.id === "pro" ? "featured" : ""}">
             <h3>${p.name}</h3>
@@ -125,7 +176,9 @@
         grid.innerHTML = "<p>Unable to load plans. Please refresh.</p>";
       }
     }
-    loadPlans();
+
+    showBillingBanner();
+    loadBillingStatus().finally(loadPlans);
   </script>
 </body>
 </html>
