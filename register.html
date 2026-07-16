@@ -111,15 +111,15 @@ required>
 
 <div id="passwordRules" class="password-rules">
 
-<p id="ruleLength">âŒ Minimum 8 characters</p>
+<p id="ruleLength">✕ Minimum 8 characters</p>
 
-<p id="ruleUpper">âŒ One uppercase letter</p>
+<p id="ruleUpper">✕ One uppercase letter</p>
 
-<p id="ruleLower">âŒ One lowercase letter</p>
+<p id="ruleLower">✕ One lowercase letter</p>
 
-<p id="ruleNumber">âŒ One number</p>
+<p id="ruleNumber">✕ One number</p>
 
-<p id="ruleSpecial">âŒ One special character</p>
+<p id="ruleSpecial">✕ One special character</p>
 
 </div>
 
@@ -164,7 +164,7 @@ function updateRule(id, valid){
         element.classList.add("valid");
 
         element.innerHTML =
-        "âœ… " +
+        "✅ " +
         element.innerText.substring(2);
 
     }else{
@@ -172,7 +172,7 @@ function updateRule(id, valid){
         element.classList.remove("valid");
 
         element.innerHTML =
-        "âŒ " +
+        "✕ " +
         element.innerText.substring(2);
 
     }
