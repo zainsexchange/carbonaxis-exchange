@@ -44,6 +44,21 @@ document.addEventListener("DOMContentLoaded", () => {
   document.body.classList.remove("user-logged-in", "user-guest");
   document.body.classList.add(token ? "user-logged-in" : "user-guest");
 
+  if (token && mobileMenu && !mobileMenu.querySelector(".mobile-account-block")) {
+    const block = document.createElement("div");
+    block.className = "mobile-account-block";
+    block.innerHTML = `
+      <p class="mobile-account-label">Account</p>
+      <a href="/dashboard.html">Dashboard</a>
+      <a href="/profile.html">Profile</a>
+      <a href="/watchlist.html">Watchlist</a>
+      <a href="/deals.html">My Deals</a>
+      <a href="/settings.html">Settings</a>
+      <a href="#" onclick="logout(); return false;">Logout</a>
+    `;
+    mobileMenu.appendChild(block);
+  }
+
   if (token) {
     if (navBtn) {
       navBtn.textContent = "Dashboard";

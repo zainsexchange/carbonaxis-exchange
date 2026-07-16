@@ -3048,9 +3048,8 @@ html{
   height:auto !important;
 }
 .mobile-menu-btn{
-  position:absolute !important;
-  right:15px !important;
-  top:14px !important;
+  /* Do not absolute-position — overlaps avatar when logged in on mobile */
+  position: static;
 }
 nav{
   margin-left:10px !important;
@@ -3786,8 +3785,9 @@ table{
   }
 
   .mobile-menu-btn{
-    top:10px !important;
-    right:20px !important;
+    top: auto !important;
+    right: auto !important;
+    left: auto !important;
     width:42px !important;
     height:42px !important;
   }
@@ -4834,21 +4834,37 @@ body.user-guest .notification-menu{
     display: none !important;
   }
 
-  /* Account dropdown stays â€” compact avatar only */
+  /* Right cluster: avatar + hamburger as one aligned pair */
+  body.user-logged-in .navbar .nav-inner{
+    gap: 10px !important;
+  }
+
   body.user-logged-in .navbar .profile-menu{
-    display: block !important;
+    display: flex !important;
     position: relative !important;
     margin-left: auto !important;
-    flex-shrink: 0 !important;
+    margin-right: 12px !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    max-width: 40px !important;
     z-index: 10004 !important;
+    order: 20;
   }
 
   body.user-logged-in .navbar .profile-btn{
-    padding: 6px !important;
+    padding: 0 !important;
     gap: 0 !important;
-    height: 42px !important;
-    width: 42px !important;
+    height: 40px !important;
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    border-radius: 50% !important;
     justify-content: center !important;
+    align-items: center !important;
+    border: 1px solid rgba(0,229,176,0.35) !important;
+    background: rgba(0,229,176,0.12) !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
   }
 
   body.user-logged-in .navbar .profile-btn span:not(.profile-avatar){
@@ -4856,15 +4872,38 @@ body.user-guest .notification-menu{
   }
 
   body.user-logged-in .navbar .profile-avatar{
-    width: 30px !important;
-    height: 30px !important;
-    font-size: 12px !important;
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 11px !important;
+    margin: 0 !important;
   }
 
   body.user-logged-in .navbar .profile-dropdown{
     right: 0 !important;
     left: auto !important;
-    min-width: 180px !important;
+    min-width: 200px !important;
+    top: calc(100% + 10px) !important;
+  }
+
+  body.user-logged-in .navbar .mobile-menu-btn{
+    display: flex !important;
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    left: auto !important;
+    order: 21;
+    margin: 0 !important;
+    flex: 0 0 40px !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+  }
+
+  /* Guest: hamburger alone on the right */
+  body.user-guest .navbar .mobile-menu-btn,
+  body:not(.user-logged-in) .navbar .mobile-menu-btn{
+    margin-left: auto !important;
   }
 
   .navbar .nav-inner{
@@ -4873,7 +4912,18 @@ body.user-guest .notification-menu{
 
   .navbar .mobile-menu-btn{
     display: flex !important;
-    margin-left: 0 !important;
+  }
+
+  /* Logo shrinks when avatar + menu both need space */
+  body.user-logged-in .navbar .brand{
+    height: 44px !important;
+    padding: 3px 6px !important;
+    max-width: min(148px, calc(100vw - 120px)) !important;
+  }
+
+  body.user-logged-in .navbar .site-logo{
+    max-width: 136px !important;
+    height: 34px !important;
   }
 
   .hero{
@@ -4991,12 +5041,53 @@ body.user-guest .notification-menu{
   .navbar .brand{
     height: 48px !important;
     padding: 4px 8px !important;
+    max-width: min(168px, calc(100vw - 100px)) !important;
   }
 
   .navbar .site-logo{
-    max-width: 168px !important;
-    height: 38px !important;
+    max-width: 152px !important;
+    height: 36px !important;
   }
+}
+
+@media (max-width: 380px){
+  .navbar .brand{
+    max-width: min(128px, calc(100vw - 108px)) !important;
+    height: 42px !important;
+    padding: 2px 5px !important;
+  }
+
+  .navbar .site-logo{
+    max-width: 118px !important;
+    height: 32px !important;
+  }
+
+  body.user-logged-in .navbar .profile-btn,
+  body.user-logged-in .navbar .mobile-menu-btn{
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+  }
+}
+
+.mobile-account-block{
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+
+.mobile-account-label{
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(0,229,176,0.85);
+}
+
+body.user-guest .mobile-account-block{
+  display: none !important;
 }
 
 /* ===== My Deals / OTC desk ===== */
@@ -5148,4 +5239,33 @@ body.user-guest .notification-menu{
   .deals-layout{ grid-template-columns:1fr; }
   .deal-metrics{ grid-template-columns:1fr; }
   .deals-stats{ grid-template-columns:1fr; }
+}
+
+/* Final mobile header: avatar + hamburger never overlap */
+@media (max-width: 768px){
+  .navbar .mobile-menu-btn{
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    left: auto !important;
+    transform: none !important;
+  }
+
+  body.user-logged-in .navbar .nav-inner{
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    gap: 0 !important;
+  }
+
+  body.user-logged-in .navbar .profile-menu{
+    margin-left: auto !important;
+    margin-right: 14px !important;
+    max-width: 40px !important;
+  }
+
+  body.user-logged-in .navbar .mobile-menu-btn{
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
 }
