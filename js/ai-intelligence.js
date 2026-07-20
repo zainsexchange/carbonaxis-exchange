@@ -578,19 +578,324 @@
   const suggestionRow = document.getElementById("aiSuggestionRow");
   const tabChat = document.getElementById("aiTabChat");
   const tabCompare = document.getElementById("aiTabCompare");
+  const tabCalc = document.getElementById("aiTabCalc");
+  const calcPanel = document.getElementById("aiCalcPanel");
+  const calcForm = document.getElementById("aiCalcForm");
+  const calcFields = document.getElementById("aiCalcFields");
+  const calcResult = document.getElementById("aiCalcResult");
+  const calcBtn = document.getElementById("aiCalcBtn");
+
+  let calcType = "solar";
+  let calcCatalog = null;
+  let lastCalcResult = null;
 
   function setAiView(view) {
     const isCompare = view === "compare";
-    tabChat?.classList.toggle("is-active", !isCompare);
+    const isCalc = view === "calc";
+    tabChat?.classList.toggle("is-active", view === "chat");
     tabCompare?.classList.toggle("is-active", isCompare);
-    if (form) form.hidden = isCompare;
-    if (suggestionRow) suggestionRow.hidden = isCompare;
+    tabCalc?.classList.toggle("is-active", isCalc);
+    if (form) form.hidden = isCompare || isCalc;
+    if (suggestionRow) suggestionRow.hidden = isCompare || isCalc;
     if (compareForm) compareForm.hidden = !isCompare;
-    setModeBadge(isCompare ? "compare" : "ready");
+    if (calcPanel) calcPanel.hidden = !isCalc;
+    if (isCalc) {
+      setModeBadge("ready");
+      if (modeBadge) {
+        modeBadge.textContent = "Calculators";
+        modeBadge.classList.add("is-green");
+      }
+      ensureCalcCatalog();
+      renderCalcFields();
+    } else {
+      setModeBadge(isCompare ? "compare" : "ready");
+    }
   }
 
   tabChat?.addEventListener("click", () => setAiView("chat"));
   tabCompare?.addEventListener("click", () => setAiView("compare"));
+  tabCalc?.addEventListener("click", () => setAiView("calc"));
+
+  async function ensureCalcCatalog() {
+    if (calcCatalog) return calcCatalog;
+    try {
+      const { res, data } = await fetchJson(
+        `${API.BASE}${API.calcCatalog}`,
+        { headers: authHeaders() },
+        30000
+      );
+      if (res.status === 401) {
+        forceRelogin(data?.message);
+        return null;
+      }
+      if (data?.markets) {
+        calcCatalog = data;
+        return calcCatalog;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    return null;
+  }
+
+  function marketOptionsHtml(selected = "World Average") {
+    const markets = calcCatalog?.markets || [
+      { name: "World Average", region: "Global" },
+      { name: "Pakistan", region: "South Asia" },
+      { name: "Oman", region: "GCC" },
+      { name: "United States", region: "Americas" },
+      { name: "European Union", region: "Europe" },
+      { name: "India", region: "South Asia" },
+      { name: "UAE", region: "GCC" },
+      { name: "China", region: "Asia-Pacific" },
+    ];
+    const groups = {};
+    markets.forEach((m) => {
+      const r = m.region || "Other";
+      if (!groups[r]) groups[r] = [];
+      groups[r].push(m);
+    });
+    return Object.keys(groups)
+      .sort()
+      .map((region) => {
+        const opts = groups[region]
+          .map(
+            (m) =>
+              `<option value="${escapeHtml(m.name)}"${
+                m.name === selected ? " selected" : ""
+              }>${escapeHtml(m.name)} (${m.tPerMWh ?? "—"} t/MWh)</option>`
+          )
+          .join("");
+        return `<optgroup label="${escapeHtml(region)}">${opts}</optgroup>`;
+      })
+      .join("");
+  }
+
+  function renderCalcFields() {
+    if (!calcFields) return;
+    if (calcType === "solar") {
+      calcFields.innerHTML = `
+        <label class="ai-compare-full">Market / grid
+          <select id="calcMarket">${marketOptionsHtml("World Average")}</select>
+        </label>
+        <label>Annual generation (MWh)
+          <input id="calcAnnualMWh" type="number" min="0" step="any" placeholder="e.g. 50000" />
+        </label>
+        <label>Or capacity (MW)
+          <input id="calcCapacityMW" type="number" min="0" step="any" placeholder="e.g. 25" />
+        </label>
+        <label>Capacity factor (0–1)
+          <input id="calcCF" type="number" min="0" max="1" step="0.01" value="0.22" />
+        </label>
+        <label>Years
+          <input id="calcYears" type="number" min="1" max="40" value="1" />
+        </label>
+        <label class="ai-compare-full">Custom grid factor tCO₂e/MWh (optional — overrides market)
+          <input id="calcCustomFactor" type="number" min="0" max="2" step="0.001" placeholder="Leave blank to use market library" />
+        </label>`;
+    } else if (calcType === "methane") {
+      calcFields.innerHTML = `
+        <label class="ai-compare-full">Context market (for Intelligence follow-up)
+          <select id="calcMarket">${marketOptionsHtml("World Average")}</select>
+        </label>
+        <label>Methane (tonnes)
+          <input id="calcCH4t" type="number" min="0" step="any" placeholder="e.g. 100" />
+        </label>
+        <label>Or methane (m³)
+          <input id="calcCH4m3" type="number" min="0" step="any" placeholder="optional" />
+        </label>
+        <label>GWP100
+          <input id="calcGWP" type="number" min="1" max="100" step="0.1" value="28" />
+        </label>
+        <label>Capture efficiency (0–1)
+          <input id="calcEff" type="number" min="0" max="1" step="0.01" value="1" />
+        </label>
+        <label>Years
+          <input id="calcYears" type="number" min="1" max="40" value="1" />
+        </label>`;
+    } else if (calcType === "biochar") {
+      calcFields.innerHTML = `
+        <label class="ai-compare-full">Context market
+          <select id="calcMarket">${marketOptionsHtml("World Average")}</select>
+        </label>
+        <label>Biochar (tonnes)
+          <input id="calcBiochar" type="number" min="0" step="any" placeholder="e.g. 1000" required />
+        </label>
+        <label>Carbon fraction (0–1)
+          <input id="calcCarbonFrac" type="number" min="0" max="1" step="0.01" value="0.75" />
+        </label>
+        <label>Permanence factor (0–1)
+          <input id="calcPerm" type="number" min="0" max="1" step="0.01" value="0.8" />
+        </label>
+        <label>Years
+          <input id="calcYears" type="number" min="1" max="40" value="1" />
+        </label>`;
+    } else {
+      calcFields.innerHTML = `
+        <label class="ai-compare-full">Context market
+          <select id="calcMarket">${marketOptionsHtml("World Average")}</select>
+        </label>
+        <label>Credits (tCO₂e)
+          <input id="calcCredits" type="number" min="0" step="any" placeholder="e.g. 5000" required />
+        </label>
+        <label>Price per credit
+          <input id="calcPrice" type="number" min="0" step="any" placeholder="e.g. 12.5" required />
+        </label>
+        <label>Currency
+          <input id="calcCurrency" type="text" value="USD" maxlength="8" />
+        </label>`;
+    }
+  }
+
+  document.getElementById("aiCalcTypeRow")?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-calc]");
+    if (!btn) return;
+    calcType = btn.dataset.calc;
+    document
+      .querySelectorAll("#aiCalcTypeRow .ai-calc-type")
+      .forEach((b) => b.classList.toggle("is-active", b === btn));
+    if (calcResult) {
+      calcResult.hidden = true;
+      calcResult.innerHTML = "";
+    }
+    renderCalcFields();
+  });
+
+  function renderCalcResult(result) {
+    if (!calcResult) return;
+    lastCalcResult = result;
+    const r = result.results || {};
+    const headline =
+      result.type === "dealValue"
+        ? `${escapeHtml(r.unit)} ${escapeHtml(r.dealValue)}`
+        : `${escapeHtml(r.tCO2ePerYear)} ${escapeHtml(r.unit)}/year`;
+    const total =
+      result.type === "dealValue"
+        ? ""
+        : `<p><strong>Total (${escapeHtml(
+            result.inputs?.years || 1
+          )} yr):</strong> ${escapeHtml(r.tCO2eTotal)} ${escapeHtml(r.unit)}</p>`;
+
+    calcResult.hidden = false;
+    calcResult.innerHTML = `
+      <h3>${escapeHtml(result.title)}</h3>
+      <p class="ai-calc-headline">${headline}</p>
+      <p><strong>Market:</strong> ${escapeHtml(result.market)} ${
+        result.region ? `· ${escapeHtml(result.region)}` : ""
+      }</p>
+      ${total}
+      <p class="ai-calc-formula"><strong>Formula:</strong> ${escapeHtml(
+        result.formula
+      )}</p>
+      <ul class="ai-calc-assumptions">
+        ${(result.assumptions || [])
+          .map((a) => `<li>${escapeHtml(a)}</li>`)
+          .join("")}
+      </ul>
+      <p class="ai-calc-disclaimer">${escapeHtml(result.disclaimer)}</p>
+      <div class="ai-compare-actions">
+        <button type="button" class="btn btn-primary" id="aiCalcAskBtn">Ask Intelligence about this result</button>
+      </div>`;
+
+    document.getElementById("aiCalcAskBtn")?.addEventListener("click", () => {
+      const prompt =
+        result.askIntelligencePrompt ||
+        `Help me interpret this ${result.type} calculation for ${result.market}.`;
+      setAiView("chat");
+      if (questionInput) {
+        questionInput.value = prompt;
+        questionInput.focus();
+      }
+    });
+  }
+
+  calcForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const market = document.getElementById("calcMarket")?.value || "World Average";
+    const years = Number(document.getElementById("calcYears")?.value || 1);
+    let inputs = { market, years };
+
+    if (calcType === "solar") {
+      inputs = {
+        market,
+        years,
+        annualMWh: document.getElementById("calcAnnualMWh")?.value,
+        capacityMW: document.getElementById("calcCapacityMW")?.value,
+        capacityFactor: document.getElementById("calcCF")?.value,
+        customGridFactor: document.getElementById("calcCustomFactor")?.value,
+      };
+    } else if (calcType === "methane") {
+      inputs = {
+        market,
+        years,
+        methaneTonnes: document.getElementById("calcCH4t")?.value,
+        methaneM3: document.getElementById("calcCH4m3")?.value,
+        gwp: document.getElementById("calcGWP")?.value,
+        captureEfficiency: document.getElementById("calcEff")?.value,
+      };
+    } else if (calcType === "biochar") {
+      inputs = {
+        market,
+        years,
+        biocharTonnes: document.getElementById("calcBiochar")?.value,
+        carbonFraction: document.getElementById("calcCarbonFrac")?.value,
+        permanenceFactor: document.getElementById("calcPerm")?.value,
+      };
+    } else {
+      inputs = {
+        market,
+        credits: document.getElementById("calcCredits")?.value,
+        pricePerCredit: document.getElementById("calcPrice")?.value,
+        currency: document.getElementById("calcCurrency")?.value || "USD",
+      };
+    }
+
+    if (calcBtn) {
+      calcBtn.disabled = true;
+      calcBtn.textContent = "Calculating…";
+    }
+
+    try {
+      await wakeApi();
+      const { res, data } = await fetchJson(
+        `${API.BASE}${API.calcRun}`,
+        {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({ type: calcType, inputs }),
+        },
+        30000
+      );
+
+      if (res.status === 401) {
+        forceRelogin(data?.message);
+        return;
+      }
+      if (!data?.success) {
+        if (calcResult) {
+          calcResult.hidden = false;
+          calcResult.innerHTML = `<p class="ai-calc-disclaimer">${escapeHtml(
+            data?.message || "Calculation failed"
+          )}</p>`;
+        }
+        return;
+      }
+      renderCalcResult(data.result);
+    } catch (err) {
+      console.error(err);
+      if (calcResult) {
+        calcResult.hidden = false;
+        calcResult.innerHTML = `<p class="ai-calc-disclaimer">${escapeHtml(
+          err.message || "Network error"
+        )}</p>`;
+      }
+    } finally {
+      if (calcBtn) {
+        calcBtn.disabled = false;
+        calcBtn.textContent = "Calculate";
+      }
+    }
+  });
 
   compareForm?.addEventListener("submit", async (e) => {
     e.preventDefault();

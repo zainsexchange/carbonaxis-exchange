@@ -15,6 +15,10 @@ import {
   consumeAiQuery,
   getEffectiveAiPlan,
 } from "./services/usage.js";
+import {
+  getCalculatorCatalog,
+  runCalculator,
+} from "./services/carbonCalculators.js";
 dotenv.config();
 
 const SITE_URL = (
@@ -1694,6 +1698,36 @@ app.post("/api/ai/compare", authenticateToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || "Market compare temporarily unavailable.",
+    });
+  }
+});
+
+/** Worldwide carbon calculators (deterministic — does not consume AI quota) */
+app.get("/api/calc/catalog", authenticateToken, async (_req, res) => {
+  try {
+    res.json(getCalculatorCatalog());
+  } catch (error) {
+    console.error("Calc catalog error:", error);
+    res.status(500).json({ success: false, message: "Failed to load calculators" });
+  }
+});
+
+app.post("/api/calc/run", authenticateToken, async (req, res) => {
+  try {
+    const { type, inputs = {} } = req.body || {};
+    if (!type) {
+      return res.status(400).json({
+        success: false,
+        message: "Calculator type is required (solar, methane, biochar, dealValue).",
+      });
+    }
+
+    const result = runCalculator(type, inputs);
+    res.json({ success: true, result });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message || "Calculation failed",
     });
   }
 });

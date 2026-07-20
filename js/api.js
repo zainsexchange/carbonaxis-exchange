@@ -21,6 +21,8 @@ const API = {
   aiCompare: "/ai/compare",
   aiQuota: "/ai/quota",
   aiThreads: "/ai/threads",
+  calcCatalog: "/calc/catalog",
+  calcRun: "/calc/run",
   deals: "/deals",
   billingCheckout: "/billing/checkout",
   billingStatus: "/billing/status",
