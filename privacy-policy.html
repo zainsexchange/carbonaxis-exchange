@@ -131,7 +131,7 @@
   </div>
 
 </div>
-      <a class="btn btn-outline login-open" href="#">Login</a>
+      <a class="btn btn-outline login-open" href="/login.html">Login</a>
       <button class="mobile-menu-btn" aria-label="Open Menu">
   <span></span>
   <span></span>
@@ -380,86 +380,6 @@ counters.forEach(counter => {
 </script>
 
 
-<div class="login-modal" id="loginModal">
-  <div class="login-overlay"></div>
-
-  <div class="login-box">
-    <button class="close-login">✕</button>
-
-    <p class="section-label">Member Access</p>
-    <h2>Access CarbonAxis</h2>
-    <p class="login-sub">Login access for buyers, project owners and market partners.</p>
-
-    <input type="email" placeholder="Business Email">
-    <input type="password" placeholder="Password">
-
-    <button class="btn btn-primary">Login</button>
-
-    <p class="login-note">
-      Early access only. Don't have access?
-     <a id="requestInviteLink" href="index.html#early-access">
-  Request Invitation
-</a>
-    </p>
-  </div>
-</div>
-
-<script>
-
-const loginOpen =
-document.querySelector(".login-open");
-
-const loginModal =
-document.getElementById("loginModal");
-
-const closeLogin =
-document.querySelector(".close-login");
-
-const loginOverlay =
-document.querySelector(".login-overlay");
-
-const loginInputs =
-document.querySelectorAll(".login-box input");
-
-function closeLoginModal(){
-
-  loginModal.classList.remove("active");
-
-  loginInputs.forEach(input => {
-    input.value = "";
-  });
-  
-}
-
-loginOpen.addEventListener("click", function(e){
-
-  e.preventDefault();
-
-  loginModal.classList.add("active");
-
-});
-
-closeLogin.addEventListener("click", function(){
-
-  closeLoginModal();
-
-});
-
-loginOverlay.addEventListener("click", function(){
-
-  closeLoginModal();
-
-});
-const requestInviteLink = document.getElementById("requestInviteLink");
-
-if (requestInviteLink) {
-  requestInviteLink.addEventListener("click", function () {
-    document.querySelector(".login-modal")?.classList.remove("active");
-    document.body.classList.remove("modal-open");
-  });
-}
-
-</script>
 <script>
 
 const profileMenu =

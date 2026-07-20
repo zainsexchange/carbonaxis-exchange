@@ -921,28 +921,6 @@ Global · Carbon Removal
   </div>
 
 </div>
-<div class="login-modal" id="loginModal">
-  <div class="login-overlay"></div>
-
-  <div class="login-box">
-    <button class="close-login">✕</button>
-
-    <p class="section-label">Member Access</p>
-    <h2>Access CarbonAxis</h2>
-    <p class="login-sub">Login access for buyers, project owners and market partners.</p>
-
-    <input type="email" placeholder="Business Email">
-    <input type="password" placeholder="Password">
-
-    <button class="btn btn-primary">Login</button>
-
-    <p class="login-note">
-  Don't have an account?
-  <a href="#early-access" id="requestInviteLink">Request invitation</a>
-</p>
-  </div>
-</div>
-
 <script>
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -1239,17 +1217,6 @@ document.getElementById("projectForm").addEventListener("submit", async function
     alert("Server error.");
   }
 });
-const requestInviteLink = document.getElementById("requestInviteLink");
-
-if (requestInviteLink) {
-  requestInviteLink.addEventListener("click", function (e) {
-    // Close the login modal
-    document.querySelector(".login-modal")?.classList.remove("active");
-
-    // Optional: remove page scroll lock if you use it
-    document.body.classList.remove("modal-open");
-  });
-}
 </script>
 <script src="/js/navbar.js?v=109"></script>
 <script src="/js/auth.js?v=246403"></script>
