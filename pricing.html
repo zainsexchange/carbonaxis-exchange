@@ -12,7 +12,7 @@
   <meta property="og:url" content="https://www.carbonaxisexchange.com/pricing.html">
   <meta property="og:image" content="https://www.carbonaxisexchange.com/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="stylesheet" href="/style.css?v=115">
+  <link rel="stylesheet" href="/style.css?v=120">
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -32,9 +32,37 @@
         <a href="/about.html">About</a>
       </nav>
       <a class="btn btn-primary nav-btn" href="/register.html">Get Access</a>
-      <a class="btn btn-outline" href="/login.html">Login</a>
+      <div class="profile-menu">
+        <button class="profile-btn" type="button">
+          <span class="profile-avatar">C</span>
+          <span>Account</span>
+          <span class="profile-arrow">▼</span>
+        </button>
+        <div class="profile-dropdown">
+          <a href="/dashboard.html">Dashboard</a>
+          <a href="/profile.html">Profile</a>
+          <a href="/settings.html">Settings</a>
+          <a href="/watchlist.html">Watchlist</a>
+          <a href="#" onclick="logout(); return false;">Logout</a>
+        </div>
+      </div>
+      <a class="btn btn-outline login-open" href="/login.html">Login</a>
+      <button class="mobile-menu-btn" aria-label="Open Menu" type="button">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </header>
+
+  <div class="mobile-overlay"></div>
+  <div class="mobile-menu">
+    <a href="/index.html">Home</a>
+    <a href="/ai-intelligence.html">Intelligence</a>
+    <a href="/marketplace.html">Marketplace</a>
+    <a href="/projects.html">Projects</a>
+    <a href="/pricing.html">Pricing</a>
+    <a href="/about.html">About</a>
+    <a href="/dashboard.html">Dashboard</a>
+  </div>
 
   <main>
     <section class="section marketplace-page-hero">
@@ -62,9 +90,28 @@
     </div>
   </footer>
 
-  <script src="/js/api.js?v=106"></script>
+  <script src="/js/api.js?v=246415"></script>
   <script src="/js/navbar.js?v=109"></script>
-  <script src="/js/auth.js"></script>
+  <script src="/js/auth.js?v=246411"></script>
+  <script>
+    const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
+    const mobileMenu = document.querySelector(".mobile-menu");
+    const mobileOverlay = document.querySelector(".mobile-overlay");
+    if (mobileMenuBtn && mobileMenu && mobileOverlay) {
+      mobileMenuBtn.addEventListener("click", function () {
+        mobileMenu.classList.toggle("active");
+        mobileOverlay.classList.toggle("active");
+        mobileMenuBtn.classList.toggle("active");
+        document.body.classList.toggle("menu-open");
+      });
+      mobileOverlay.addEventListener("click", function () {
+        mobileMenu.classList.remove("active");
+        mobileOverlay.classList.remove("active");
+        mobileMenuBtn.classList.remove("active");
+        document.body.classList.remove("menu-open");
+      });
+    }
+  </script>
   <script>
     let billingStatus = { stripeReady: false, proCheckout: false };
 
