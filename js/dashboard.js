@@ -1,140 +1,117 @@
 document.addEventListener("DOMContentLoaded", async () => {
+  const token = localStorage.getItem("token");
 
-    const token = localStorage.getItem("token");
+  if (!token) {
+    window.location.href = "/login.html";
+    return;
+  }
 
-    if (!token) {
-        window.location.href = "/login.html";
-        return;
+  try {
+    const response = await fetch(`${API.BASE}${API.dashboard}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      renderEmptyActivity("Could not load dashboard data.");
+      renderEmptyWatchlist("Could not load watchlist.");
+      return;
     }
 
-    try {
-
-        const response = await fetch(`${API.BASE}${API.dashboard}`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-
-        const data = await response.json();
-        console.log(data);
-
-        if (!data.success) return;
-
-        updateGreeting(data.user.name);
-
-        updateProfile(data.user);
-
-        updateStats(data.stats);
-
-    } catch (error) {
-
-        console.error(error);
-
-    }
-
+    updateGreeting(data.user.name);
+    updateProfile(data.user);
+    updateStats(data.stats, data.user);
+    renderActivity(data.activity || []);
+    renderWatchlistPreview(data.watchlist || []);
+  } catch (error) {
+    console.error(error);
+    renderEmptyActivity("Network error loading activity.");
+    renderEmptyWatchlist("Network error loading watchlist.");
+  }
 });
 
-function updateGreeting(name){
+function updateGreeting(name) {
+  const greeting = document.getElementById("dashboardGreeting");
+  if (!greeting) return;
 
-    const greeting =
-    document.getElementById("dashboardGreeting");
+  const hour = new Date().getHours();
+  let message = "Welcome";
+  if (hour < 12) message = "Good Morning";
+  else if (hour < 18) message = "Good Afternoon";
+  else message = "Good Evening";
 
-    if(!greeting) return;
-
-    const hour =
-    new Date().getHours();
-
-    let message = "Welcome";
-
-    if(hour < 12){
-
-        message = "Good Morning";
-
-    }else if(hour < 18){
-
-        message = "Good Afternoon";
-
-    }else{
-
-        message = "Good Evening";
-
-    }
-
-    greeting.innerHTML =
-    `${message}, ${name} 👋`;
-
+  greeting.textContent = `${message}, ${name}`;
 }
 
-function updateProfile(user){
+function updateProfile(user) {
+  const avatar = document.querySelector(".profile-avatar");
+  const account = document.querySelector(".profile-btn span:nth-child(2)");
 
-    const avatar =
-    document.querySelector(".profile-avatar");
+  if (avatar && user?.name) {
+    avatar.textContent = user.name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
+  }
 
-    const account =
-    document.querySelector(".profile-btn span:nth-child(2)");
-
-    if(avatar){
-
-        avatar.innerText =
-        user.name
-        .split(" ")
-        .map(n => n[0])
-        .join("")
-        .substring(0,2)
-        .toUpperCase();
-
-    }
-
-    if(account){
-
-        account.innerText =
-        user.name;
-
-    }
-
+  if (account && user?.name) {
+    account.textContent = user.name.split(" ")[0];
+  }
 }
 
-function updateStats(stats){
+function updateStats(stats, user) {
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
 
-    const portfolio =
-    document.getElementById("portfolioValue");
+  setText("creditsWatched", stats.creditsWatched ?? 0);
+  setText("projectsSubmitted", stats.projectsSubmitted ?? 0);
+  setText("verifiedProjects", stats.verifiedProjects ?? 0);
+  setText("openDeals", stats.openDeals ?? 0);
 
-    const watched =
-    document.getElementById("creditsWatched");
+  const co2 = Number(stats.co2ePotential || 0);
+  setText(
+    "co2eImpact",
+    co2 > 0 ? `${co2.toLocaleString()} t` : "—"
+  );
 
-    const verified =
-    document.getElementById("verifiedProjects");
+  const aiLimit =
+    stats.aiLimit == null || stats.aiLimit === Infinity || stats.aiLimit > 900000
+      ? "∞"
+      : stats.aiLimit;
+  setText("aiSearches", `${stats.aiSearches || 0} / ${aiLimit}`);
 
-    const aiSearches =
-    document.getElementById("aiSearches");
+  const headline = document.getElementById("workspaceHeadline");
+  const sub = document.getElementById("workspaceSub");
+  const plan = (user?.subscription || "free").toString();
+  if (headline) {
+    headline.textContent =
+      plan === "free"
+        ? "Free plan workspace"
+        : `${plan.charAt(0).toUpperCase()}${plan.slice(1)} plan workspace`;
+  }
+  if (sub) {
+    sub.textContent = `${stats.projectsSubmitted || 0} projects · ${
+      stats.creditsWatched || 0
+    } watchlist · ${stats.openDeals || 0} open deals`;
+  }
+}
 
-    if(portfolio){
-
-        portfolio.innerText =
-        "$" +
-        Number(stats.portfolioValue).toLocaleString();
-
-    }
-
-    if(watched){
-
-        watched.innerText =
-        stats.creditsWatched;
-
-    }
-
-    if(verified){
-
-        verified.innerText =
-        stats.verifiedProjects;
-
-    }
-
-    if(aiSearches){
-        const limit = stats.aiLimit != null ? ` / ${stats.aiLimit}` : "";
-        aiSearches.innerText = `${stats.aiSearches || 0}${limit}`;
-    }
-
+function timeAgo(dateValue) {
+  if (!dateValue) return "";
+  const s = Math.floor((Date.now() - new Date(dateValue).getTime()) / 1000);
+  if (Number.isNaN(s) || s < 0) return "";
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  if (s < 604800) return `${Math.floor(s / 86400)}d ago`;
+  return new Date(dateValue).toLocaleDateString();
 }
 
 function escapeHtml(value) {
@@ -143,6 +120,94 @@ function escapeHtml(value) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function renderEmptyActivity(message) {
+  const list = document.getElementById("activityList");
+  const badge = document.getElementById("activityBadge");
+  if (badge) badge.textContent = "Empty";
+  if (!list) return;
+  list.innerHTML = `
+    <div class="activity-item dash-empty">
+      <div>
+        <h4>${escapeHtml(message || "No activity yet")}</h4>
+        <p>Create a project, save a listing, or request a deal to see activity here.</p>
+        <p style="margin-top:10px">
+          <a class="btn btn-outline" href="/marketplace.html">Browse marketplace</a>
+          <a class="btn btn-primary" href="/project-editor.html">Add project</a>
+        </p>
+      </div>
+    </div>`;
+}
+
+function renderActivity(items) {
+  const list = document.getElementById("activityList");
+  const badge = document.getElementById("activityBadge");
+  if (!list) return;
+
+  if (!items.length) {
+    renderEmptyActivity("No activity yet");
+    return;
+  }
+
+  if (badge) badge.textContent = `${items.length} updates`;
+
+  const typeLabel = {
+    project: "Project",
+    watchlist: "Watchlist",
+    deal: "Deal",
+  };
+
+  list.innerHTML = items
+    .map((item) => {
+      const href = item.href || "#";
+      return `
+      <a class="activity-item activity-item-link" href="${escapeHtml(href)}">
+        <div class="activity-dot"></div>
+        <div>
+          <h4>${escapeHtml(item.title)}</h4>
+          <p>${escapeHtml(typeLabel[item.type] || item.type)} · ${escapeHtml(
+        item.detail || ""
+      )}</p>
+        </div>
+        <span>${escapeHtml(timeAgo(item.at))}</span>
+      </a>`;
+    })
+    .join("");
+}
+
+function renderEmptyWatchlist(message) {
+  const grid = document.getElementById("watchlistPreview");
+  if (!grid) return;
+  grid.innerHTML = `
+    <div class="watchlist-item dash-empty">
+      <h4>${escapeHtml(message || "No saved listings")}</h4>
+      <p>Add projects from the marketplace to track them here.</p>
+      <a class="btn btn-outline" href="/marketplace.html">Open marketplace</a>
+    </div>`;
+}
+
+function renderWatchlistPreview(items) {
+  const grid = document.getElementById("watchlistPreview");
+  if (!grid) return;
+
+  if (!items.length) {
+    renderEmptyWatchlist("No saved listings yet");
+    return;
+  }
+
+  grid.innerHTML = items
+    .map(
+      (item) => `
+    <a class="watchlist-item watchlist-item-link" href="/watchlist.html">
+      <h4>${escapeHtml(item.title || "Listing")}</h4>
+      <p>${escapeHtml(item.country || "—")}${
+        item.volume ? ` · ${escapeHtml(item.volume)}` : ""
+      }</p>
+      <span>${escapeHtml(item.price || item.category || "Saved")}</span>
+    </a>`
+    )
+    .join("");
 }
 
 function inlinePulseMd(text) {
@@ -305,7 +370,6 @@ function restoreCachedPulse() {
     const raw = localStorage.getItem("carbonaxis_ai_pulse");
     if (!raw) return;
     const cached = JSON.parse(raw);
-    // keep cache for 24h
     if (!cached?.answer || Date.now() - (cached.at || 0) > 24 * 60 * 60 * 1000) {
       return;
     }
@@ -327,11 +391,11 @@ document.addEventListener("DOMContentLoaded", () => {
   if (banner && params.get("billing") === "success") {
     const plan = params.get("plan") || "Pro";
     banner.hidden = false;
-    banner.textContent = `Payment received — ${String(plan).toUpperCase()} will activate shortly. Refresh if your plan label has not updated yet.`;
-    // clean URL without reload
+    banner.textContent = `Payment received — ${String(
+      plan
+    ).toUpperCase()} will activate shortly. Refresh if your plan label has not updated yet.`;
     try {
-      const clean = window.location.pathname;
-      window.history.replaceState({}, "", clean);
+      window.history.replaceState({}, "", window.location.pathname);
     } catch (_) {}
   }
 });

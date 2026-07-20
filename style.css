@@ -1700,6 +1700,36 @@ body::before{
   border-color:rgba(0,224,164,0.25);
 }
 
+a.activity-item-link,
+a.watchlist-item-link{
+  text-decoration:none;
+  color:inherit;
+  display:flex;
+}
+
+a.watchlist-item-link{
+  flex-direction:column;
+}
+
+.dashboard-quick-links{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:18px;
+}
+
+.dash-panel-link{
+  color:#00e5b0;
+  font-size:13px;
+  text-decoration:none;
+  font-weight:600;
+}
+
+.dash-empty .btn{
+  margin-top:8px;
+  margin-right:8px;
+}
+
 .activity-dot{
   width:12px;
   height:12px;

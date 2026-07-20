@@ -1406,22 +1406,75 @@ app.get("/api/dashboard", authenticateToken, async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
-    const totalProjects = await CarbonProject.countDocuments({
-  userId: req.user.id
-});
+    const [recentProjects, allCreditRows, watchItems, deals, totalProjects, approvedProjects, watchCount, openDeals] =
+      await Promise.all([
+        CarbonProject.find({ userId: req.user.id })
+          .sort({ updatedAt: -1 })
+          .limit(8)
+          .lean(),
+        CarbonProject.find({ userId: req.user.id })
+          .select("estimatedCredits")
+          .lean(),
+        WatchlistItem.find({ userId: req.user.id })
+          .sort({ createdAt: -1 })
+          .limit(6)
+          .lean(),
+        Deal.find({ buyerId: req.user.id })
+          .sort({ updatedAt: -1 })
+          .limit(8)
+          .lean(),
+        CarbonProject.countDocuments({ userId: req.user.id }),
+        CarbonProject.countDocuments({
+          userId: req.user.id,
+          status: { $in: ["Approved", "Published"] },
+        }),
+        WatchlistItem.countDocuments({ userId: req.user.id }),
+        Deal.countDocuments({
+          buyerId: req.user.id,
+          status: { $in: ["Open", "Under Review", "Countered"] },
+        }),
+      ]);
 
-const approvedProjects = await CarbonProject.countDocuments({
-  userId: req.user.id,
-  status: "Approved"
-});
+    const parseTons = (value) => {
+      if (value == null || value === "") return 0;
+      const match = String(value).replace(/,/g, "").match(/[\d.]+/);
+      return match ? Number(match[0]) : 0;
+    };
 
-    const watchCount = await WatchlistItem.countDocuments({
-      userId: req.user.id,
-    });
+    const co2ePotential = allCreditRows.reduce(
+      (sum, p) => sum + parseTons(p.estimatedCredits),
+      0
+    );
+
+    const activity = [
+      ...recentProjects.map((p) => ({
+        type: "project",
+        title: p.projectName || "Untitled project",
+        detail: `${p.country || "—"} · ${p.status || "Draft"}`,
+        at: p.updatedAt || p.createdAt,
+        href: p._id ? `/project-view.html?id=${p._id}` : "/projects.html",
+      })),
+      ...watchItems.map((w) => ({
+        type: "watchlist",
+        title: w.title || "Watchlist item",
+        detail: `${w.country || "—"} · ${w.category || "Marketplace"}`,
+        at: w.createdAt,
+        href: "/watchlist.html",
+      })),
+      ...deals.map((d) => ({
+        type: "deal",
+        title: d.listingTitle || "Deal request",
+        detail: `${d.status || "Open"} · ${d.volumeRequested || "—"}`,
+        at: d.updatedAt || d.createdAt,
+        href: "/deals.html",
+      })),
+    ]
+      .sort((a, b) => new Date(b.at) - new Date(a.at))
+      .slice(0, 8);
 
     await ensureAiUsagePeriod(user);
     const quota = getAiQuota(user);
@@ -1437,24 +1490,34 @@ const approvedProjects = await CarbonProject.countDocuments({
         subscription: user.subscription,
       },
       stats: {
-        portfolioValue: 0,
+        portfolioValue: null,
         creditsWatched: watchCount,
         projectsSubmitted: totalProjects,
         verifiedProjects: approvedProjects,
+        openDeals,
+        co2ePotential: Math.round(co2ePotential),
         aiSearches: quota.used,
         aiLimit: quota.limit,
         aiRemaining: quota.remaining,
       },
+      activity,
+      watchlist: watchItems.map((w) => ({
+        id: w._id,
+        title: w.title,
+        country: w.country,
+        category: w.category,
+        price: w.price,
+        volume: w.volume,
+      })),
       plan: getPlan(user.subscription),
       quota,
     });
-
   } catch (error) {
     console.error(error);
 
     res.status(500).json({
       success: false,
-      message: "Failed to load dashboard"
+      message: "Failed to load dashboard",
     });
   }
 });

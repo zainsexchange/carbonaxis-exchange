@@ -6,7 +6,7 @@
 <title>Climate Intelligence Dashboard | CarbonAxis Exchange</title>
   <meta name="description" content="CarbonAxis Exchange is building institutional climate market infrastructure for transparent carbon trading, verified climate projects, and scalable climate finance." />
   <link rel="icon" type="image/png" href="/favicon.png" />
-  <link rel="stylesheet" href="/style.css?v=115">
+  <link rel="stylesheet" href="/style.css?v=120">
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -176,9 +176,8 @@ Welcome back!
     </h1>
 
     <p class="hero-text">
-      Monitor carbon assets, track market activity,
-      manage watchlists and explore AI-powered
-      climate insights.
+      Track your projects, watchlist, deal requests, and Intelligence usage —
+      all in one place.
     </p>
 
     <div id="billingBanner" class="billing-banner billing-banner-ok" hidden></div>
@@ -196,139 +195,89 @@ Welcome back!
         <h2>Manage Carbon Assets & Market Activity</h2>
       </div>
       <p>
-        Track portfolios and watchlists, then use CarbonAxis Intelligence for market research, compare, and listing analysis.
+        Your real CarbonAxis activity — projects, watchlist, deals, and Intelligence quota.
       </p>
     </div>
 
     <div class="dashboard-preview">
       <div class="dash-card large-dash">
-        <h2>Portfolio Value</h2>
-<h3 id="portfolioValue">$0</h3>
-        <p>Projected carbon credit holdings across verified climate assets.</p>
-        <div class="portfolio-chart">
-
-  <div class="chart-line">
-
-    <span></span>
-
-  </div>
-
-  <div class="chart-labels">
-
-    <small>Jan</small>
-    <small>Mar</small>
-    <small>May</small>
-    <small>Jul</small>
-    <small>Sep</small>
-    <small>Dec</small>
-
-  </div>
-
-</div>
+        <h2>Your workspace</h2>
+        <h3 id="workspaceHeadline">Loading…</h3>
+        <p id="workspaceSub">Projects, deals, and Intelligence on your account.</p>
+        <div class="dashboard-quick-links">
+          <a class="btn btn-primary" href="/projects.html">My projects</a>
+          <a class="btn btn-outline" href="/ai-intelligence.html">Intelligence</a>
+          <a class="btn btn-outline" href="/deals.html">My deals</a>
+          <a class="btn btn-outline" href="/watchlist.html">Watchlist</a>
+        </div>
       </div>
 
       <div class="dash-card">
-        <span>Credits Watched</span>
+        <span>Watchlist</span>
         <h3 id="creditsWatched">0</h3>
-        <p>Saved projects and market opportunities.</p>
+        <p>Saved marketplace opportunities.</p>
       </div>
 
       <div class="dash-card">
-        <span>Verified Projects</span>
+        <span>My projects</span>
+        <h3 id="projectsSubmitted">0</h3>
+        <p>Drafts and submissions you own.</p>
+      </div>
+
+      <div class="dash-card">
+        <span>Approved</span>
         <h3 id="verifiedProjects">0</h3>
-        <p>Projects under buyer review.</p>
+        <p>Projects marked approved / published.</p>
       </div>
 
       <div class="dash-card">
-        <span>CO₂e Impact</span>
-        <h3>42,800 t</h3>
-        <p>Estimated climate impact potential.</p>
+        <span>Open deals</span>
+        <h3 id="openDeals">0</h3>
+        <p>Active OTC / RFQ requests.</p>
+      </div>
+
+      <div class="dash-card">
+        <span>Project CO₂e</span>
+        <h3 id="co2eImpact">—</h3>
+        <p>Sum of estimated credits on your projects.</p>
+      </div>
+
+      <div class="dash-card">
+        <span>AI queries</span>
+        <h3 id="aiSearches">0</h3>
+        <p>Intelligence usage this period.</p>
       </div>
     </div>
 
   <div class="activity-panel">
 
   <div class="activity-head">
-    <h3>Recent Market Activity</h3>
-    <span>Sample preview</span>
+    <h3>Your recent activity</h3>
+    <span id="activityBadge">Live</span>
   </div>
 
-  <div class="activity-list">
-
-    <div class="activity-item">
-      <div class="activity-dot"></div>
-
+  <div class="activity-list" id="activityList">
+    <div class="activity-item dash-empty">
       <div>
-        <h4>Biochar Project Verified</h4>
-        <p>Pakistan · Carbon Removal</p>
+        <h4>Loading activity…</h4>
+        <p>Fetching your projects, watchlist, and deals.</p>
       </div>
-
-      <span>2m ago</span>
     </div>
-
-    <div class="activity-item">
-      <div class="activity-dot"></div>
-
-      <div>
-        <h4>Renewable Credits Added</h4>
-        <p>UAE · Renewable Energy</p>
-      </div>
-
-      <span>12m ago</span>
-    </div>
-
-    <div class="activity-item">
-      <div class="activity-dot"></div>
-
-      <div>
-        <h4>Buyer Watchlist Updated</h4>
-        <p>18 credits tracked</p>
-      </div>
-
-      <span>25m ago</span>
-    </div>
-
-    <div class="activity-item">
-      <div class="activity-dot"></div>
-
-      <div>
-        <h4>Climate Asset Requested</h4>
-        <p>Institutional OTC Inquiry</p>
-      </div>
-
-      <span>1h ago</span>
-    </div>
-
   </div>
 
 </div>
 <div class="watchlist-panel">
 
   <div class="activity-head">
-    <h3>Buyer Watchlist</h3>
-    <span>Tracked Assets</span>
+    <h3>Your watchlist</h3>
+    <a href="/watchlist.html" class="dash-panel-link">View all</a>
   </div>
 
-  <div class="watchlist-grid">
-
-    <div class="watchlist-item">
-      <h4>Biochar Carbon Removal</h4>
-      <p>Pakistan · 98,000 tCO₂e</p>
-      <span>$38/t</span>
+  <div class="watchlist-grid" id="watchlistPreview">
+    <div class="watchlist-item dash-empty">
+      <h4>Loading…</h4>
+      <p>Fetching saved listings.</p>
     </div>
-
-    <div class="watchlist-item">
-      <h4>Solar Renewable Credits</h4>
-      <p>UAE · 210,000 tCO₂e</p>
-      <span>$16/t</span>
-    </div>
-
-    <div class="watchlist-item">
-      <h4>Methane Avoidance</h4>
-      <p>Malaysia · 145,000 tCO₂e</p>
-      <span>$16/t</span>
-    </div>
-
   </div>
 
 </div>
@@ -901,9 +850,9 @@ if(_token){
   }
 }
 </script>
-<script src="/js/api.js?v=106"></script>
+<script src="/js/api.js?v=246415"></script>
 <script src="/js/navbar.js?v=109"></script>
 <script src="/js/auth.js"></script>
-<script src="/js/dashboard.js?v=104"></script>
+<script src="/js/dashboard.js?v=105"></script>
 </body>
 </html>
