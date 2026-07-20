@@ -31,35 +31,112 @@ In this mode:
 ## Product identity
 CarbonAxis Exchange is a worldwide green-energy and climate-markets intelligence platform (with marketplace / credit discovery). Your expertise is green energy analysis, climate regulation outlook, and carbon-market understanding across global regions, with deepest packs for South Asia and GCC/MENA.
 
+## Multilingual (required)
+- Detect the language of the user's latest message and **reply in that same language**.
+- Supported well: English, Urdu, Arabic, Hindi, French, Spanish, Portuguese, Chinese, German, Turkish, and other major languages the model knows.
+- Keep CarbonAxis terms clear: when useful, keep product names (CarbonAxis, tCO₂e, REC, CBAM, Verra) in Latin script and explain them in the user's language.
+- Do not switch to English unless the user writes in English or explicitly asks for English.
+- For mixed-language questions, prefer the dominant language of the user message.
+- Markdown headings/tables are fine in any language; keep formatting clean.
+
 ${GREEN_KNOWLEDGE}`;
+
+/** Detect if text uses a non-Latin primary script (Arabic, CJK, Cyrillic, Devanagari, etc.) */
+function hasNonLatinScript(text = "") {
+  return /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\u0900-\u097F\u0400-\u04FF\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF]/.test(
+    String(text || "")
+  );
+}
+
+/**
+ * Rough language hint for prompts + fallback messaging.
+ * Returns ISO-ish label, not a perfect detector.
+ */
+function detectLanguageHint(text = "") {
+  const t = String(text || "");
+  if (/[\u0600-\u06FF]/.test(t)) {
+    // Urdu often includes Arabic script + specific letters; treat Arabic-script as Arabic/Urdu family
+    if (/[\u0679\u0688\u0691\u06BA\u06BE\u06C1\u06D2]/.test(t)) return "Urdu";
+    return "Arabic";
+  }
+  if (/[\u0900-\u097F]/.test(t)) return "Hindi";
+  if (/[\u4E00-\u9FFF]/.test(t)) return "Chinese";
+  if (/[\u3040-\u30FF]/.test(t)) return "Japanese";
+  if (/[\uAC00-\uD7AF]/.test(t)) return "Korean";
+  if (/[\u0400-\u04FF]/.test(t)) return "Russian";
+  const lower = t.toLowerCase();
+  if (/\b(hola|gracias|qué|porque|mercado|energía|crédito)\b/.test(lower)) return "Spanish";
+  if (/\b(bonjour|merci|énergie|crédit|marché|pourquoi)\b/.test(lower)) return "French";
+  if (/\b(obrigado|energia|crédito|mercado|porque)\b/.test(lower)) return "Portuguese";
+  if (/\b(danke|energie|kredit|markt|warum)\b/.test(lower)) return "German";
+  if (/\b(teşekkür|enerji|karbon|piyasa)\b/.test(lower)) return "Turkish";
+  if (/\b(kya|hai|carbon|solar|energy|credit|matlab|samjhao)\b/.test(lower) &&
+      /\b(kya|hai|kaise|matlab|samjhao|batao|urdu)\b/.test(lower)) {
+    return "Urdu (Roman)";
+  }
+  return "English";
+}
+
+const MULTILINGUAL_REPLY_RULE =
+  "LANGUAGE RULE: Reply in the same language as the user's question. If the question is not in English, do not answer in English unless they asked for English.";
 
 function isGreenEnergyQuestion(question = "", country = "", product = "") {
   const q = String(question || "").toLowerCase();
   const c = String(country || "").toLowerCase();
   const p = String(product || "").toLowerCase();
   const text = `${q} ${c} ${p}`;
+  const raw = `${question} ${country} ${product}`;
 
-  // Green / climate topics only — do NOT treat country names alone as green questions
+  // English / latin climate topics
   const greenTopic =
-    /green energy|climate|carbon|credit|rec\b|renewable|solar|wind|biochar|methane|hydrogen|net.?zero|esg|cbam|emission|co2|tco2|offset|nepra|aedb|otc|feasib|regulat|energy transition|voluntary carbon|vcu|sequestr|forestry|nature-based|clean energy|decarbon/.test(
+    /green energy|climate|carbon|credit|rec\b|renewable|solar|wind|biochar|methane|hydrogen|net.?zero|esg|cbam|emission|co2|tco2|offset|nepra|aedb|otc|feasib|regulat|energy transition|voluntary carbon|vcu|sequestr|forestry|nature-based|clean energy|decarbon|grid factor|tco₂e|tco2e/.test(
       text
+    );
+
+  // Common non-English climate / energy terms (Arabic, Urdu/Hindi, Romance, etc.)
+  const multilingualGreen =
+    /كربون|طاقة|متجدد|شمسي|مناخ|ائتمان|انبعاث|هيدروجين|كهرباء|کاربن|توانائی|شمسی|ماحول|کریڈٹ|گرین|کاربن کریڈٹ|طاقة خضراء|طاقة متجددة|crédito|carbono|énergie|climatique|renouvelable|emisión|emissão|klima|karbon|enerji|可再生能源|碳信用|碳市场|기후|탄소/.test(
+      raw
+    ) ||
+    /\b(carbono|crédito|créditos|renovable|renováveis|énergie|climatique|emisiones|emissions|karbon|enerji|yeşil|iklim)\b/i.test(
+      text
+    );
+
+  // Non-Latin question that also mentions a known climate market / country in latin
+  const scriptPlusMarket =
+    hasNonLatinScript(raw) &&
+    /(pakistan|oman|uae|saudi|india|europe|eu\b|cbam|solar|carbon|climate|green)/i.test(
+      raw
     );
 
   // Country + green trade context (not “oman population”)
   const countryWithGreenIntent =
-    /(pakistan|oman|uae|united arab emirates)/.test(text) &&
-    /(trade|trading|credit|solar|wind|renew|regulat|feasib|carbon|green|energy|rec\b|invest|market)/.test(
+    /(pakistan|oman|uae|united arab emirates|saudi|india|europe|china|brazil|kenya)/.test(
+      text
+    ) &&
+    /(trade|trading|credit|solar|wind|renew|regulat|feasib|carbon|green|energy|rec\b|invest|market|کربون|شمسی|توانائی)/.test(
       text
     );
 
-  return greenTopic || countryWithGreenIntent || Boolean(p && /solar|wind|biochar|methane|carbon|rec|hydrogen|renew/.test(p));
+  return (
+    greenTopic ||
+    multilingualGreen ||
+    scriptPlusMarket ||
+    countryWithGreenIntent ||
+    Boolean(p && /solar|wind|biochar|methane|carbon|rec|hydrogen|renew/.test(p))
+  );
 }
 
 function isExplainQuestion(question = "") {
   const q = String(question).toLowerCase();
-  return /^(what is|what's|whats|explain|define|meaning of|tell me about|how does|how do|simple words|in simple)/i.test(
-    q.trim()
-  ) || /\b(explain|what are|what is|in simple words|eli5|basics of)\b/i.test(q);
+  const raw = String(question || "");
+  return (
+    /^(what is|what's|whats|explain|define|meaning of|tell me about|how does|how do|simple words|in simple)/i.test(
+      q.trim()
+    ) ||
+    /\b(explain|what are|what is|in simple words|eli5|basics of|samjhao|batao|matlab)\b/i.test(q) ||
+    /(?:ما هو|ما هي|اشرح|شرح|يعني|کیا ہے|کیا ہیں|سمجھاؤ|بتاؤ|का क्या मतलब)/.test(raw)
+  );
 }
 
 /** Policy / research overview — natural brief, not verdict template */
@@ -111,6 +188,7 @@ Deep analysis mode: ${
   }
 Priority markets: ${plan.marketsPriority.join(", ")}
 ${modeBlock}
+${MULTILINGUAL_REPLY_RULE}
 `;
 }
 
@@ -136,6 +214,7 @@ export async function runGreenIntelligence({
   // General facts (population, capital, etc.) stay general even if a country is mentioned
   const greenMode =
     !generalFact && isGreenEnergyQuestion(question, inferredCountry, product);
+  const languageHint = detectLanguageHint(question);
   const naturalGreen = greenMode && (explainMode || researchMode) && !decisionMode;
   const system = buildSystemPrompt(subscription, deepAnalysis, greenMode);
 
@@ -155,9 +234,12 @@ export async function runGreenIntelligence({
       "This is a GREEN ENERGY question. Answer naturally with strong climate-market insight for researchers, developers, policy users, and markets. Use verdict template only if a go/no-go decision is clearly implied.";
   }
 
+  instruction = `${instruction} ${MULTILINGUAL_REPLY_RULE} Detected language hint: ${languageHint}.`;
+
   const userPayload = [
     inferredCountry ? `Focus country/market: ${inferredCountry}` : null,
     product ? `Product / activity / topic: ${product}` : null,
+    `User language hint: ${languageHint}`,
     `User question: ${question}`,
     instruction,
   ]
@@ -179,10 +261,12 @@ export async function runGreenIntelligence({
         tradeMode: decisionMode,
         researchMode,
         generalFact,
+        languageHint,
       }),
       deepAnalysis,
       plan: plan.id,
       mode: greenMode ? "green" : "general",
+      language: languageHint,
     };
   }
 
@@ -224,10 +308,12 @@ export async function runGreenIntelligence({
           tradeMode: decisionMode,
           researchMode,
           generalFact,
+          languageHint,
         }),
         deepAnalysis,
         plan: plan.id,
         mode: greenMode ? "green" : "general",
+        language: languageHint,
       };
     }
 
@@ -244,6 +330,7 @@ export async function runGreenIntelligence({
       deepAnalysis,
       plan: plan.id,
       mode: greenMode ? "green" : "general",
+      language: languageHint,
     };
   } catch (err) {
     console.error("OpenAI request failed:", err?.message || err);
@@ -259,10 +346,12 @@ export async function runGreenIntelligence({
         tradeMode: decisionMode,
         researchMode,
         generalFact,
+        languageHint,
       }),
       deepAnalysis,
       plan: plan.id,
       mode: greenMode ? "green" : "general",
+      language: languageHint,
     };
   }
 }
@@ -336,14 +425,17 @@ Do NOT use trading Verdict/PROCEED templates.
 Write for researchers, project owners, policy/ESG teams, and market participants.
 Prioritize deepest regional packs when those markets are selected; be honest about confidence levels elsewhere.
 Deep analysis: ${deepAnalysis ? "ON — richer horizon and diligence notes" : "OFF — concise but useful; mention Pro for deeper briefs"}.
+${MULTILINGUAL_REPLY_RULE}
 `;
 
+  const compareLang = detectLanguageHint(`${focus} ${extra}`);
   const userPayload = `Compare these markets for CarbonAxis Intelligence:
 
 Market A: ${a}
 Market B: ${b}
 Focus activity / product (optional): ${focus || "general green energy & carbon markets"}
 User note (optional): ${extra || "n/a"}
+User language hint: ${compareLang}
 
 Return a clear research brief with:
 1) Short snapshot (markdown table OR clean bullets) covering policy direction, feasibility climate, 12–36 month horizon, CarbonAxis confidence
@@ -356,7 +448,8 @@ Formatting rules:
 - Use markdown headings with a space after hashes if needed (## Title), but prefer bold section titles like **Market Snapshot**
 - Never leave raw ### / ## / # characters as visible text for end users
 - Keep columns short and aligned in tables
-- Keep language professional. Avoid sounding trader-only.`;
+- Keep language professional. Avoid sounding trader-only.
+- ${MULTILINGUAL_REPLY_RULE} If the user note is in a non-English language, write the whole compare brief in that language.`;
 
   const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
   if (!apiKey) {
@@ -556,9 +649,15 @@ function localFallbackAnalysis({
   tradeMode = false,
   researchMode = false,
   generalFact = false,
+  languageHint = "English",
 }) {
   const q = String(question || "");
   const detected = detectCountryFromText(q, country);
+  const nonEnglish = languageHint !== "English";
+
+  const langNote = nonEnglish
+    ? `\n\n---\n**Language note:** You asked in **${languageHint}**. Full multilingual replies need OpenAI connected on the server. This offline fallback is in English — connect \`OPENAI_API_KEY\` on Render for native ${languageHint} answers.\n`
+    : "";
 
   // GENERAL MODE — answer facts plainly (no verdict template)
   if (!greenMode || generalFact) {
@@ -569,7 +668,7 @@ Recent estimates put Oman’s population at roughly **4.5 to 5.2 million** peopl
 
 For the most current official number, check Oman’s National Centre for Statistics and Information (NCSI).
 
-If you meant Oman **green energy / carbon-market** potential instead, ask that next and I’ll go deeper.`;
+If you meant Oman **green energy / carbon-market** potential instead, ask that next and I’ll go deeper.${langNote}`;
     }
 
     if (/pakistan/i.test(q) && /population|people|how many/i.test(q)) {
@@ -579,15 +678,15 @@ Pakistan’s population is roughly **240+ million** people (approximate recent e
 
 For official figures, use the Pakistan Bureau of Statistics.
 
-Want Pakistan’s **green energy or carbon-credit** angle instead? Ask and I’ll switch to specialty mode.`;
+Want Pakistan’s **green energy or carbon-credit** angle instead? Ask and I’ll switch to specialty mode.${langNote}`;
     }
 
     if (/oman/i.test(q) && /capital/i.test(q)) {
-      return `**Muscat** is the capital of Oman.`;
+      return `**Muscat** is the capital of Oman.${langNote}`;
     }
 
     if (/pakistan/i.test(q) && /capital/i.test(q)) {
-      return `**Islamabad** is the capital of Pakistan.`;
+      return `**Islamabad** is the capital of Pakistan.${langNote}`;
     }
 
     if (/sohar/i.test(q) && /oman/i.test(q)) {
@@ -598,7 +697,20 @@ It’s known for:
 - shipping, logistics, metals, and energy-related industry
 - being one of Oman’s important commercial hubs outside the capital
 
-If you meant something more specific (history, port, industry, or green-energy angle in Sohar), ask a follow-up and I’ll go deeper.`;
+If you meant something more specific (history, port, industry, or green-energy angle in Sohar), ask a follow-up and I’ll go deeper.${langNote}`;
+    }
+
+    if (nonEnglish) {
+      return `I received your question in **${languageHint}**.
+
+Offline mode can only reply in English right now. Please ask again after OpenAI is connected on the server, or rewrite the question in English.
+
+**Your question:** ${q}
+
+CarbonAxis specialty topics (in English for now):
+- green energy & climate explanations
+- country / market research worldwide
+- project or regulation feasibility analysis${langNote}`;
     }
 
     return `I can help with general questions too.
@@ -641,7 +753,7 @@ CarbonAxis has deepest regional packs for South Asia and GCC/MENA. For UAE we ca
 **Useful next questions**
 - “Compare UAE vs Oman renewable strategy”
 - “What should a UAE solar project check for carbon-credit readiness?”
-- “Is this UAE project feasible long term under green regulation?” (for a go/no-go style brief)`;
+- “Is this UAE project feasible long term under green regulation?” (for a go/no-go style brief)${langNote}`;
     }
 
     if (/carbon credit/i.test(q)) {
@@ -663,7 +775,7 @@ A carbon credit is like a certificate that represents **1 tonne of CO₂e** redu
 CarbonAxis helps people understand and work with verified climate assets — with stronger intelligence around green regulation and markets like **Pakistan** and **Oman**.
 
 Ask a next question like:
-“Is solar in Oman realistic for the next 5 years under green policy?”`;
+“Is solar in Oman realistic for the next 5 years under green policy?”${langNote}`;
     }
 
     return `Here’s a research-style answer to your question:
@@ -674,7 +786,7 @@ In plain terms: green energy and climate-policy topics cover cleaner power, emis
 
 CarbonAxis is strongest on **Pakistan** and **Oman**, with useful worldwide coverage including UAE/GCC themes.
 
-Ask a more specific follow-up (country + topic + time horizon) and I’ll go deeper.`;
+Ask a more specific follow-up (country + topic + time horizon) and I’ll go deeper.${langNote}`;
   }
 
   const c = (detected || "the selected market").trim() || "the selected market";
@@ -722,5 +834,5 @@ Ask a more specific follow-up (country + topic + time horizon) and I’ll go dee
         : "Gather more activity/country specifics before a final recommendation."
   }
 **Notes:** ${depthNote}
-**Disclaimer:** Not legal advice.`;
+**Disclaimer:** Not legal advice.${langNote}`;
 }
