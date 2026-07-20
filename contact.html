@@ -6,7 +6,7 @@
 <title>Contact CarbonAxis Exchange</title>
  <meta name="description" content="Contact CarbonAxis Exchange for partnerships, climate projects, carbon credits, marketplace participation and climate finance opportunities.">
   <link rel="icon" type="image/png" href="/favicon.png" />
-  <link rel="stylesheet" href="/style.css?v=115">
+  <link rel="stylesheet" href="/style.css?v=119">
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -227,96 +227,27 @@
 
     <h2>Contact Our Team</h2>
 
-    <form class="contact-form">
+    <form class="contact-form" id="contactForm">
 
-      <input type="text" placeholder="Full Name" required>
+      <input type="text" id="contactName" name="name" placeholder="Full Name" required>
 
-      <input type="email" placeholder="Email Address" required>
+      <input type="email" id="contactEmail" name="email" placeholder="Email Address" required>
 
-      <input type="text" placeholder="Organization">
+      <input type="text" id="contactOrganization" name="organization" placeholder="Organization">
 
-      <textarea placeholder="Tell us about your inquiry..." rows="6"></textarea>
+      <textarea id="contactMessage" name="message" placeholder="Tell us about your inquiry..." rows="6" required></textarea>
 
-      <button type="submit" class="btn btn-primary">
+      <button type="submit" class="btn btn-primary" id="contactSubmitBtn">
         Send Message
       </button>
+
+      <p id="contactFormStatus" class="profile-message" style="margin-top:14px" role="status" aria-live="polite"></p>
 
     </form>
 
   </div>
 
 </section>
-<main>
-  <section class="section marketplace-page-hero">
-  <div class="container">
-
-    <p class="section-label">
-      About Us
-    </p>
-
-    <h1>
-      Building Trusted Climate Markets
-    </h1>
-
-    <p class="hero-text">
-      CarbonAxis Exchange is developing climate market
-      infrastructure that connects project owners,
-      buyers, brokers and climate-finance partners
-      through transparent and trusted carbon markets.
-    </p>
-
-  </div>
-</section>
-<section class="section">
-
-  <div class="container">
-
-    <div class="section-head">
-      <div>
-        <p class="section-label">Our Mission</p>
-        <h2>Accelerating Climate Finance Through Transparency</h2>
-      </div>
-
-      <p>
-        CarbonAxis Exchange aims to simplify access to
-        verified climate projects and carbon markets by
-        creating trusted digital infrastructure for
-        project discovery, due diligence and climate finance.
-      </p>
-    </div>
-
-    <div class="sector-grid">
-
-      <div class="sector-card">
-        <span>01</span>
-        <h3>Transparency</h3>
-        <p>Trusted climate market data and verified project information.</p>
-      </div>
-
-      <div class="sector-card">
-        <span>02</span>
-        <h3>Verification</h3>
-        <p>Focus on high-quality climate projects and registry-backed assets.</p>
-      </div>
-
-      <div class="sector-card">
-        <span>03</span>
-        <h3>Accessibility</h3>
-        <p>Connecting project owners, buyers and investors globally.</p>
-      </div>
-
-      <div class="sector-card">
-        <span>04</span>
-        <h3>Climate Impact</h3>
-        <p>Supporting measurable environmental outcomes and net-zero goals.</p>
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
-</main>
 
   <footer>
   <div class="container">
@@ -587,5 +518,47 @@ mobileLinks.forEach(link => {
 <script src="/js/api.js"></script>
 <script src="/js/navbar.js?v=109"></script>
 <script src="/js/auth.js"></script>
+<script>
+document.getElementById("contactForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const status = document.getElementById("contactFormStatus");
+  const btn = document.getElementById("contactSubmitBtn");
+  const payload = {
+    name: document.getElementById("contactName")?.value.trim(),
+    email: document.getElementById("contactEmail")?.value.trim(),
+    organization: document.getElementById("contactOrganization")?.value.trim(),
+    message: document.getElementById("contactMessage")?.value.trim(),
+  };
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Sending…";
+  }
+  if (status) status.textContent = "";
+
+  try {
+    const res = await fetch(`${API.BASE}${API.contact}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.success) {
+      if (status) status.textContent = data.message || "Message sent.";
+      e.target.reset();
+    } else if (status) {
+      status.textContent = data.message || "Could not send message.";
+    }
+  } catch (err) {
+    console.error(err);
+    if (status) status.textContent = "Network error — please try again.";
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Send Message";
+    }
+  }
+});
+</script>
 </body>
 </html>

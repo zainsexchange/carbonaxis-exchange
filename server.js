@@ -815,6 +815,94 @@ const brokerInquirySchema = new mongoose.Schema(
 
 const BrokerInquiry = mongoose.model("BrokerInquiry", brokerInquirySchema);
 
+const contactMessageSchema = new mongoose.Schema(
+  {
+    name: String,
+    email: String,
+    organization: String,
+    message: String,
+  },
+  { timestamps: true }
+);
+
+const ContactMessage = mongoose.model("ContactMessage", contactMessageSchema);
+
+app.post("/api/contact", async (req, res) => {
+  try {
+    const { name, email, organization, message } = req.body || {};
+
+    if (!name?.trim() || !email?.trim() || !message?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, email, and message are required.",
+      });
+    }
+
+    const entry = await ContactMessage.create({
+      name: name.trim(),
+      email: email.trim(),
+      organization: organization?.trim() || "",
+      message: message.trim(),
+    });
+
+    try {
+      if (process.env.EMAIL_USER && transporter) {
+        await transporter.sendMail({
+          from: `"CarbonAxis Exchange" <${process.env.EMAIL_USER}>`,
+          to: process.env.EMAIL_USER,
+          subject: `Contact form — ${name.trim()}`,
+          html: `
+            <h2>New contact message</h2>
+            <p><b>Name:</b> ${name.trim()}</p>
+            <p><b>Email:</b> ${email.trim()}</p>
+            <p><b>Organization:</b> ${organization?.trim() || "—"}</p>
+            <p><b>Message:</b></p>
+            <p>${message.trim().replace(/\n/g, "<br>")}</p>
+          `,
+        });
+      }
+    } catch (emailError) {
+      console.error("Contact email failed:", emailError);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Thanks — we received your message and will reply soon.",
+      data: entry,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Could not send message. Please try again.",
+    });
+  }
+});
+
+app.get("/api/contact-messages", requireAdmin, async (req, res) => {
+  try {
+    const messages = await ContactMessage.find().sort({ createdAt: -1 });
+    res.json({ success: true, data: messages });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch contact messages",
+    });
+  }
+});
+
+app.delete("/api/contact-messages/:id", requireAdmin, async (req, res) => {
+  try {
+    await ContactMessage.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: "Contact message deleted" });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Contact message delete failed",
+    });
+  }
+});
+
 app.get("/api/early-access", requireAdmin, async (req, res) => {
   try {
     const requests = await EarlyAccess.find().sort({ createdAt: -1 });

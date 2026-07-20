@@ -5052,9 +5052,12 @@ font-weight:600;
 .notification-menu{
   display: none;
 }
-body.user-logged-in .navbar .profile-menu,
-body.user-logged-in .navbar .notification-menu{
+body.user-logged-in .navbar .profile-menu{
   display: block !important;
+}
+/* Notification bell hidden until real alerts ship */
+body.user-logged-in .navbar .notification-menu{
+  display: none !important;
 }
 body.user-logged-in .login-open{
   display: none !important;

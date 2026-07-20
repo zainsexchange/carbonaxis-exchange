@@ -23,6 +23,7 @@ const API = {
   aiThreads: "/ai/threads",
   calcCatalog: "/calc/catalog",
   calcRun: "/calc/run",
+  contact: "/contact",
   deals: "/deals",
   billingCheckout: "/billing/checkout",
   billingStatus: "/billing/status",

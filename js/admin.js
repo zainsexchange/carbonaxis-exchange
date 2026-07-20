@@ -311,6 +311,20 @@
     }
   };
 
+  window.deleteContactMessage = async function (id) {
+    if (!confirm("Delete this contact message?")) return;
+    try {
+      await apiRequest(`${API_BASE}/api/contact-messages/${id}`, {
+        method: "DELETE",
+        headers: adminHeaders(),
+      });
+      showToast("Deleted", "Contact message removed.");
+      await refreshAdminData(false);
+    } catch (err) {
+      showToast("Delete failed", err.message, "error");
+    }
+  };
+
   window.updateProjectStatus = async function (id, status) {
     try {
       await apiRequest(`${API_BASE}/api/project-submissions/${id}/status`, {
@@ -517,6 +531,24 @@
       .join("");
   }
 
+  function renderContactTable(list) {
+    const table = document.getElementById("contactTable");
+    if (!table) return;
+    table.innerHTML = list
+      .map(
+        (item) => `
+      <tr>
+        <td>${escapeHtml(item.name)}</td>
+        <td>${escapeHtml(item.email)}</td>
+        <td>${escapeHtml(item.organization || "-")}</td>
+        <td>${escapeHtml(item.message)}</td>
+        <td>${new Date(item.createdAt).toLocaleString()}</td>
+        <td><button type="button" class="delete-btn" onclick="deleteContactMessage('${item._id}')">Delete</button></td>
+      </tr>`
+      )
+      .join("");
+  }
+
   function renderProjectTable(list) {
     const table = document.getElementById("projectTable");
     if (!table) return;
@@ -592,6 +624,15 @@
     const list = data.data || [];
     setCountCard("earlyCount", "earlyCountText", list);
     renderEarlyTable(list);
+  }
+
+  async function loadContactMessages() {
+    const data = await apiRequest(`${API_BASE}/api/contact-messages`, {
+      headers: adminHeaders(),
+    });
+    const list = data.data || [];
+    setCountCard("contactCount", "contactCountText", list);
+    renderContactTable(list);
   }
 
   async function loadProjects() {
@@ -737,6 +778,7 @@
     [
       ["userSearch", "userTable"],
       ["earlySearch", "earlyAccessTable"],
+      ["contactSearch", "contactTable"],
       ["projectSearch", "projectTable"],
       ["brokerSearch", "brokerTable"],
       ["dealSearch", "dealTable"],
@@ -765,6 +807,7 @@
       ["billing", loadBillingSummary],
       ["users", loadUsers],
       ["early", loadEarlyAccess],
+      ["contact", loadContactMessages],
       ["projects", loadProjects],
       ["brokers", loadBrokerInquiries],
       ["deals", loadDeals],
