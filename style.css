@@ -4623,6 +4623,14 @@ font-weight:600;
   flex-wrap:wrap;
 }
 
+.ai-calc-panel{
+  margin-top:10px;
+  padding:16px;
+  border:1px solid rgba(0,229,176,0.16);
+  border-radius:18px;
+  background:rgba(8,18,16,0.55);
+}
+
 .visually-hidden{
   position:absolute;
   width:1px;
@@ -4635,13 +4643,6 @@ font-weight:600;
   border:0;
 }
 
-  margin-top:10px;
-  padding:16px;
-  border:1px solid rgba(0,229,176,0.16);
-  border-radius:18px;
-  background:rgba(8,18,16,0.55);
-}
-
 /* Calc / Compare tabs: hide chat chrome, give tool full panel */
 .ai-chat-panel.ai-view-calc #aiChatLog,
 .ai-chat-panel.ai-view-calc #aiSuggestionRow,
@@ -4650,6 +4651,13 @@ font-weight:600;
 .ai-chat-panel.ai-view-compare #aiSuggestionRow,
 .ai-chat-panel.ai-view-compare #aiAskForm{
   display:none !important;
+  flex:0 0 0 !important;
+  min-height:0 !important;
+  max-height:0 !important;
+  padding:0 !important;
+  margin:0 !important;
+  overflow:hidden !important;
+  border:0 !important;
 }
 
 .ai-chat-panel.ai-view-calc #aiCalcPanel,
@@ -4661,8 +4669,13 @@ font-weight:600;
   margin-top:0;
 }
 
-.ai-chat-panel.ai-view-calc,
-.ai-chat-panel.ai-view-compare{
+.ai-chat-panel.ai-view-calc #aiCompareForm,
+.ai-chat-panel.ai-view-compare #aiCalcPanel{
+  display:none !important;
+}
+
+.ai-chat-panel-flex.ai-view-calc,
+.ai-chat-panel-flex.ai-view-compare{
   min-height:0;
   justify-content:flex-start;
 }
