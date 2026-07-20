@@ -144,3 +144,10 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Local debug copies of user screen recordings (never commit)
+.cursor-tmp-*
+.cursor-video-frames*/
+frame0.jpg
+*.mp4
+!**/docs/**/*.mp4

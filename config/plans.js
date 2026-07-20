@@ -12,11 +12,11 @@ export const PLANS = {
     maxWatchlist: 5,
     deepAnalysis: false,
     projectAiInsights: false,
-    marketsPriority: ["Pakistan", "Oman"],
+    marketsPriority: ["Global", "GCC", "South Asia", "Europe", "Americas"],
     features: [
       "5 Green Energy AI queries / month",
-      "Basic feasibility answers",
-      "Pakistan & Oman priority coverage",
+      "Worldwide market coverage",
+      "Global carbon calculators",
       "Marketplace browse + watchlist (5)",
     ],
   },
@@ -28,7 +28,7 @@ export const PLANS = {
     maxWatchlist: 50,
     deepAnalysis: true,
     projectAiInsights: true,
-    marketsPriority: ["Pakistan", "Oman", "UAE", "Global"],
+    marketsPriority: ["Global", "GCC", "South Asia", "Europe", "Americas", "Asia-Pacific", "Africa"],
     features: [
       "100 AI queries / month",
       "Deep regulatory & horizon analysis",
@@ -45,7 +45,7 @@ export const PLANS = {
     maxWatchlist: 500,
     deepAnalysis: true,
     projectAiInsights: true,
-    marketsPriority: ["Pakistan", "Oman", "UAE", "Global"],
+    marketsPriority: ["Global", "GCC", "South Asia", "Europe", "Americas", "Asia-Pacific", "Africa"],
     features: [
       "1000 AI queries / month",
       "Full green-energy regulatory depth",

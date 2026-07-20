@@ -584,6 +584,7 @@
   const calcFields = document.getElementById("aiCalcFields");
   const calcResult = document.getElementById("aiCalcResult");
   const calcBtn = document.getElementById("aiCalcBtn");
+  const chatPanel = document.getElementById("aiChatPanel");
 
   let calcType = "solar";
   let calcCatalog = null;
@@ -592,20 +593,30 @@
   function setAiView(view) {
     const isCompare = view === "compare";
     const isCalc = view === "calc";
-    tabChat?.classList.toggle("is-active", view === "chat");
+    const isChat = view === "chat";
+    tabChat?.classList.toggle("is-active", isChat);
     tabCompare?.classList.toggle("is-active", isCompare);
     tabCalc?.classList.toggle("is-active", isCalc);
-    if (form) form.hidden = isCompare || isCalc;
-    if (suggestionRow) suggestionRow.hidden = isCompare || isCalc;
+    if (form) form.hidden = !isChat;
+    if (suggestionRow) suggestionRow.hidden = !isChat;
+    if (chatLog) chatLog.hidden = !isChat;
     if (compareForm) compareForm.hidden = !isCompare;
     if (calcPanel) calcPanel.hidden = !isCalc;
+    if (chatPanel) {
+      chatPanel.classList.remove("ai-view-chat", "ai-view-compare", "ai-view-calc");
+      chatPanel.classList.add(
+        isCalc ? "ai-view-calc" : isCompare ? "ai-view-compare" : "ai-view-chat"
+      );
+    }
     if (isCalc) {
       setModeBadge("ready");
       if (modeBadge) {
         modeBadge.textContent = "Calculators";
         modeBadge.classList.add("is-green");
       }
-      ensureCalcCatalog();
+      ensureCalcCatalog().then(() => {
+        if (calcPanel && !calcPanel.hidden) renderCalcFields();
+      });
       renderCalcFields();
     } else {
       setModeBadge(isCompare ? "compare" : "ready");
@@ -615,6 +626,138 @@
   tabChat?.addEventListener("click", () => setAiView("chat"));
   tabCompare?.addEventListener("click", () => setAiView("compare"));
   tabCalc?.addEventListener("click", () => setAiView("calc"));
+
+  const FALLBACK_MARKETS = [
+    { name: "World Average", region: "Global", tPerMWh: 0.48 },
+    { name: "Pakistan", region: "South Asia", tPerMWh: 0.57 },
+    { name: "India", region: "South Asia", tPerMWh: 0.71 },
+    { name: "Oman", region: "GCC", tPerMWh: 0.45 },
+    { name: "UAE", region: "GCC", tPerMWh: 0.42 },
+    { name: "Saudi Arabia", region: "GCC", tPerMWh: 0.55 },
+    { name: "United States", region: "Americas", tPerMWh: 0.38 },
+    { name: "Brazil", region: "Americas", tPerMWh: 0.1 },
+    { name: "European Union", region: "Europe", tPerMWh: 0.25 },
+    { name: "Germany", region: "Europe", tPerMWh: 0.35 },
+    { name: "China", region: "Asia-Pacific", tPerMWh: 0.58 },
+    { name: "Japan", region: "Asia-Pacific", tPerMWh: 0.47 },
+    { name: "Australia", region: "Asia-Pacific", tPerMWh: 0.55 },
+    { name: "Kenya", region: "Africa", tPerMWh: 0.18 },
+    { name: "South Africa", region: "Africa", tPerMWh: 0.9 },
+  ];
+
+  function getCalcMarkets() {
+    return calcCatalog?.markets?.length ? calcCatalog.markets : FALLBACK_MARKETS;
+  }
+
+  function buildMarketPicker(selected = "World Average", id = "calcMarket") {
+    const markets = [...getCalcMarkets()].sort((a, b) => {
+      if (a.region === b.region) return a.name.localeCompare(b.name);
+      return (a.region || "").localeCompare(b.region || "");
+    });
+    const current =
+      markets.find((m) => m.name === selected) ||
+      markets.find((m) => m.name === "World Average") ||
+      markets[0];
+    const factor =
+      current?.tPerMWh != null ? Number(current.tPerMWh).toFixed(2) : "—";
+
+    const byRegion = {};
+    markets.forEach((m) => {
+      const region = m.region || "Other";
+      if (!byRegion[region]) byRegion[region] = [];
+      byRegion[region].push(m);
+    });
+
+    const menuGroups = Object.keys(byRegion)
+      .sort((a, b) => a.localeCompare(b))
+      .map((region) => {
+        const items = byRegion[region]
+          .map((m) => {
+            const f =
+              m.tPerMWh != null ? Number(m.tPerMWh).toFixed(2) : "—";
+            return `<button type="button" role="option" class="ai-market-option${
+              m.name === current.name ? " is-selected" : ""
+            }" data-value="${escapeHtml(m.name)}" data-factor="${f}" data-region="${escapeHtml(
+              m.region || ""
+            )}">
+              <span>${escapeHtml(m.name)}</span>
+              <small>${f} tCO₂e/MWh</small>
+            </button>`;
+          })
+          .join("");
+        return `<div class="ai-market-group">
+          <div class="ai-market-group-label">${escapeHtml(region)}</div>
+          ${items}
+        </div>`;
+      })
+      .join("");
+
+    return `
+    <div class="ai-market-picker" data-market-picker="${escapeHtml(id)}">
+      <input type="hidden" id="${escapeHtml(id)}" value="${escapeHtml(current.name)}" />
+      <button type="button" class="ai-market-trigger" aria-expanded="false" aria-haspopup="listbox">
+        <span class="ai-market-trigger-text">
+          <span class="ai-market-trigger-label">${escapeHtml(current.name)}</span>
+          <span class="ai-market-trigger-meta">${factor} tCO₂e/MWh · ${escapeHtml(current.region || "")}</span>
+        </span>
+        <span class="ai-market-trigger-caret" aria-hidden="true">▾</span>
+      </button>
+      <div class="ai-market-menu" role="listbox" hidden>
+        ${menuGroups}
+      </div>
+    </div>`;
+  }
+
+  function closeAllMarketMenus() {
+    document.querySelectorAll(".ai-market-menu").forEach((menu) => {
+      menu.hidden = true;
+    });
+    document.querySelectorAll(".ai-market-trigger").forEach((trigger) => {
+      trigger.setAttribute("aria-expanded", "false");
+    });
+  }
+
+  function bindMarketPickers(root = document) {
+    root.querySelectorAll("[data-market-picker]").forEach((picker) => {
+      if (picker.dataset.bound) return;
+      picker.dataset.bound = "1";
+      const hidden = picker.querySelector('input[type="hidden"]');
+      const trigger = picker.querySelector(".ai-market-trigger");
+      const menu = picker.querySelector(".ai-market-menu");
+      const label = picker.querySelector(".ai-market-trigger-label");
+      const meta = picker.querySelector(".ai-market-trigger-meta");
+
+      trigger?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const willOpen = menu.hidden;
+        closeAllMarketMenus();
+        menu.hidden = !willOpen;
+        trigger.setAttribute("aria-expanded", willOpen ? "true" : "false");
+      });
+
+      picker.querySelectorAll(".ai-market-option").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          hidden.value = btn.dataset.value;
+          label.textContent = btn.dataset.value;
+          meta.textContent = `${btn.dataset.factor} tCO₂e/MWh · ${btn.dataset.region}`;
+          picker
+            .querySelectorAll(".ai-market-option")
+            .forEach((b) => b.classList.remove("is-selected"));
+          btn.classList.add("is-selected");
+          closeAllMarketMenus();
+        });
+      });
+    });
+  }
+
+  if (!window.__aiMarketPickerBound) {
+    window.__aiMarketPickerBound = true;
+    document.addEventListener("click", closeAllMarketMenus);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeAllMarketMenus();
+    });
+  }
 
   async function ensureCalcCatalog() {
     if (calcCatalog) return calcCatalog;
@@ -638,45 +781,14 @@
     return null;
   }
 
-  function marketOptionsHtml(selected = "World Average") {
-    const markets = calcCatalog?.markets || [
-      { name: "World Average", region: "Global" },
-      { name: "Pakistan", region: "South Asia" },
-      { name: "Oman", region: "GCC" },
-      { name: "United States", region: "Americas" },
-      { name: "European Union", region: "Europe" },
-      { name: "India", region: "South Asia" },
-      { name: "UAE", region: "GCC" },
-      { name: "China", region: "Asia-Pacific" },
-    ];
-    const groups = {};
-    markets.forEach((m) => {
-      const r = m.region || "Other";
-      if (!groups[r]) groups[r] = [];
-      groups[r].push(m);
-    });
-    return Object.keys(groups)
-      .sort()
-      .map((region) => {
-        const opts = groups[region]
-          .map(
-            (m) =>
-              `<option value="${escapeHtml(m.name)}"${
-                m.name === selected ? " selected" : ""
-              }>${escapeHtml(m.name)} (${m.tPerMWh ?? "—"} t/MWh)</option>`
-          )
-          .join("");
-        return `<optgroup label="${escapeHtml(region)}">${opts}</optgroup>`;
-      })
-      .join("");
-  }
-
   function renderCalcFields() {
     if (!calcFields) return;
+    const selectedMarket =
+      document.getElementById("calcMarket")?.value || "World Average";
     if (calcType === "solar") {
       calcFields.innerHTML = `
         <label class="ai-compare-full">Market / grid
-          <select id="calcMarket">${marketOptionsHtml("World Average")}</select>
+          ${buildMarketPicker(selectedMarket)}
         </label>
         <label>Annual generation (MWh)
           <input id="calcAnnualMWh" type="number" min="0" step="any" placeholder="e.g. 50000" />
@@ -696,7 +808,7 @@
     } else if (calcType === "methane") {
       calcFields.innerHTML = `
         <label class="ai-compare-full">Context market (for Intelligence follow-up)
-          <select id="calcMarket">${marketOptionsHtml("World Average")}</select>
+          ${buildMarketPicker(selectedMarket)}
         </label>
         <label>Methane (tonnes)
           <input id="calcCH4t" type="number" min="0" step="any" placeholder="e.g. 100" />
@@ -716,7 +828,7 @@
     } else if (calcType === "biochar") {
       calcFields.innerHTML = `
         <label class="ai-compare-full">Context market
-          <select id="calcMarket">${marketOptionsHtml("World Average")}</select>
+          ${buildMarketPicker(selectedMarket)}
         </label>
         <label>Biochar (tonnes)
           <input id="calcBiochar" type="number" min="0" step="any" placeholder="e.g. 1000" required />
@@ -733,7 +845,7 @@
     } else {
       calcFields.innerHTML = `
         <label class="ai-compare-full">Context market
-          <select id="calcMarket">${marketOptionsHtml("World Average")}</select>
+          ${buildMarketPicker(selectedMarket)}
         </label>
         <label>Credits (tCO₂e)
           <input id="calcCredits" type="number" min="0" step="any" placeholder="e.g. 5000" required />
@@ -745,6 +857,7 @@
           <input id="calcCurrency" type="text" value="USD" maxlength="8" />
         </label>`;
     }
+    bindMarketPickers(calcFields);
   }
 
   document.getElementById("aiCalcTypeRow")?.addEventListener("click", (e) => {

@@ -234,8 +234,8 @@ async function refreshIntelligencePulse() {
     const question = `Give a short CarbonAxis Intelligence market pulse (max 180 words) for dashboard users.
 
 Cover:
-1) Pakistan green-energy / carbon-market signal
-2) Oman green-energy / carbon-market signal
+1) One South Asia or Asia-Pacific green-energy / carbon-market signal
+2) One GCC, Europe, or Americas signal
 3) One worldwide caution or opportunity
 
 Use clear bullets with bold labels. Do not use markdown headings (no # / ## / ###). Research tone. No Verdict/PROCEED trading template. Not legal advice.`;
@@ -248,7 +248,7 @@ Use clear bullets with bold labels. Do not use markdown headings (no # / ## / ##
       },
       body: JSON.stringify({
         question,
-        country: "Pakistan",
+        country: "Global",
         product: "green energy",
         conversation: [],
       }),

@@ -1,154 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    
-
-<meta charset="UTF-8">
-
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
-
-<title>My Profile | CarbonAxis Exchange</title>
-
-<link rel="stylesheet" href="/style.css?v=115">
-
-<link rel="stylesheet" href="/css/carbon-ui/smart-select.css">
-<link rel="stylesheet" href="/css/profile.css">
-
-<link rel="icon"
-type="image/png"
-href="/favicon.png">
-
-</head>
-
-<body>
-    <header>
-    <link rel="icon" type="image/png" href="/favicon.png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Climate Intelligence Dashboard | CarbonAxis Exchange</title>
-  <meta name="description" content="CarbonAxis Exchange is building institutional climate market infrastructure for transparent carbon trading, verified climate projects, and scalable climate finance." />
+  <title>My Profile | CarbonAxis Exchange</title>
+  <meta name="description" content="Manage your CarbonAxis Exchange profile — account details, company, and contact information.">
+  <link rel="canonical" href="https://www.carbonaxisexchange.com/profile.html">
+  <link rel="stylesheet" href="/style.css?v=118" />
+  <link rel="stylesheet" href="/css/carbon-ui/smart-select.css" />
+  <link rel="stylesheet" href="/css/profile.css" />
   <link rel="icon" type="image/png" href="/favicon.png" />
-  <link rel="stylesheet" href="/style.css?v=115">
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <meta property="og:type" content="website">
-<meta property="og:site_name" content="CarbonAxis Exchange">
-<meta property="og:title" content="CarbonAxis Exchange | Building Trusted Climate Markets">
-<meta property="og:description" content="Trusted climate market infrastructure for carbon credits, climate projects and environmental assets.">
-<meta property="og:image" content="https://carbonaxisexchange.com/og-image.png">
-<meta property="og:url" content="https://carbonaxisexchange.com">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="CarbonAxis Exchange">
-<meta name="twitter:description" content="Building Trusted Climate Markets">
-<meta name="twitter:image" content="https://carbonaxisexchange.com/og-image.png">
-</header>
-<main class="profile-page">
-  <section class="profile-hero">
-    <div class="container">
-      <p class="section-label">Account</p>
-      <h1>My Profile</h1>
-      <p class="profile-subtitle">
-        Manage your CarbonAxis Exchange account information.
-      </p>
-    </div>
-  </section>
+</head>
+<body>
+  <script>
+    if (!localStorage.getItem("token")) {
+      window.location.href = "/login.html";
+    }
+  </script>
 
-  <section class="profile-section">
-    <div class="container">
-      <div class="profile-card">
-        <div class="profile-card-head">
-          <div class="profile-avatar-large" id="profileAvatarLarge">CA</div>
-          <div>
-            <h2>Personal Information</h2>
-            <p>Update your personal and professional details.</p>
-          </div>
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="/index.html" class="brand">
+        <img src="/logo.png" alt="CarbonAxis Exchange Logo" class="site-logo" />
+      </a>
+      <nav>
+        <a href="/index.html">Home</a>
+        <a href="/ai-intelligence.html">Intelligence</a>
+        <a href="/marketplace.html">Marketplace</a>
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/profile.html" class="active">Profile</a>
+      </nav>
+      <a class="btn btn-primary nav-btn" href="/dashboard.html">Dashboard</a>
+      <div class="profile-menu">
+        <button class="profile-btn" type="button">
+          <span class="profile-avatar">C</span>
+          <span>Account</span>
+          <span class="profile-arrow">▼</span>
+        </button>
+        <div class="profile-dropdown">
+          <a href="/dashboard.html">Dashboard</a>
+          <a href="/profile.html">Profile</a>
+          <a href="/settings.html">Settings</a>
+          <a href="/watchlist.html">Watchlist</a>
+          <a href="#" onclick="logout()">Logout</a>
         </div>
-
-        <form id="profileForm" class="profile-form">
-          <div class="form-grid">
-            <label>
-              Full Name
-              <input type="text" id="name">
-            </label>
-
-            <label>
-              Email Address
-              <input type="email" id="email" readonly>
-            </label>
-
-            <label>
-              Company
-              <input type="text" id="company">
-            </label>
-
-            <label>
-              Country
-              <input
-type="text"
-id="country"
-autocomplete="off">
-            </label>
-
-            <label>
-              Phone
-              <input type="text" id="phone">
-            </label>
-
-            <label>
-              Job Title
-              <input
-type="text"
-id="jobTitle"
-autocomplete="off">
-            </label>
-
-            <label>
-              Industry
-              <input
-type="text"
-id="industry"
-autocomplete="off">
-            </label>
-
-            <label>
-              Website
-              <input type="text" id="website">
-            </label>
-
-            <label class="full-width">
-              LinkedIn
-              <input type="text" id="linkedin">
-            </label>
-
-            <label class="full-width">
-              Bio
-              <textarea id="bio"></textarea>
-            </label>
-          </div>
-
-          <div class="profile-actions">
-            <button type="submit" class="btn btn-primary">
-              Save Changes
-            </button>
-            <a href="/dashboard.html" class="btn btn-secondary">
-  Back to Dashboard
-</a>
-
-            <p id="profileMessage" class="profile-message"></p>
-          </div>
-        </form>
       </div>
+      <a class="btn btn-outline login-open" href="/login.html">Login</a>
+      <button class="mobile-menu-btn" aria-label="Open Menu" type="button">
+        <span></span><span></span><span></span>
+      </button>
     </div>
-  </section>
-</main>
-<script src="/js/api.js"></script>
-<script src="/js/data.js"></script>
-<script src="/js/navbar.js?v=109"></script>
-<script src="/js/auth.js"></script>
-<script src="/js/carbon-ui/smart-select.js"></script>
-<script src="/js/profile.js"></script>
+  </header>
+
+  <div class="mobile-overlay"></div>
+  <div class="mobile-menu">
+    <a href="/index.html">Home</a>
+    <a href="/ai-intelligence.html">Intelligence</a>
+    <a href="/marketplace.html">Marketplace</a>
+    <a href="/dashboard.html">Dashboard</a>
+    <a href="/profile.html">Profile</a>
+    <a href="/settings.html">Settings</a>
+  </div>
+
+  <main class="profile-page" style="padding-top:110px">
+    <section class="profile-hero">
+      <div class="container">
+        <p class="section-label">Account</p>
+        <h1>My Profile</h1>
+        <p class="profile-subtitle">
+          Manage your CarbonAxis Exchange account information.
+        </p>
+      </div>
+    </section>
+
+    <section class="profile-section">
+      <div class="container">
+        <div class="profile-card">
+          <div class="profile-card-head">
+            <div class="profile-avatar-large" id="profileAvatarLarge">CA</div>
+            <div>
+              <h2>Personal Information</h2>
+              <p>Update your personal and professional details.</p>
+            </div>
+          </div>
+
+          <form id="profileForm" class="profile-form">
+            <div class="form-grid">
+              <label>
+                Full Name
+                <input type="text" id="name" autocomplete="name" />
+              </label>
+
+              <label>
+                Email Address
+                <input type="email" id="email" readonly autocomplete="email" />
+              </label>
+
+              <label>
+                Company
+                <input type="text" id="company" autocomplete="organization" />
+              </label>
+
+              <label>
+                Country
+                <input type="text" id="country" autocomplete="country-name" />
+              </label>
+
+              <label>
+                Phone
+                <input type="text" id="phone" autocomplete="tel" />
+              </label>
+
+              <label>
+                Job Title
+                <input type="text" id="jobTitle" autocomplete="organization-title" />
+              </label>
+
+              <label>
+                Industry
+                <input type="text" id="industry" />
+              </label>
+
+              <label>
+                Website
+                <input type="text" id="website" autocomplete="url" />
+              </label>
+
+              <label class="full-width">
+                LinkedIn
+                <input type="text" id="linkedin" />
+              </label>
+
+              <label class="full-width">
+                Bio
+                <textarea id="bio"></textarea>
+              </label>
+            </div>
+
+            <div class="profile-actions">
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+              <a href="/dashboard.html" class="btn btn-secondary">Back to Dashboard</a>
+              <p id="profileMessage" class="profile-message"></p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/data.js"></script>
+  <script src="/js/navbar.js?v=109"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/carbon-ui/smart-select.js"></script>
+  <script src="/js/profile.js"></script>
+  <script>
+    const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
+    const mobileMenu = document.querySelector(".mobile-menu");
+    const mobileOverlay = document.querySelector(".mobile-overlay");
+    if (mobileMenuBtn && mobileMenu && mobileOverlay) {
+      mobileMenuBtn.addEventListener("click", function () {
+        mobileMenu.classList.toggle("active");
+        mobileOverlay.classList.toggle("active");
+        mobileMenuBtn.classList.toggle("active");
+        document.body.classList.toggle("menu-open");
+      });
+      mobileOverlay.addEventListener("click", function () {
+        mobileMenu.classList.remove("active");
+        mobileOverlay.classList.remove("active");
+        mobileMenuBtn.classList.remove("active");
+        document.body.classList.remove("menu-open");
+      });
+    }
+  </script>
 </body>
 </html>

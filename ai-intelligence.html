@@ -4,9 +4,10 @@
   <link rel="icon" type="image/png" href="/favicon.png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CarbonAxis AI | Ask Anything</title>
-  <meta name="description" content="Private AI chat threads for green energy and climate markets.">
-  <link rel="stylesheet" href="/style.css?v=116">
+  <title>Green Energy AI Intelligence | CarbonAxis Exchange</title>
+  <meta name="description" content="Worldwide green energy and carbon market intelligence — AI research, market compare, and global tCO₂e calculators for solar, methane, biochar, and deal value.">
+  <link rel="canonical" href="https://www.carbonaxisexchange.com/ai-intelligence.html">
+  <link rel="stylesheet" href="/style.css?v=118">
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -72,6 +73,7 @@
     </aside>
 
     <section class="ai-chat-main">
+      <h1 class="visually-hidden">CarbonAxis Green Energy Intelligence</h1>
       <div class="ai-chat-top">
         <button type="button" class="btn btn-outline ai-threads-toggle" id="aiThreadsToggle">Chats</button>
         <div class="ai-view-tabs" role="tablist">
@@ -85,18 +87,18 @@
         </div>
       </div>
 
-      <div class="ai-chat-panel ai-chat-panel-flex">
+      <div class="ai-chat-panel ai-chat-panel-flex ai-view-chat" id="aiChatPanel">
         <div id="aiChatLog" class="ai-chat-log">
           <div class="ai-bubble ai-bubble-assistant">
             <div class="ai-bubble-label">CarbonAxis</div>
-            <div class="ai-bubble-body">Hi — ask me anything. I'm especially strong on green energy research and climate analysis (Pakistan &amp; Oman depth first, worldwide coverage). Use <strong>Compare Markets</strong> for country briefs, or <strong>Calculators</strong> for global tCO₂e screening math.</div>
+            <div class="ai-bubble-body">Hi — I'm CarbonAxis Intelligence for <strong>green energy, climate regulation, and carbon markets worldwide</strong>. Ask about any country, use <strong>Compare Markets</strong> for side-by-side briefs, or open <strong>Calculators</strong> for global tCO₂e screening math.</div>
           </div>
         </div>
 
         <div class="ai-suggestion-row" id="aiSuggestionRow">
-          <button type="button" data-ai-example="Explain carbon credits in simple words.">Explain carbon credits</button>
-          <button type="button" data-ai-example="Is solar in Oman realistic for the next 5 years under green policy?">Oman solar outlook</button>
-          <button type="button" data-ai-example="How do green rules affect fuel oil projects in Pakistan over 3–4 years?">Pakistan policy horizon</button>
+          <button type="button" data-ai-example="Is utility-scale solar feasible in the UAE over the next 5 years?">UAE solar outlook</button>
+          <button type="button" data-ai-example="How are EU CBAM rules affecting industrial exporters worldwide?">EU CBAM impact</button>
+          <button type="button" data-ai-example="Compare voluntary carbon credit integrity trends globally.">Global VCM integrity</button>
         </div>
 
         <form id="aiAskForm" class="ai-ask-form">
@@ -114,25 +116,25 @@
             <label>
               Market A
               <select id="compareCountryA" required>
-                <option value="Pakistan">Pakistan</option>
-                <option value="Oman" selected>Oman</option>
+                <option value="United States">United States</option>
+                <option value="European Union" selected>European Union</option>
                 <option value="UAE">UAE</option>
                 <option value="Saudi Arabia">Saudi Arabia</option>
                 <option value="India">India</option>
-                <option value="European Union">European Union</option>
-                <option value="United States">United States</option>
+                <option value="Pakistan">Pakistan</option>
+                <option value="Oman">Oman</option>
               </select>
             </label>
             <label>
               Market B
               <select id="compareCountryB" required>
-                <option value="Pakistan" selected>Pakistan</option>
+                <option value="United States" selected>United States</option>
+                <option value="India">India</option>
+                <option value="European Union">European Union</option>
+                <option value="Pakistan">Pakistan</option>
                 <option value="Oman">Oman</option>
                 <option value="UAE">UAE</option>
                 <option value="Saudi Arabia">Saudi Arabia</option>
-                <option value="India">India</option>
-                <option value="European Union">European Union</option>
-                <option value="United States">United States</option>
               </select>
             </label>
             <label class="ai-compare-full">
@@ -177,7 +179,7 @@
   <script src="/js/api.js?v=246412"></script>
   <script src="/js/navbar.js?v=109"></script>
   <script src="/js/auth.js?v=246410"></script>
-  <script src="/js/ai-intelligence.js?v=246412"></script>
+  <script src="/js/ai-intelligence.js?v=246414"></script>
   <script>
     const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
     const mobileMenu = document.querySelector(".mobile-menu");

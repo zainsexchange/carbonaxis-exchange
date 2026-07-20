@@ -23,13 +23,13 @@ This mode is for many users — not traders only:
 In this mode:
 - If the user is ASKING TO LEARN / EXPLAIN (what is, explain, meaning, simple words): answer in clear natural language. Do NOT force a decision verdict template.
 - If the user is ASKING ABOUT FEASIBILITY / REGULATION RISK / GO OR NO-GO: be decision-ready and lead with PROCEED | PROCEED_SHORT_TERM | CAUTION | AVOID, plus horizon analysis (months to 3–4 years). Trading is only one possible angle among analysis use-cases.
-- Prioritize Pakistan and Oman depth using CarbonAxis knowledge packs; still answer worldwide with honest confidence notes
+- Answer worldwide with honest confidence notes; deepest regional packs cover South Asia and GCC/MENA
 - Make answers attractive, practical, and responsible
 - Never invent fake statute numbers; if uncertain, say so
 - Never claim guaranteed returns
 
 ## Product identity
-CarbonAxis Exchange is a green-energy and climate-markets intelligence platform (with marketplace / credit discovery). Your deepest expertise is green energy analysis, climate regulation outlook, and carbon-market understanding — especially Pakistan and Oman knowledge packs. Mentions of trading are examples of analysis, not the only purpose of this engine.
+CarbonAxis Exchange is a worldwide green-energy and climate-markets intelligence platform (with marketplace / credit discovery). Your expertise is green energy analysis, climate regulation outlook, and carbon-market understanding across global regions, with deepest packs for South Asia and GCC/MENA.
 
 ${GREEN_KNOWLEDGE}`;
 
@@ -272,10 +272,10 @@ function localCompareFallback({ countryA, countryB, product, deepAnalysis }) {
   const b = countryB;
   const focus = product || "green energy / carbon-market activity";
   const depthOf = (c) =>
-    /pakistan|oman/i.test(c)
-      ? "Higher (priority market)"
-      : /uae|saudi|gcc/i.test(c)
-        ? "Medium (regional coverage)"
+    /pakistan|oman|india|uae|saudi|gcc/i.test(c)
+      ? "Higher (regional depth pack)"
+      : /europe|united states|eu\b|germany|uk\b/i.test(c)
+        ? "Medium–high (global coverage)"
         : "Directional (worldwide coverage)";
 
   return `**Market compare · ${a} vs ${b}**
@@ -291,7 +291,7 @@ function localCompareFallback({ countryA, countryB, product, deepAnalysis }) {
 
 ### Where ${a} may be stronger
 - Local project pipeline fit if aligned with renewables / verified climate outcomes
-- Use Pakistan & Oman depth when that market is ${a}
+- Use deepest regional packs when that market is ${a}
 
 ### Where ${b} may be stronger
 - Diversification of destination rules, buyer access, or industrial demand
@@ -334,7 +334,7 @@ Active mode: MARKET COMPARE (research brief).
 Compare green energy / climate / carbon-market conditions for two countries.
 Do NOT use trading Verdict/PROCEED templates.
 Write for researchers, project owners, policy/ESG teams, and market participants.
-Prioritize Pakistan & Oman depth when those markets are selected; be honest about lower confidence elsewhere.
+Prioritize deepest regional packs when those markets are selected; be honest about confidence levels elsewhere.
 Deep analysis: ${deepAnalysis ? "ON — richer horizon and diligence notes" : "OFF — concise but useful; mention Pro for deeper briefs"}.
 `;
 
@@ -608,7 +608,7 @@ If you meant something more specific (history, port, industry, or green-energy a
 I couldn’t pull a live data answer for that in this session. Try a clear fact question I can cover offline, or ask a CarbonAxis specialty question:
 
 - green energy & climate explanations
-- country / market research (especially Pakistan & Oman)
+- country / market research worldwide (deepest packs: South Asia & GCC/MENA)
 - project or regulation feasibility analysis
 
 Examples:
@@ -636,7 +636,7 @@ The UAE is advancing a national climate and energy-transition agenda. In practic
 - Export-linked projects may feel destination-market pressure (e.g. EU CBAM-style rules)
 
 **CarbonAxis confidence note**
-Pakistan & Oman remain our deepest markets. For UAE we can give solid directional research, but treat details as changing — always verify against current UAE government and authority publications.
+CarbonAxis has deepest regional packs for South Asia and GCC/MENA. For UAE we can give solid directional research, but treat details as changing — always verify against current UAE government and authority publications.
 
 **Useful next questions**
 - “Compare UAE vs Oman renewable strategy”
@@ -712,7 +712,7 @@ Ask a more specific follow-up (country + topic + time horizon) and I’ll go dee
 **Product / activity:** ${p}
 **Current feasibility:** Directionally workable if documentation, permits, and counterpart checks are clean. Focus lens: ${focus}.
 **Green regulation outlook:** ${horizon}
-**Why this timing:** CarbonAxis prioritizes Pakistan & Oman depth first, then worldwide. Activities aligned with renewables / high-integrity credits tend to be longer-term; high-emission or soon-to-be-restricted activities may be short-term only.
+**Why this timing:** CarbonAxis covers worldwide markets with deepest regional packs for South Asia and GCC/MENA. Activities aligned with renewables / high-integrity credits tend to be longer-term; high-emission or soon-to-be-restricted activities may be short-term only.
 **User question addressed:** ${q}
 **CarbonAxis recommendation:** ${
     verdict === "PROCEED"
