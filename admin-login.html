@@ -83,8 +83,8 @@
           return;
         }
 
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("adminToken", data.token);
+        localStorage.setItem("adminUser", JSON.stringify(data.user));
         localStorage.setItem("adminLoggedIn", "true");
         window.location.href = "admin.html";
       } catch (err) {

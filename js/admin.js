@@ -5,11 +5,26 @@
       ? "http://localhost:5000"
       : "https://carbonaxis-exchange.onrender.com";
 
-  const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  function getAdminSession() {
+    let token = localStorage.getItem("adminToken");
+    let user = {};
+    try {
+      user = JSON.parse(localStorage.getItem("adminUser") || "{}");
+    } catch {
+      user = {};
+    }
+    if (token && user.role === "admin") {
+      return { token, user };
+    }
+    return { token: null, user: {} };
+  }
+
+  const { token, user } = getAdminSession();
 
   if (!token || user.role !== "admin") {
     localStorage.removeItem("adminLoggedIn");
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminUser");
     window.location.href = "admin-login.html";
     return;
   }
@@ -174,8 +189,8 @@
 
   window.logout = function logout() {
     localStorage.removeItem("adminLoggedIn");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminUser");
     window.location.href = "admin-login.html";
   };
 

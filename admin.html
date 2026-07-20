@@ -6,10 +6,12 @@
   <link rel="stylesheet" href="style.css?v=115">
 
   <script>
-    const __adminUser = JSON.parse(localStorage.getItem("user") || "{}");
-    const __adminToken = localStorage.getItem("token");
+    const __adminUser = JSON.parse(localStorage.getItem("adminUser") || "{}");
+    const __adminToken = localStorage.getItem("adminToken");
     if (!__adminToken || __adminUser.role !== "admin") {
       localStorage.removeItem("adminLoggedIn");
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminUser");
       window.location.href = "admin-login.html";
     }
   </script>
@@ -841,7 +843,7 @@
   </table>
 </div>
 <script src="/js/api.js"></script>
-<script src="/js/admin.js?v=113"></script>
+<script src="/js/admin.js?v=114"></script>
 <div class="deal-drawer-backdrop" id="dealDrawerBackdrop" onclick="window.closeDealDrawer?.()"></div>
 <aside class="deal-drawer" id="dealDrawer" aria-hidden="true">
   <div class="deal-drawer-head">
