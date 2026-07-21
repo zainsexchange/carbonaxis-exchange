@@ -2033,38 +2033,36 @@ a.watchlist-item-link{
 }
 .ticker-track{
   display:flex;
-
-  gap:80px;
-
   width:max-content;
-
-  animation:tickerMove 28s linear infinite;
+  animation:tickerMove 24s linear infinite;
+  will-change:transform;
 }
 
-.ticker-track span{
+.ticker-set{
+  display:flex;
+  align-items:center;
+  gap:80px;
+  flex-shrink:0;
+  padding-right:80px;
+}
+
+.ticker-set span{
   color:var(--mint);
-
   font-size:14px;
-
   font-weight:700;
-
   letter-spacing:0.06em;
-
   white-space:nowrap;
-
   text-transform:uppercase;
 }
 
 @keyframes tickerMove{
-
-  0%{
-    transform:translateX(0);
+  from{
+    transform:translate3d(0,0,0);
   }
 
-  100%{
-    transform:translateX(-50%);
+  to{
+    transform:translate3d(-50%,0,0);
   }
-
 }
 html, body{
   overflow-x:hidden;
@@ -2264,6 +2262,14 @@ padding:0;
 .notification-list{
   max-height:360px;
   overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+
+.profile-dropdown,
+.notification-dropdown{
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
 }
 
 .notification-empty{
@@ -2617,8 +2623,7 @@ html, body{
   }
 
   .notification-menu,
-  .profile-menu,
-  .login-open{
+  .profile-menu{
     display:none;
   }
 
@@ -2627,7 +2632,11 @@ html, body{
     padding:10px 0;
   }
 
-  .ticker-track span{
+  .ticker-track{
+    animation-duration:20s;
+  }
+
+  .ticker-set span{
     font-size:12px;
   }
 
@@ -2675,6 +2684,10 @@ html, body{
 }
 
 @media(max-width:768px){
+  .mobile-menu{
+    display:flex !important;
+  }
+
   .mobile-menu-btn{
     display:flex;
     align-items:center;
@@ -2830,6 +2843,11 @@ html, body{
 
   body.menu-open{
     overflow:hidden;
+    touch-action:none;
+  }
+
+  body.menu-open .mobile-menu{
+    touch-action:pan-y;
   }
 }
 .section{
@@ -3680,8 +3698,11 @@ table{
 
   .navbar nav,
   .nav-btn,
-  .notification-menu,
-  .login-open{
+  .notification-menu{
+    display: none !important;
+  }
+
+  body.user-logged-in .navbar .login-open{
     display: none !important;
   }
 
@@ -3745,8 +3766,12 @@ table{
     -webkit-backdrop-filter: blur(12px) !important;
   }
 
-  .ticker-track span{
+  .ticker-set span{
     font-size: 12px !important;
+  }
+
+  .ticker-track{
+    animation-duration: 20s !important;
   }
 
   .mobile-overlay{
@@ -3769,9 +3794,9 @@ table{
   .mobile-menu{
     display: flex !important;
     position: fixed !important;
-    top: 88px !important;
-    left: 14px !important;
-    right: 14px !important;
+    top: 76px !important;
+    left: 12px !important;
+    right: 12px !important;
     z-index: 10002 !important;
     flex-direction: column !important;
     gap: 8px !important;
@@ -3785,6 +3810,17 @@ table{
     visibility: hidden !important;
     transform: translateY(-10px) !important;
     transition: 0.3s ease !important;
+    max-height: calc(100dvh - 92px) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+    box-sizing: border-box !important;
+  }
+
+  body:has(.market-ticker) .mobile-menu{
+    top: 132px !important;
+    max-height: calc(100dvh - 148px) !important;
   }
 
   .mobile-menu.active{
@@ -3806,8 +3842,16 @@ table{
     color: var(--mint) !important;
   }
 
-  body.menu-open{
+  body.menu-open,
+  body.page-scroll-locked{
     overflow: hidden !important;
+    touch-action: none;
+  }
+
+  body.menu-open .mobile-menu,
+  body.page-scroll-locked .notification-dropdown,
+  body.page-scroll-locked .profile-dropdown{
+    touch-action: pan-y;
   }
 
   /* Normal inner pages: Marketplace / Projects / About / AI Intelligence */
@@ -4023,9 +4067,9 @@ table{
   .mobile-menu{
     display:flex !important;
     position:fixed !important;
-    top:116px !important;
-    left:14px !important;
-    right:14px !important;
+    top:76px !important;
+    left:12px !important;
+    right:12px !important;
     z-index:10002 !important;
     flex-direction:column !important;
     gap:8px !important;
@@ -4038,6 +4082,17 @@ table{
     visibility:hidden !important;
     transform:translateY(-10px) !important;
     transition:0.3s ease !important;
+    max-height:calc(100dvh - 92px) !important;
+    overflow-y:auto !important;
+    overscroll-behavior:contain !important;
+    -webkit-overflow-scrolling:touch !important;
+    touch-action:pan-y !important;
+    box-sizing:border-box !important;
+  }
+
+  body:has(.market-ticker) .mobile-menu{
+    top:132px !important;
+    max-height:calc(100dvh - 148px) !important;
   }
 
   .mobile-menu.active{
@@ -5176,7 +5231,7 @@ body.user-guest .notification-menu{
   /* Keep page nav / CTAs hidden on phone */
   body.user-logged-in .navbar nav,
   body.user-logged-in .navbar .nav-btn,
-  .navbar .login-open{
+  body.user-logged-in .navbar .login-open{
     display: none !important;
   }
 
@@ -5197,8 +5252,74 @@ body.user-guest .notification-menu{
   }
 
   body.user-logged-in .navbar .notification-dropdown{
-    right: -8px !important;
-    width: min(320px, calc(100vw - 24px)) !important;
+    position: fixed !important;
+    top: 76px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: min(70vh, 420px) !important;
+    overflow-y: auto !important;
+    z-index: 10010 !important;
+    box-sizing: border-box !important;
+  }
+
+  body.user-logged-in .navbar .notification-list{
+    max-height: min(52vh, 320px) !important;
+  }
+
+  body:has(.market-ticker) .navbar .notification-dropdown{
+    top: 132px !important;
+  }
+
+  body.user-logged-in .navbar .profile-dropdown{
+    position: fixed !important;
+    top: 76px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    max-height: min(70vh, 420px) !important;
+    overflow-y: auto !important;
+    z-index: 10010 !important;
+    box-sizing: border-box !important;
+  }
+
+  body:has(.market-ticker) .navbar .profile-dropdown{
+    top: 132px !important;
+  }
+
+  body.header-dropdown-open,
+  body.page-scroll-locked{
+    overflow: hidden !important;
+    touch-action: none;
+  }
+
+  body.header-dropdown-open .notification-dropdown,
+  body.header-dropdown-open .profile-dropdown,
+  body.page-scroll-locked .notification-dropdown,
+  body.page-scroll-locked .profile-dropdown,
+  body.menu-open .mobile-menu{
+    touch-action: pan-y;
+  }
+
+  .notification-menu:not(.active) .notification-dropdown,
+  .profile-menu:not(.active) .profile-dropdown{
+    pointer-events: none !important;
+  }
+
+  .mobile-menu{
+    display: flex !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .mobile-menu.active{
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
   }
 
   body.user-logged-in .navbar .profile-menu{
@@ -5240,13 +5361,6 @@ body.user-guest .notification-menu{
     margin: 0 !important;
   }
 
-  body.user-logged-in .navbar .profile-dropdown{
-    right: 0 !important;
-    left: auto !important;
-    min-width: 200px !important;
-    top: calc(100% + 10px) !important;
-  }
-
   body.user-logged-in .navbar .mobile-menu-btn{
     display: flex !important;
     position: static !important;
@@ -5262,10 +5376,26 @@ body.user-guest .notification-menu{
     min-height: 40px !important;
   }
 
-  /* Guest: hamburger alone on the right */
+  /* Guest: login + hamburger on the right */
+  body.user-guest .navbar .login-open{
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    order: 19 !important;
+    margin-left: auto !important;
+    margin-right: 8px !important;
+    padding: 8px 14px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    font-size: 13px !important;
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+  }
+
   body.user-guest .navbar .mobile-menu-btn,
   body:not(.user-logged-in) .navbar .mobile-menu-btn{
-    margin-left: auto !important;
+    margin-left: 0 !important;
+    order: 20 !important;
   }
 
   .navbar .nav-inner{
@@ -5353,8 +5483,7 @@ body.user-guest .notification-menu{
     gap: 14px !important;
   }
 
-  .market-ticker,
-  .ticker-track{
+  .market-ticker{
     max-width: 100vw !important;
     overflow: hidden !important;
   }
@@ -5449,6 +5578,35 @@ body.user-guest .notification-menu{
 }
 
 body.user-guest .mobile-account-block{
+  display: none !important;
+}
+
+.mobile-guest-block{
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mobile-guest-block a{
+  display: block;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.mobile-guest-block a:first-of-type{
+  background: rgba(0,229,176,0.14);
+  border: 1px solid rgba(0,229,176,0.28);
+  color: var(--mint);
+}
+
+body.user-logged-in .mobile-guest-block{
   display: none !important;
 }
 

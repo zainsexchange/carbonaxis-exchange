@@ -59,6 +59,17 @@ document.addEventListener("DOMContentLoaded", () => {
     mobileMenu.appendChild(block);
   }
 
+  if (!token && mobileMenu && !mobileMenu.querySelector(".mobile-guest-block")) {
+    const block = document.createElement("div");
+    block.className = "mobile-guest-block";
+    block.innerHTML = `
+      <p class="mobile-account-label">Account</p>
+      <a href="/login.html">Login</a>
+      <a href="/register.html">Get Access</a>
+    `;
+    mobileMenu.appendChild(block);
+  }
+
   if (token) {
     if (navBtn) {
       navBtn.textContent = "Dashboard";

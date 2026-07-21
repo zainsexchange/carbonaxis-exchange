@@ -5,6 +5,81 @@ document.addEventListener("DOMContentLoaded", () => {
   const notificationMenu = document.querySelector(".notification-menu");
   const notificationBtn = document.querySelector(".notification-btn");
 
+  const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
+  const mobileMenu = document.querySelector(".mobile-menu");
+  const mobileOverlay = document.querySelector(".mobile-overlay");
+
+  let lockedScrollY = 0;
+
+  function isAnyOverlayOpen() {
+    return (
+      profileMenu?.classList.contains("active") ||
+      notificationMenu?.classList.contains("active") ||
+      mobileMenu?.classList.contains("active")
+    );
+  }
+
+  function lockPageScroll() {
+    if (document.body.classList.contains("page-scroll-locked")) return;
+
+    lockedScrollY = window.scrollY || window.pageYOffset || 0;
+    document.body.classList.add("page-scroll-locked");
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${lockedScrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+  }
+
+  function unlockPageScroll() {
+    if (!document.body.classList.contains("page-scroll-locked")) return;
+
+    document.body.classList.remove("page-scroll-locked");
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    document.body.style.width = "";
+    window.scrollTo(0, lockedScrollY);
+  }
+
+  function syncPageScrollLock() {
+    if (isAnyOverlayOpen()) {
+      lockPageScroll();
+    } else {
+      unlockPageScroll();
+    }
+  }
+
+  function closeMobileMenu() {
+    toggleMobileMenu(false);
+  }
+
+  function closeHeaderDropdowns() {
+    profileMenu?.classList.remove("active");
+    notificationMenu?.classList.remove("active");
+  }
+
+  function toggleMobileMenu(forceOpen) {
+    if (!mobileMenu || !mobileMenuBtn) return;
+
+    const shouldOpen =
+      typeof forceOpen === "boolean"
+        ? forceOpen
+        : !mobileMenu.classList.contains("active");
+
+    closeHeaderDropdowns();
+
+    mobileMenu.classList.toggle("active", shouldOpen);
+    mobileOverlay?.classList.toggle("active", shouldOpen);
+    mobileMenuBtn.classList.toggle("active", shouldOpen);
+    document.body.classList.toggle("menu-open", shouldOpen);
+
+    requestAnimationFrame(() => {
+      syncPageScrollLock();
+    });
+  }
+
   // Use cropped navbar logo so mark fills the brand plate
   document.querySelectorAll(".navbar .site-logo").forEach((img) => {
     const current = img.getAttribute("src") || "";
@@ -30,28 +105,56 @@ document.addEventListener("DOMContentLoaded", () => {
   if (profileBtn && profileMenu) {
     profileBtn.addEventListener("click", (e) => {
       e.stopPropagation();
+      closeMobileMenu();
 
       if (notificationMenu) {
         notificationMenu.classList.remove("active");
       }
 
       profileMenu.classList.toggle("active");
+      syncPageScrollLock();
     });
   }
 
   if (notificationBtn && notificationMenu) {
     notificationBtn.addEventListener("click", (e) => {
       e.stopPropagation();
+      closeMobileMenu();
 
       if (profileMenu) {
         profileMenu.classList.remove("active");
       }
 
       notificationMenu.classList.toggle("active");
+      syncPageScrollLock();
+    });
+  }
+
+  if (mobileMenuBtn && mobileMenu) {
+    mobileMenuBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleMobileMenu();
+    });
+
+    mobileOverlay?.addEventListener("click", closeMobileMenu);
+
+    mobileMenu.addEventListener("click", (e) => {
+      if (e.target.closest("a")) {
+        closeMobileMenu();
+      }
     });
   }
 
   document.addEventListener("click", (e) => {
+    if (mobileMenuBtn?.contains(e.target) || mobileMenu?.contains(e.target)) {
+      return;
+    }
+
+    if (mobileMenu?.classList.contains("active")) {
+      closeMobileMenu();
+    }
+
     if (profileMenu && !profileMenu.contains(e.target)) {
       profileMenu.classList.remove("active");
     }
@@ -59,6 +162,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (notificationMenu && !notificationMenu.contains(e.target)) {
       notificationMenu.classList.remove("active");
     }
+
+    syncPageScrollLock();
   });
 
   document.querySelectorAll(".profile-dropdown a").forEach((link) => {
@@ -66,18 +171,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (profileMenu) {
         profileMenu.classList.remove("active");
       }
+      syncPageScrollLock();
     });
   });
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
-      if (profileMenu) {
-        profileMenu.classList.remove("active");
-      }
-
-      if (notificationMenu) {
-        notificationMenu.classList.remove("active");
-      }
+      closeMobileMenu();
+      closeHeaderDropdowns();
     }
   });
 

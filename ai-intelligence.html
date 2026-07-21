@@ -203,23 +203,6 @@
   <script src="/js/auth.js?v=246410"></script>
   <script src="/js/ai-intelligence.js?v=246415"></script>
   <script>
-    const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
-    const mobileMenu = document.querySelector(".mobile-menu");
-    const mobileOverlay = document.querySelector(".mobile-overlay");
-    if (mobileMenuBtn) {
-      mobileMenuBtn.addEventListener("click", function () {
-        mobileMenu.classList.toggle("active");
-        mobileOverlay.classList.toggle("active");
-        mobileMenuBtn.classList.toggle("active");
-        document.body.classList.toggle("menu-open");
-      });
-      mobileOverlay.addEventListener("click", function () {
-        mobileMenu.classList.remove("active");
-        mobileOverlay.classList.remove("active");
-        mobileMenuBtn.classList.remove("active");
-        document.body.classList.remove("menu-open");
-      });
-    }
     document.getElementById("aiThreadsToggle")?.addEventListener("click", () => {
       document.getElementById("aiThreadSidebar")?.classList.toggle("open");
     });

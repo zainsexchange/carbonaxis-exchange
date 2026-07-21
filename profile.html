@@ -179,24 +179,5 @@
   <script src="/js/auth.js"></script>
   <script src="/js/carbon-ui/smart-select.js"></script>
   <script src="/js/profile.js"></script>
-  <script>
-    const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
-    const mobileMenu = document.querySelector(".mobile-menu");
-    const mobileOverlay = document.querySelector(".mobile-overlay");
-    if (mobileMenuBtn && mobileMenu && mobileOverlay) {
-      mobileMenuBtn.addEventListener("click", function () {
-        mobileMenu.classList.toggle("active");
-        mobileOverlay.classList.toggle("active");
-        mobileMenuBtn.classList.toggle("active");
-        document.body.classList.toggle("menu-open");
-      });
-      mobileOverlay.addEventListener("click", function () {
-        mobileMenu.classList.remove("active");
-        mobileOverlay.classList.remove("active");
-        mobileMenuBtn.classList.remove("active");
-        document.body.classList.remove("menu-open");
-      });
-    }
-  </script>
 </body>
 </html>

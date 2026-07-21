@@ -391,31 +391,5 @@ document.addEventListener("click", (e) => {
 
 </script>
 
-<script>
-const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
-const mobileMenu = document.querySelector(".mobile-menu");
-const mobileOverlay = document.querySelector(".mobile-overlay");
-const mobileLinks = document.querySelectorAll(".mobile-menu a");
-
-function closeMobileMenu(){
-  mobileMenu.classList.remove("active");
-  mobileOverlay.classList.remove("active");
-  mobileMenuBtn.classList.remove("active");
-  document.body.classList.remove("menu-open");
-}
-
-mobileMenuBtn.addEventListener("click", function(){
-  mobileMenu.classList.toggle("active");
-  mobileOverlay.classList.toggle("active");
-  mobileMenuBtn.classList.toggle("active");
-  document.body.classList.toggle("menu-open");
-});
-
-mobileOverlay.addEventListener("click", closeMobileMenu);
-
-mobileLinks.forEach(link => {
-  link.addEventListener("click", closeMobileMenu);
-});
-</script>
 </body>
 </html>

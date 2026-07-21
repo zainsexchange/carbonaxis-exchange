@@ -111,25 +111,6 @@
   <script src="/js/navbar.js?v=109"></script>
   <script src="/js/auth.js?v=246411"></script>
   <script>
-    const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
-    const mobileMenu = document.querySelector(".mobile-menu");
-    const mobileOverlay = document.querySelector(".mobile-overlay");
-    if (mobileMenuBtn && mobileMenu && mobileOverlay) {
-      mobileMenuBtn.addEventListener("click", function () {
-        mobileMenu.classList.toggle("active");
-        mobileOverlay.classList.toggle("active");
-        mobileMenuBtn.classList.toggle("active");
-        document.body.classList.toggle("menu-open");
-      });
-      mobileOverlay.addEventListener("click", function () {
-        mobileMenu.classList.remove("active");
-        mobileOverlay.classList.remove("active");
-        mobileMenuBtn.classList.remove("active");
-        document.body.classList.remove("menu-open");
-      });
-    }
-  </script>
-  <script>
     let billingStatus = { stripeReady: false, proCheckout: false };
 
     function authToken() {
