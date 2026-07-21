@@ -1,9 +1,13 @@
 (() => {
   const token = (localStorage.getItem("token") || "").trim();
+  const guestLanding = document.getElementById("aiGuestLanding");
+
   if (!token) {
-    window.location.href = "/login.html";
     return;
   }
+
+  document.documentElement.classList.add("ai-has-token");
+  if (guestLanding) guestLanding.hidden = true;
   localStorage.setItem("token", token);
 
   const chatLog = document.getElementById("aiChatLog");

@@ -29,8 +29,8 @@ document.addEventListener("DOMContentLoaded", () => {
     "watchlist.html",
     "profile.html",
     "settings.html",
-    "ai-intelligence.html",
     "deals.html",
+    "projects.html",
   ];
 
   const currentPage = window.location.pathname.split("/").pop();

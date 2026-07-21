@@ -4,5 +4,18 @@ Allow: /
 Disallow: /admin.html
 Disallow: /admin-login.html
 Disallow: /api/
+Disallow: /dashboard.html
+Disallow: /profile.html
+Disallow: /settings.html
+Disallow: /watchlist.html
+Disallow: /deals.html
+Disallow: /projects.html
+Disallow: /project-view.html
+Disallow: /project-editor.html
+Disallow: /login.html
+Disallow: /register.html
+Disallow: /forgot-password.html
+Disallow: /reset-password.html
+Disallow: /AI%20Intelligence.html
 
 Sitemap: https://www.carbonaxisexchange.com/sitemap.xml

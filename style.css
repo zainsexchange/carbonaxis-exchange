@@ -5789,3 +5789,53 @@ body.user-logged-in .mobile-guest-block{
     margin-right: 0 !important;
   }
 }
+
+/* AI Intelligence public guest landing (SEO + pre-login) */
+#aiGuestLanding{
+  display: block;
+  padding: 120px 0 80px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+#aiWorkspace{
+  display: none;
+}
+
+html.ai-has-token #aiGuestLanding{
+  display: none;
+}
+
+html.ai-has-token #aiWorkspace{
+  display: grid;
+}
+
+.ai-guest-landing h1{
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  line-height: 1.15;
+  margin: 12px 0 20px;
+}
+
+.ai-guest-lead{
+  color: #b8cfc6;
+  font-size: 1.1rem;
+  line-height: 1.65;
+  margin-bottom: 28px;
+}
+
+.ai-guest-features{
+  margin: 0 0 32px;
+  padding-left: 1.25rem;
+  color: #d4e4de;
+  line-height: 1.7;
+}
+
+.ai-guest-features li{
+  margin-bottom: 10px;
+}
+
+.ai-guest-actions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}

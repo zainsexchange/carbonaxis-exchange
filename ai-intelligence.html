@@ -6,12 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Green Energy AI Intelligence | CarbonAxis Exchange</title>
   <meta name="description" content="Worldwide green energy and carbon market intelligence — AI research in multiple languages, market compare, and global tCO₂e calculators for solar, methane, biochar, and deal value.">
+  <meta name="keywords" content="green energy AI, carbon market intelligence, tCO2e calculator, solar carbon credits, methane avoidance, biochar credits, climate research, net zero, ESG intelligence">
   <link rel="canonical" href="https://www.carbonaxisexchange.com/ai-intelligence.html">
-  <link rel="stylesheet" href="/style.css?v=119">
+  <link rel="stylesheet" href="/style.css?v=126">
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <meta name="robots" content="index,follow">
+  <meta name="author" content="CarbonAxis Exchange">
+  <meta name="theme-color" content="#00e5b0">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="CarbonAxis Exchange">
   <meta property="og:title" content="Green Energy AI Intelligence | CarbonAxis Exchange">
@@ -22,14 +25,37 @@
   <meta name="twitter:title" content="Green Energy AI Intelligence | CarbonAxis Exchange">
   <meta name="twitter:description" content="Worldwide green energy and carbon market intelligence — AI research in multiple languages, market compare, and global tCO₂e calculators for solar, methane, biochar, and deal value.">
   <meta name="twitter:image" content="https://www.carbonaxisexchange.com/og-image.png">
+  <script>
+    (function () {
+      if (localStorage.getItem("token")) {
+        document.documentElement.classList.add("ai-has-token");
+      }
+    })();
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "CarbonAxis Green Energy Intelligence",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "url": "https://www.carbonaxisexchange.com/ai-intelligence.html",
+    "description": "AI-powered green energy and carbon market research with multilingual chat, market compare, and worldwide tCO₂e calculators.",
+    "provider": {
+      "@type": "Organization",
+      "name": "CarbonAxis Exchange",
+      "url": "https://www.carbonaxisexchange.com"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "description": "Free tier with Intelligence quota; Pro and Enterprise plans available."
+    }
+  }
+  </script>
 </head>
 <body>
-  <script>
-    if (!localStorage.getItem("token")) {
-      window.location.href = "/login.html";
-    }
-  </script>
-
   <header class="navbar">
     <div class="container nav-inner">
       <a href="/index.html" class="brand">
@@ -86,7 +112,30 @@
     <a href="/dashboard.html">Dashboard</a>
   </div>
 
-  <main class="ai-workspace">
+  <section class="ai-guest-landing" id="aiGuestLanding">
+    <div class="container">
+      <p class="section-label">CarbonAxis Intelligence</p>
+      <h1>Green Energy &amp; Carbon Market AI Intelligence</h1>
+      <p class="ai-guest-lead">
+        Worldwide green energy research, carbon market analysis, and screening calculators —
+        in English, Urdu, Arabic, Hindi, French, Spanish, and more. Compare markets side-by-side
+        and run deterministic tCO₂e math for solar, methane, biochar, and deal value.
+      </p>
+      <ul class="ai-guest-features">
+        <li>Multilingual AI chat for climate regulation, credits, and project feasibility</li>
+        <li>Market compare across GCC, South Asia, EU, Americas, and Asia-Pacific</li>
+        <li>Global calculators with regional grid factors and indicative screening outputs</li>
+        <li>Private chat history and quota-based plans (Free, Pro, Enterprise)</li>
+      </ul>
+      <div class="ai-guest-actions">
+        <a href="/register.html" class="btn btn-primary">Get Access</a>
+        <a href="/login.html" class="btn btn-outline">Login</a>
+        <a href="/pricing.html" class="btn btn-outline">View pricing</a>
+      </div>
+    </div>
+  </section>
+
+  <main class="ai-workspace" id="aiWorkspace">
     <aside class="ai-thread-sidebar" id="aiThreadSidebar">
       <button type="button" class="btn btn-primary ai-new-chat" id="aiNewChatBtn">+ New chat</button>
       <p class="ai-thread-label">Your private chats</p>
@@ -200,8 +249,8 @@
 
   <script src="/js/api.js?v=246412"></script>
   <script src="/js/navbar.js?v=109"></script>
-  <script src="/js/auth.js?v=246410"></script>
-  <script src="/js/ai-intelligence.js?v=246415"></script>
+  <script src="/js/auth.js?v=246411"></script>
+  <script src="/js/ai-intelligence.js?v=246416"></script>
   <script>
     document.getElementById("aiThreadsToggle")?.addEventListener("click", () => {
       document.getElementById("aiThreadSidebar")?.classList.toggle("open");
