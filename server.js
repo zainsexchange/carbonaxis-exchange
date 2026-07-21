@@ -838,37 +838,90 @@ app.post("/api/contact", async (req, res) => {
       });
     }
 
+    const safeName = name.trim();
+    const safeEmail = email.trim();
+    const safeOrg = organization?.trim() || "";
+    const safeMessage = message.trim();
+
+    const escapeEmailHtml = (value) =>
+      String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+
     const entry = await ContactMessage.create({
-      name: name.trim(),
-      email: email.trim(),
-      organization: organization?.trim() || "",
-      message: message.trim(),
+      name: safeName,
+      email: safeEmail,
+      organization: safeOrg,
+      message: safeMessage,
     });
 
-    try {
-      if (process.env.EMAIL_USER && transporter) {
+    let adminEmailed = false;
+    let confirmationEmailed = false;
+
+    if (process.env.EMAIL_USER && transporter) {
+      const from = `"CarbonAxis Exchange" <${process.env.EMAIL_USER}>`;
+
+      try {
         await transporter.sendMail({
-          from: `"CarbonAxis Exchange" <${process.env.EMAIL_USER}>`,
+          from,
           to: process.env.EMAIL_USER,
-          subject: `Contact form — ${name.trim()}`,
+          replyTo: safeEmail,
+          subject: `Contact form — ${safeName}`,
           html: `
             <h2>New contact message</h2>
-            <p><b>Name:</b> ${name.trim()}</p>
-            <p><b>Email:</b> ${email.trim()}</p>
-            <p><b>Organization:</b> ${organization?.trim() || "—"}</p>
+            <p><b>Name:</b> ${escapeEmailHtml(safeName)}</p>
+            <p><b>Email:</b> ${escapeEmailHtml(safeEmail)}</p>
+            <p><b>Organization:</b> ${escapeEmailHtml(safeOrg || "—")}</p>
             <p><b>Message:</b></p>
-            <p>${message.trim().replace(/\n/g, "<br>")}</p>
+            <p>${escapeEmailHtml(safeMessage).replace(/\n/g, "<br>")}</p>
           `,
         });
+        adminEmailed = true;
+      } catch (emailError) {
+        console.error("Contact admin email failed:", emailError);
       }
-    } catch (emailError) {
-      console.error("Contact email failed:", emailError);
+
+      try {
+        await transporter.sendMail({
+          from,
+          to: safeEmail,
+          subject: "We received your message — CarbonAxis Exchange",
+          html: `
+            <div style="font-family:Arial,sans-serif;line-height:1.55;color:#122018;max-width:560px">
+              <h2 style="color:#0a7a5f;margin-bottom:8px">Thanks, ${escapeEmailHtml(safeName)}</h2>
+              <p>We received your message at <strong>CarbonAxis Exchange</strong> and will get back to you soon.</p>
+              <p style="margin:18px 0 8px"><strong>Your message:</strong></p>
+              <blockquote style="margin:0;padding:12px 14px;border-left:3px solid #00e5b0;background:#f4fbf8;color:#334">
+                ${escapeEmailHtml(safeMessage).replace(/\n/g, "<br>")}
+              </blockquote>
+              ${
+                safeOrg
+                  ? `<p style="margin-top:14px"><strong>Organization:</strong> ${escapeEmailHtml(safeOrg)}</p>`
+                  : ""
+              }
+              <p style="margin-top:22px;font-size:13px;color:#667">
+                This is an automatic confirmation. For urgent matters, reply to this email or write to
+                <a href="mailto:${escapeEmailHtml(process.env.EMAIL_USER)}">${escapeEmailHtml(process.env.EMAIL_USER)}</a>.
+              </p>
+              <p style="font-size:13px;color:#667">— CarbonAxis Exchange</p>
+            </div>
+          `,
+        });
+        confirmationEmailed = true;
+      } catch (emailError) {
+        console.error("Contact confirmation email failed:", emailError);
+      }
     }
 
     res.status(201).json({
       success: true,
-      message: "Thanks — we received your message and will reply soon.",
+      message: confirmationEmailed
+        ? "Thanks — we received your message and sent a confirmation to your email."
+        : "Thanks — we received your message and will reply soon.",
       data: entry,
+      emailed: { admin: adminEmailed, confirmation: confirmationEmailed },
     });
   } catch (error) {
     console.error(error);
