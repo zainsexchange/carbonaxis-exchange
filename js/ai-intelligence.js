@@ -1,6 +1,73 @@
 (() => {
   const token = (localStorage.getItem("token") || "").trim();
   const guestLanding = document.getElementById("aiGuestLanding");
+  const engineBadges = [
+    document.getElementById("aiEngineBadge"),
+    document.getElementById("aiEngineBadgeGuest"),
+  ].filter(Boolean);
+
+  let configuredEngineStatus = null;
+
+  function renderAiEngineBadge(source, kind = "configured") {
+    let status;
+    let label;
+    let title;
+
+    if (typeof source === "string") {
+      status = source === "openai" ? "live" : "offline";
+      label = status === "live" ? "Live AI" : "Offline mode";
+      if (kind === "response" && status === "offline" && configuredEngineStatus === "live") {
+        title =
+          "OpenAI is configured but this answer used offline fallback. Check Render logs or OpenAI billing.";
+      } else if (status === "live") {
+        title = "This answer used live OpenAI intelligence.";
+      } else {
+        title =
+          "This answer used offline fallback — add OPENAI_API_KEY on Render for Live AI.";
+      }
+    } else if (source?.status) {
+      configuredEngineStatus = source.status;
+      status = source.status;
+      label = source.label || (status === "live" ? "Live AI" : "Offline mode");
+      if (status === "live") {
+        title = `OpenAI connected (${source.model || "gpt-4o-mini"}) — full multilingual intelligence.`;
+      } else {
+        title =
+          "OPENAI_API_KEY not set on server — answers use local fallback until connected.";
+      }
+    } else {
+      return;
+    }
+
+    engineBadges.forEach((badge) => {
+      badge.textContent = label;
+      badge.classList.remove("is-live", "is-offline", "is-checking");
+      badge.classList.add(status === "live" ? "is-live" : "is-offline");
+      badge.title = title;
+    });
+  }
+
+  async function loadAiEngineStatus() {
+    if (!engineBadges.length) return;
+    try {
+      const path = API.aiStatus || "/ai/status";
+      const res = await fetch(`${API.BASE}${path}`, { cache: "no-store" });
+      const data = await res.json();
+      if (data?.success && data.aiEngine) {
+        renderAiEngineBadge(data.aiEngine, "configured");
+      }
+    } catch (err) {
+      console.error(err);
+      engineBadges.forEach((badge) => {
+        badge.textContent = "AI status unknown";
+        badge.classList.remove("is-live", "is-checking");
+        badge.classList.add("is-offline");
+        badge.title = "Could not reach the server to check AI status.";
+      });
+    }
+  }
+
+  loadAiEngineStatus();
 
   if (!token) {
     return;
@@ -437,7 +504,10 @@
         forceRelogin("Invalid or expired token. Please login again.");
         return;
       }
-      if (data?.success) renderQuota(data.quota);
+      if (data?.success) {
+        renderQuota(data.quota);
+        if (data.aiEngine) renderAiEngineBadge(data.aiEngine, "configured");
+      }
     } catch (err) {
       console.error(err);
     }
@@ -554,6 +624,7 @@
 
       if (data.threadId) activeThreadId = data.threadId;
       if (data.mode) setModeBadge(data.mode);
+      if (data.provider) renderAiEngineBadge(data.provider, "response");
       await appendMessage("assistant", data.answer, { stream: true });
       conversation.push({ role: "assistant", content: data.answer });
       renderQuota(data.quota);
@@ -1092,6 +1163,7 @@
 
       if (data.threadId) activeThreadId = data.threadId;
       setModeBadge("compare");
+      if (data.provider) renderAiEngineBadge(data.provider, "response");
       await appendMessage("assistant", data.answer, { stream: true });
       conversation.push({ role: "assistant", content: data.answer });
       renderQuota(data.quota);

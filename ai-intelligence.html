@@ -8,7 +8,7 @@
   <meta name="description" content="Worldwide green energy and carbon market intelligence — AI research in multiple languages, market compare, and global tCO₂e calculators for solar, methane, biochar, and deal value.">
   <meta name="keywords" content="green energy AI, carbon market intelligence, tCO2e calculator, solar carbon credits, methane avoidance, biochar credits, climate research, net zero, ESG intelligence">
   <link rel="canonical" href="https://www.carbonaxisexchange.com/ai-intelligence.html">
-  <link rel="stylesheet" href="/style.css?v=126">
+  <link rel="stylesheet" href="/style.css?v=127">
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -132,6 +132,9 @@
         <a href="/login.html" class="btn btn-outline">Login</a>
         <a href="/pricing.html" class="btn btn-outline">View pricing</a>
       </div>
+      <p class="ai-guest-engine">
+        <span id="aiEngineBadgeGuest" class="ai-engine-badge is-checking">Checking AI…</span>
+      </p>
     </div>
   </section>
 
@@ -154,6 +157,7 @@
         </div>
         <div class="ai-quota-bar" style="margin:0;">
           <span><strong id="aiPlan">Free</strong> · <span id="aiQuota">…</span></span>
+          <span id="aiEngineBadge" class="ai-engine-badge is-checking">Checking AI…</span>
           <span id="aiModeBadge" class="ai-mode-badge">Ready</span>
         </div>
       </div>
@@ -247,10 +251,10 @@
     </section>
   </main>
 
-  <script src="/js/api.js?v=246412"></script>
+  <script src="/js/api.js?v=246413"></script>
   <script src="/js/navbar.js?v=109"></script>
   <script src="/js/auth.js?v=246411"></script>
-  <script src="/js/ai-intelligence.js?v=246416"></script>
+  <script src="/js/ai-intelligence.js?v=246417"></script>
   <script>
     document.getElementById("aiThreadsToggle")?.addEventListener("click", () => {
       document.getElementById("aiThreadSidebar")?.classList.toggle("open");

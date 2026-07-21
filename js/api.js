@@ -20,6 +20,7 @@ const API = {
   aiAsk: "/ai/ask",
   aiCompare: "/ai/compare",
   aiQuota: "/ai/quota",
+  aiStatus: "/ai/status",
   aiThreads: "/ai/threads",
   calcCatalog: "/calc/catalog",
   calcRun: "/calc/run",

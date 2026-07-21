@@ -193,6 +193,30 @@ ${MULTILINGUAL_REPLY_RULE}
 }
 
 /**
+ * Whether OpenAI is configured on the server (not whether the last call succeeded).
+ */
+export function getAiEngineStatus() {
+  const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
+  const model = String(process.env.OPENAI_MODEL || "gpt-4o-mini").trim();
+
+  if (apiKey) {
+    return {
+      status: "live",
+      provider: "openai",
+      label: "Live AI",
+      model,
+    };
+  }
+
+  return {
+    status: "offline",
+    provider: "local",
+    label: "Offline mode",
+    model: null,
+  };
+}
+
+/**
  * Calls OpenAI chat completions if OPENAI_API_KEY is set.
  * Falls back to a deterministic local analysis when no key is configured,
  * so the product flow still works in demos.

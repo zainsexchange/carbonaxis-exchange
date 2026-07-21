@@ -8,7 +8,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { authenticateToken, requireAdminRole } from "./middleware/auth.js";
 import { PLANS, getPlan } from "./config/plans.js";
-import { runGreenIntelligence, analyzeProjectForAI, compareMarkets } from "./services/greenAI.js";
+import { runGreenIntelligence, analyzeProjectForAI, compareMarkets, getAiEngineStatus } from "./services/greenAI.js";
 import {
   ensureAiUsagePeriod,
   getAiQuota,
@@ -1678,6 +1678,10 @@ app.get("/api/plans", (req, res) => {
   });
 });
 
+app.get("/api/ai/status", (_req, res) => {
+  res.json({ success: true, aiEngine: getAiEngineStatus() });
+});
+
 app.get("/api/ai/quota", authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -1685,7 +1689,11 @@ app.get("/api/ai/quota", authenticateToken, async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
     await ensureAiUsagePeriod(user);
-    res.json({ success: true, quota: getAiQuota(user) });
+    res.json({
+      success: true,
+      quota: getAiQuota(user),
+      aiEngine: getAiEngineStatus(),
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Failed to load AI quota" });

@@ -4376,6 +4376,47 @@ font-weight:600;
   background:rgba(0,229,176,0.08);
 }
 
+.ai-engine-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.14);
+  font-size:12px;
+  font-weight:600;
+  color:#b7c7c1;
+}
+
+.ai-engine-badge.is-checking{
+  font-weight:500;
+}
+
+.ai-engine-badge.is-live{
+  border-color:rgba(0,229,176,0.45);
+  color:#00e5b0;
+  background:rgba(0,229,176,0.08);
+}
+
+.ai-engine-badge.is-live::before{
+  content:"";
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#00e5b0;
+  box-shadow:0 0 8px rgba(0,229,176,0.75);
+}
+
+.ai-engine-badge.is-offline{
+  border-color:rgba(255,180,80,0.45);
+  color:#ffb450;
+  background:rgba(255,180,80,0.08);
+}
+
+.ai-guest-engine{
+  margin:28px 0 0;
+}
+
 @media (max-width: 960px){
   .ai-engine-layout,
   .pricing-grid,
