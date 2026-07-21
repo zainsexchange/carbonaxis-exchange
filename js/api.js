@@ -25,6 +25,7 @@ const API = {
   calcRun: "/calc/run",
   contact: "/contact",
   deals: "/deals",
+  notifications: "/notifications",
   billingCheckout: "/billing/checkout",
   billingStatus: "/billing/status",
   projectAnalyze: (id) => `/projects/${id}/analyze`,

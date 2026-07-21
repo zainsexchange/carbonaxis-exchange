@@ -522,6 +522,89 @@ const dealSchema = new mongoose.Schema(
 
 const Deal = mongoose.model("Deal", dealSchema);
 
+const notificationSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    type: {
+      type: String,
+      enum: ["deal", "project", "system", "welcome"],
+      default: "system",
+    },
+    title: { type: String, required: true },
+    message: { type: String, default: "" },
+    href: { type: String, default: "" },
+    read: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
+notificationSchema.index({ userId: 1, createdAt: -1 });
+
+const Notification = mongoose.model("Notification", notificationSchema);
+
+async function createUserNotification(userId, payload = {}) {
+  if (!userId) return null;
+
+  const { type = "system", title, message = "", href = "" } = payload;
+  if (!title) return null;
+
+  try {
+    return await Notification.create({
+      userId,
+      type,
+      title,
+      message,
+      href,
+    });
+  } catch (err) {
+    console.error("createUserNotification failed:", err);
+    return null;
+  }
+}
+
+function dealStatusNotificationContent(deal, status) {
+  const listing = deal.listingTitle || "Deal request";
+  const templates = {
+    "Under Review": {
+      title: "Deal under review",
+      message: `"${listing}" is being reviewed by our desk.`,
+    },
+    Countered: {
+      title: "Counter offer received",
+      message: `"${listing}" — review the updated terms in My Deals.`,
+    },
+    Accepted: {
+      title: "Deal accepted",
+      message: `"${listing}" has been accepted.`,
+    },
+    Rejected: {
+      title: "Deal declined",
+      message: `"${listing}" was not accepted at this time.`,
+    },
+    Closed: {
+      title: "Deal closed",
+      message: `"${listing}" is now closed.`,
+    },
+    Open: {
+      title: "Deal reopened",
+      message: `"${listing}" is open again in our queue.`,
+    },
+  };
+
+  const template = templates[status];
+  if (!template) return null;
+
+  return {
+    ...template,
+    type: "deal",
+    href: "/deals.html",
+  };
+}
+
 app.get("/", (req, res) => {
   res.send("CarbonAxis backend is running");
 });
@@ -717,6 +800,13 @@ app.put("/api/projects/:id/submit", authenticateToken, async (req, res) => {
 
     project.status = "Submitted";
     await project.save();
+
+    await createUserNotification(req.user.id, {
+      type: "project",
+      title: "Project submitted",
+      message: `"${project.projectName || "Your project"}" is queued for review.`,
+      href: `/project-view.html?id=${project._id}`,
+    });
 
     return res.json({
       success: true,
@@ -1136,6 +1226,13 @@ if (
       password: hashedPassword,
       company,
       country,
+    });
+
+    await createUserNotification(user._id, {
+      type: "welcome",
+      title: "Welcome to CarbonAxis",
+      message: "Explore Intelligence, Marketplace, and your dashboard.",
+      href: "/dashboard.html",
     });
 
     res.status(201).json({
@@ -2173,6 +2270,13 @@ app.post("/api/deals", authenticateToken, async (req, res) => {
       console.error("Deal email failed:", emailErr);
     }
 
+    await createUserNotification(req.user.id, {
+      type: "deal",
+      title: "Deal request submitted",
+      message: `"${listingTitle}" is in our OTC queue.`,
+      href: "/deals.html",
+    });
+
     res.status(201).json({
       success: true,
       message: "Deal request submitted. CarbonAxis will review shortly.",
@@ -2260,6 +2364,12 @@ app.patch("/api/deals/:id/status", requireAdmin, async (req, res) => {
         console.error("Deal status email failed:", emailErr);
         notifyError = emailErr.message || "Email failed";
       }
+
+      const buyerId = deal.buyerId?._id || deal.buyerId;
+      const alert = dealStatusNotificationContent(deal, status);
+      if (buyerId && alert) {
+        await createUserNotification(buyerId, alert);
+      }
     }
 
     res.json({
@@ -2271,6 +2381,71 @@ app.patch("/api/deals/:id/status", requireAdmin, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Failed to update deal" });
+  }
+});
+
+/** User notifications (in-app bell) */
+app.get("/api/notifications", authenticateToken, async (req, res) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 20, 50);
+    const [notifications, unreadCount] = await Promise.all([
+      Notification.find({ userId: req.user.id })
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .lean(),
+      Notification.countDocuments({ userId: req.user.id, read: false }),
+    ]);
+
+    res.json({
+      success: true,
+      notifications,
+      unreadCount,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to load notifications" });
+  }
+});
+
+app.patch("/api/notifications/read-all", authenticateToken, async (req, res) => {
+  try {
+    await Notification.updateMany(
+      { userId: req.user.id, read: false },
+      { read: true }
+    );
+
+    res.json({ success: true, unreadCount: 0 });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to mark notifications read" });
+  }
+});
+
+app.patch("/api/notifications/:id/read", authenticateToken, async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: "Invalid notification ID" });
+    }
+
+    const notification = await Notification.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id },
+      { read: true },
+      { new: true }
+    );
+
+    if (!notification) {
+      return res.status(404).json({ success: false, message: "Notification not found" });
+    }
+
+    const unreadCount = await Notification.countDocuments({
+      userId: req.user.id,
+      read: false,
+    });
+
+    res.json({ success: true, notification, unreadCount });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to update notification" });
   }
 });
 

@@ -43,10 +43,17 @@
     </nav>
 
     <div class="notification-menu">
-      <button class="notification-btn">🔔</button>
-    </div>
-
-    <div class="profile-menu">
+      <button class="notification-btn" type="button" aria-label="Notifications">
+        🔔
+        <span class="notification-count" hidden>0</span>
+      </button>
+      <div class="notification-dropdown">
+        <div class="notification-list">
+          <p class="notification-empty">Loading…</p>
+        </div>
+      </div>
+      </div>
+      <div class="profile-menu">
       <button class="profile-btn">
         <span class="profile-avatar">C</span>
         <span>Account</span>

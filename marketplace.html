@@ -42,57 +42,15 @@
   Get Access
 </a>
      <div class="notification-menu">
-
-  <button class="notification-btn">
-
+  <button class="notification-btn" type="button" aria-label="Notifications">
     🔔
-
-    <span class="notification-count">
-      3
-    </span>
-
+    <span class="notification-count" hidden>0</span>
   </button>
-
   <div class="notification-dropdown">
-
-    <div class="notification-item">
-
-      <h4>
-        New Carbon Project Added
-      </h4>
-
-      <p>
-        Renewable energy credits listed.
-      </p>
-
+    <div class="notification-list">
+      <p class="notification-empty">Loading…</p>
     </div>
-
-    <div class="notification-item">
-
-      <h4>
-        Verification Completed
-      </h4>
-
-      <p>
-        Biochar project verified successfully.
-      </p>
-
-    </div>
-
-    <div class="notification-item">
-
-      <h4>
-        Watchlist Updated
-      </h4>
-
-      <p>
-        Market activity changed on tracked assets.
-      </p>
-
-    </div>
-
   </div>
-
 </div>
       <div class="profile-menu">
 
@@ -1509,24 +1467,7 @@ async function submitDealRequest() {
     </button>
   </div>
 </div>
-<script>
-const userToken = localStorage.getItem("token");
-
-const loginBtn = document.querySelector(".login-open");
-const profileMenuBox = document.querySelector(".profile-menu");
-const notificationMenuBox = document.querySelector(".notification-menu");
-
-if (userToken) {
-  if (loginBtn) loginBtn.style.display = "none";
-  if (profileMenuBox) profileMenuBox.style.display = "block";
-  if (notificationMenuBox) notificationMenuBox.style.display = "block";
-} else {
-  if (loginBtn) loginBtn.style.display = "inline-flex";
-  if (profileMenuBox) profileMenuBox.style.display = "none";
-  if (notificationMenuBox) notificationMenuBox.style.display = "none";
-}
-</script>
-<script src="/js/navbar.js?v=109"></script>
+<script src="/js/navbar.js?v=110"></script>
 <script src="/js/auth.js"></script>
 </body>
 </html>

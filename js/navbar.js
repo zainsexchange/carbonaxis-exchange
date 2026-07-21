@@ -115,4 +115,11 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .catch(() => {});
   }
+
+  if (token) {
+    const noteScript = document.createElement("script");
+    noteScript.src = "/js/notifications.js?v=2";
+    noteScript.defer = true;
+    document.body.appendChild(noteScript);
+  }
 });

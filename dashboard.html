@@ -6,7 +6,7 @@
 <title>Dashboard | CarbonAxis Exchange</title>
   <meta name="description" content="Your CarbonAxis workspace — projects, watchlist, deals, and Intelligence usage.">
   <link rel="icon" type="image/png" href="/favicon.png" />
-  <link rel="stylesheet" href="/style.css?v=120">
+  <link rel="stylesheet" href="/style.css?v=121">
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -49,57 +49,15 @@ if (!token) {
   Get Access
 </a>
      <div class="notification-menu">
-
-  <button class="notification-btn">
-
+  <button class="notification-btn" type="button" aria-label="Notifications">
     🔔
-
-    <span class="notification-count">
-      3
-    </span>
-
+    <span class="notification-count" hidden>0</span>
   </button>
-
   <div class="notification-dropdown">
-
-    <div class="notification-item">
-
-      <h4>
-        New Carbon Project Added
-      </h4>
-
-      <p>
-        Renewable energy credits listed.
-      </p>
-
+    <div class="notification-list">
+      <p class="notification-empty">Loading…</p>
     </div>
-
-    <div class="notification-item">
-
-      <h4>
-        Verification Completed
-      </h4>
-
-      <p>
-        Biochar project verified successfully.
-      </p>
-
-    </div>
-
-    <div class="notification-item">
-
-      <h4>
-        Watchlist Updated
-      </h4>
-
-      <p>
-        Market activity changed on tracked assets.
-      </p>
-
-    </div>
-
   </div>
-
 </div>
       <div class="profile-menu">
 
