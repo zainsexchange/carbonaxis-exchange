@@ -6,7 +6,11 @@ import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import path from "path";
+import { fileURLToPath } from "url";
 import { authenticateToken, requireAdminRole } from "./middleware/auth.js";
+import libraryRoutes from "./intelligence/routes/library.js";
+import carbonBrainRoutes from "./intelligence/routes/ask.js";
 import { PLANS, getPlan } from "./config/plans.js";
 import { runGreenIntelligence, analyzeProjectForAI, compareMarkets, getAiEngineStatus } from "./services/greenAI.js";
 import {
@@ -20,6 +24,8 @@ import {
   runCalculator,
 } from "./services/carbonCalculators.js";
 dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const SITE_URL = (
   process.env.SITE_URL || "https://www.carbonaxisexchange.com"
@@ -172,6 +178,9 @@ const app = express();
 
 app.use(cors());
 
+// Serve HTML, CSS, JavaScript, images and other frontend assets
+app.use(express.static(__dirname));
+
 /** Stripe webhook needs raw body — register before json parser */
 app.post("/api/billing/webhook", express.raw({ type: "application/json" }), async (req, res) => {
   if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) {
@@ -237,6 +246,8 @@ app.post("/api/billing/webhook", express.raw({ type: "application/json" }), asyn
 });
 
 app.use(express.json());
+
+app.use("/api/intelligence", carbonBrainRoutes);
 
 mongoose
   .connect(process.env.MONGO_URI)
@@ -2646,7 +2657,7 @@ app.get("/api/profile", authenticateToken, async (req, res) => {
     });
   }
 });
-
+app.use("/api/library", libraryRoutes);
 app.put("/api/profile", authenticateToken, async (req, res) => {
   try {
     const {

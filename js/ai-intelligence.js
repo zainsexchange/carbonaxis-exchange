@@ -311,7 +311,491 @@
   function setAssistantBody(el, text) {
     el.innerHTML = formatAssistantHtml(text);
   }
+  function getConfidenceClass(percentage) {
+  const score = Number(percentage || 0);
 
+  if (score >= 80) return "is-high";
+  if (score >= 60) return "is-moderate";
+  return "is-low";
+}
+
+function formatCarbonDate(value) {
+  if (!value) return "Not specified";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return escapeHtml(value);
+  }
+
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function submitCarbonBrainQuestion(question) {
+  const cleanQuestion = String(question || "").trim();
+
+  if (
+    !cleanQuestion ||
+    !questionInput ||
+    !form ||
+    sendBtn?.disabled
+  ) {
+    return;
+  }
+
+  questionInput.value = cleanQuestion;
+
+  setModeBadge(
+    looksGreen(cleanQuestion)
+      ? "green"
+      : "general"
+  );
+
+  form.requestSubmit();
+}
+
+function renderCarbonBrainDetails(container, data) {
+  if (!container || !data) return;
+
+  const confidencePercentage = Math.round(
+    Number(
+      data.confidence?.percentage ??
+        data.confidence?.score * 100 ??
+        0
+    )
+  );
+
+  const confidenceLevel =
+    data.confidence?.level || "unknown";
+
+  const truthStatus =
+    data.truthStatus || "unknown";
+
+  const confidenceClass =
+    getConfidenceClass(confidencePercentage);
+
+  const citations = Array.isArray(data.citations)
+    ? data.citations
+    : [];
+
+  const explainability = Array.isArray(
+    data.explainability
+  )
+    ? data.explainability
+    : [];
+
+  const limitations = Array.isArray(
+    data.limitations
+  )
+    ? data.limitations
+    : [];
+
+  const relatedQuestions = Array.isArray(
+    data.relatedQuestions
+  )
+    ? data.relatedQuestions
+    : [];
+
+  const conflicts = Array.isArray(data.conflicts)
+    ? data.conflicts
+    : [];
+
+  const wrapper = document.createElement("div");
+
+  wrapper.className = "carbon-brain-details";
+
+  const responseId =
+    data.responseId ||
+    `carbon-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
+
+  wrapper.innerHTML = `
+    <div class="carbon-brain-actions">
+      <div class="carbon-brain-response-label">
+        <span class="carbon-brain-response-dot"></span>
+        Carbon Brain analysis
+      </div>
+
+      <div class="carbon-brain-action-buttons">
+        <button
+          type="button"
+          class="carbon-brain-action-btn"
+          data-carbon-action="copy"
+          data-response-id="${escapeHtml(responseId)}"
+        >
+          Copy answer
+        </button>
+      </div>
+    </div>
+
+    <div class="carbon-brain-summary">
+      <div class="carbon-brain-confidence ${confidenceClass}">
+        <div class="carbon-brain-confidence-top">
+          <span>Confidence</span>
+          <strong>${confidencePercentage}%</strong>
+        </div>
+
+        <div
+          class="carbon-brain-confidence-track"
+          role="progressbar"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="${confidencePercentage}"
+        >
+          <span
+            class="carbon-brain-confidence-fill"
+            style="width:${Math.min(
+              100,
+              Math.max(0, confidencePercentage)
+            )}%"
+          ></span>
+        </div>
+
+        <div class="carbon-brain-confidence-meta">
+          <span>${escapeHtml(confidenceLevel)}</span>
+          <span>${escapeHtml(truthStatus)} evidence</span>
+        </div>
+      </div>
+
+      <div class="carbon-brain-status">
+        <span class="carbon-brain-status-label">
+          Truth status
+        </span>
+
+        <strong class="carbon-brain-truth-badge">
+          ${escapeHtml(truthStatus)}
+        </strong>
+      </div>
+    </div>
+
+    ${
+      citations.length
+        ? `
+      <details class="carbon-brain-section" open>
+        <summary>
+          Sources
+          <span>${citations.length}</span>
+        </summary>
+
+        <div class="carbon-brain-source-list">
+          ${citations
+            .map(
+              (citation) => `
+            <article class="carbon-brain-source-card">
+              <div class="carbon-brain-source-head">
+                <span class="carbon-brain-citation-id">
+                  ${escapeHtml(
+                    citation.citationId || "Source"
+                  )}
+                </span>
+
+                <span class="carbon-brain-source-score">
+                  ${Math.round(
+                    Number(
+                      citation.confidencePercentage ??
+                        citation.evidenceScore * 100 ??
+                        0
+                    )
+                  )}% evidence
+                </span>
+              </div>
+
+              <h4>
+                ${escapeHtml(
+                  citation.title || "Untitled source"
+                )}
+              </h4>
+
+              <p>
+                ${escapeHtml(
+                  citation.issuingAuthority ||
+                    "Authority not specified"
+                )}
+              </p>
+
+              <div class="carbon-brain-source-meta">
+                <span>
+                  ${escapeHtml(
+                    citation.country ||
+                      citation.jurisdiction ||
+                      "Location not specified"
+                  )}
+                </span>
+
+                <span>
+                  ${formatCarbonDate(
+                    citation.publicationDate
+                  )}
+                </span>
+
+                <span>
+                  ${escapeHtml(
+                    citation.documentStatus ||
+                      "status unknown"
+                  )}
+                </span>
+              </div>
+
+              ${
+                citation.sectionTitle
+                  ? `
+                <p class="carbon-brain-source-section">
+                  Section:
+                  ${escapeHtml(citation.sectionTitle)}
+                </p>
+              `
+                  : ""
+              }
+
+              ${
+                citation.excerpt
+                  ? `
+                <blockquote>
+                  ${escapeHtml(citation.excerpt)}
+                </blockquote>
+              `
+                  : ""
+              }
+            </article>
+          `
+            )
+            .join("")}
+        </div>
+      </details>
+    `
+        : ""
+    }
+
+    ${
+      explainability.length
+        ? `
+      <details class="carbon-brain-section">
+        <summary>
+          Why this answer?
+          <span>${explainability.length}</span>
+        </summary>
+
+        <ul class="carbon-brain-check-list">
+          ${explainability
+            .map(
+              (item) => `
+            <li>
+              <span aria-hidden="true">✓</span>
+              ${escapeHtml(item)}
+            </li>
+          `
+            )
+            .join("")}
+        </ul>
+      </details>
+    `
+        : ""
+    }
+
+    ${
+      conflicts.length
+        ? `
+      <details class="carbon-brain-section carbon-brain-conflicts">
+        <summary>
+          Evidence conflicts
+          <span>${conflicts.length}</span>
+        </summary>
+
+        <p>
+          Carbon Brain detected conflicting claims in the
+          available evidence.
+        </p>
+      </details>
+    `
+        : ""
+    }
+
+    ${
+      limitations.length
+        ? `
+      <details class="carbon-brain-section carbon-brain-limitations">
+        <summary>
+          Limitations
+          <span>${limitations.length}</span>
+        </summary>
+
+        <ul>
+          ${limitations
+            .map(
+              (item) => `
+            <li>${escapeHtml(item)}</li>
+          `
+            )
+            .join("")}
+        </ul>
+      </details>
+    `
+        : ""
+    }
+
+    ${
+      relatedQuestions.length
+        ? `
+      <div class="carbon-brain-related">
+        <h4>Related questions</h4>
+
+        <div class="carbon-brain-related-list">
+          ${relatedQuestions
+            .map(
+              (question) => `
+            <button
+              type="button"
+              class="carbon-brain-related-question"
+              data-carbon-question="${escapeHtml(question)}"
+            >
+              ${escapeHtml(question)}
+            </button>
+          `
+            )
+            .join("")}
+        </div>
+      </div>
+    `
+        : ""
+    }
+
+    <div class="carbon-brain-footer">
+      <span>
+        ${
+          data.provider
+            ? `Provider: ${escapeHtml(data.provider)}`
+            : "Carbon Brain"
+        }
+      </span>
+
+      ${
+        data.model
+          ? `<span>Model: ${escapeHtml(data.model)}</span>`
+          : ""
+      }
+
+      ${
+        Number.isFinite(
+          Number(data.statistics?.totalLatencyMs)
+        )
+          ? `<span>${(
+              Number(
+                data.statistics.totalLatencyMs
+              ) / 1000
+            ).toFixed(1)}s</span>`
+          : ""
+      }
+
+      ${
+        Number.isFinite(
+          Number(data.tokenUsage?.totalTokens)
+        )
+          ? `<span>${escapeHtml(
+              data.tokenUsage.totalTokens
+            )} tokens</span>`
+          : ""
+      }
+    </div>
+  `;
+
+  container.appendChild(wrapper);
+
+  wrapper
+    .querySelectorAll(
+      ".carbon-brain-related-question"
+    )
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        const question =
+          button.dataset.carbonQuestion || "";
+
+        if (!question) return;
+
+        wrapper
+          .querySelectorAll(
+            ".carbon-brain-related-question"
+          )
+          .forEach((item) => {
+            item.disabled = true;
+          });
+
+        button.textContent =
+          "Asking Carbon Brain…";
+
+        submitCarbonBrainQuestion(question);
+      });
+    });
+
+  const copyButton = wrapper.querySelector(
+    '[data-carbon-action="copy"]'
+  );
+
+  copyButton?.addEventListener(
+    "click",
+    async () => {
+      const answer = String(
+        data.answer || ""
+      ).trim();
+
+      if (!answer) return;
+
+      const originalText =
+        copyButton.textContent;
+
+      try {
+        await navigator.clipboard.writeText(
+          answer
+        );
+
+        copyButton.textContent = "Copied";
+      } catch (error) {
+        console.error(
+          "Copy answer failed:",
+          error
+        );
+
+        const temporaryInput =
+          document.createElement("textarea");
+
+        temporaryInput.value = answer;
+        temporaryInput.setAttribute(
+          "readonly",
+          ""
+        );
+
+        temporaryInput.style.position =
+          "fixed";
+
+        temporaryInput.style.opacity = "0";
+
+        document.body.appendChild(
+          temporaryInput
+        );
+
+        temporaryInput.select();
+
+        document.execCommand("copy");
+
+        temporaryInput.remove();
+
+        copyButton.textContent = "Copied";
+      }
+
+      setTimeout(() => {
+        copyButton.textContent =
+          originalText;
+      }, 1600);
+    }
+  );
+
+  chatLog.scrollTop =
+    chatLog.scrollHeight;
+}
   function appendMessage(role, text, { stream = false } = {}) {
     const bubble = document.createElement("div");
     bubble.className = `ai-bubble ai-bubble-${role}`;
@@ -534,120 +1018,181 @@
     }
   });
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const question = questionInput.value.trim();
-    const country = countryInput?.value.trim() || "";
-    const product = productInput?.value.trim() || "";
-    if (question.length < 3) return;
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-    const green = looksGreen(`${question} ${country} ${product}`);
-    setModeBadge(green ? "green" : "general");
+  const question = questionInput.value.trim();
 
-    appendMessage("user", question);
-    conversation.push({ role: "user", content: question });
-    questionInput.value = "";
-    sendBtn.disabled = true;
-    sendBtn.textContent = "…";
+  if (question.length < 3) {
+    return;
+  }
 
-    const thinking = document.createElement("div");
-    thinking.className = "ai-bubble ai-bubble-assistant ai-thinking";
-    thinking.textContent = green
-      ? "Connecting… preparing green analysis"
-      : "Connecting… thinking";
-    chatLog.appendChild(thinking);
-    chatLog.scrollTop = chatLog.scrollHeight;
+  const green = looksGreen(question);
+  setModeBadge(green ? "green" : "general");
 
-    try {
-      if (!API.aiAsk) {
-        throw new Error("Missing api.js AI routes — re-upload js/api.js");
-      }
+  await appendMessage("user", question);
 
-      thinking.textContent = "Waking server…";
-      await wakeApi();
-      thinking.textContent = green ? "Analyzing…" : "Thinking…";
-
-      const body = {
-        question,
-        country,
-        product,
-        conversation: conversation.slice(-8),
-        threadId: activeThreadId,
-      };
-
-      let result;
-      try {
-        result = await fetchJson(
-          `${API.BASE}${API.aiAsk}`,
-          {
-            method: "POST",
-            headers: authHeaders(),
-            body: JSON.stringify(body),
-          },
-          90000
-        );
-      } catch (_) {
-        thinking.textContent = "Retrying… server was slow";
-        await wakeApi();
-        result = await fetchJson(
-          `${API.BASE}${API.aiAsk}`,
-          {
-            method: "POST",
-            headers: authHeaders(),
-            body: JSON.stringify(body),
-          },
-          90000
-        );
-      }
-
-      const { res, data } = result;
-      thinking.remove();
-
-      if (res.status === 401) {
-        forceRelogin(
-          data?.message || "Invalid or expired token. Please login again."
-        );
-        return;
-      }
-
-      if (!data) {
-        throw new Error(`Bad server response (${res.status})`);
-      }
-
-      if (!data.success) {
-        await appendMessage("assistant", data.message || "Unable to answer.", {
-          stream: true,
-        });
-        if (data.quota) renderQuota(data.quota);
-        return;
-      }
-
-      if (data.threadId) activeThreadId = data.threadId;
-      if (data.mode) setModeBadge(data.mode);
-      if (data.provider) renderAiEngineBadge(data.provider, "response");
-      await appendMessage("assistant", data.answer, { stream: true });
-      conversation.push({ role: "assistant", content: data.answer });
-      renderQuota(data.quota);
-      loadThreads();
-    } catch (err) {
-      thinking.remove();
-      console.error(err);
-      const timedOut = err?.name === "AbortError";
-      await appendMessage(
-        "assistant",
-        timedOut
-          ? "Request timed out. Please try again."
-          : err?.message
-            ? `Connection issue: ${err.message}`
-            : "Network error. Please try again.",
-        { stream: true }
-      );
-    } finally {
-      sendBtn.disabled = false;
-      sendBtn.textContent = "Send";
-    }
+  conversation.push({
+    role: "user",
+    content: question,
   });
 
+  questionInput.value = "";
+  sendBtn.disabled = true;
+  sendBtn.textContent = "…";
+
+  const thinking = document.createElement("div");
+
+  thinking.className =
+    "ai-bubble ai-bubble-assistant ai-thinking";
+
+  thinking.textContent =
+    "Connecting to Carbon Brain…";
+
+  chatLog.appendChild(thinking);
+  chatLog.scrollTop = chatLog.scrollHeight;
+
+  try {
+    if (!API.carbonBrainAsk) {
+      throw new Error(
+        "Missing Carbon Brain API route — update js/api.js"
+      );
+    }
+
+    thinking.textContent = "Waking server…";
+
+    await wakeApi();
+
+    thinking.textContent =
+      "Searching trusted Carbon Axis knowledge…";
+
+    const body = {
+      question,
+
+      conversation: conversation.slice(-6),
+    };
+
+    let result;
+
+    try {
+      result = await fetchJson(
+        `${API.BASE}${API.carbonBrainAsk}`,
+        {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify(body),
+        },
+        90000
+      );
+    } catch (firstError) {
+      thinking.textContent =
+        "Retrying… server was slow";
+
+      await wakeApi();
+
+      result = await fetchJson(
+        `${API.BASE}${API.carbonBrainAsk}`,
+        {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify(body),
+        },
+        90000
+      );
+    }
+
+    const { res, data } = result;
+
+    thinking.remove();
+
+    if (res.status === 401) {
+      forceRelogin(
+        data?.message ||
+          "Invalid or expired token. Please login again."
+      );
+
+      return;
+    }
+
+    if (!data) {
+      throw new Error(
+        `Bad server response (${res.status})`
+      );
+    }
+
+    if (!data.success) {
+      await appendMessage(
+        "assistant",
+        data.message || "Unable to answer.",
+        {
+          stream: true,
+        }
+      );
+
+      return;
+    }
+
+    if (data.provider) {
+      renderAiEngineBadge(
+        data.provider,
+        "response"
+      );
+    }
+
+    setModeBadge(
+      data.truthStatus === "strong"
+        ? "green"
+        : data.truthStatus === "partial"
+          ? "compare"
+          : "general"
+    );
+
+    const assistantBody = await appendMessage(
+  "assistant",
+  data.answer,
+  {
+    stream: true,
+  }
+);
+
+renderCarbonBrainDetails(
+  assistantBody,
+  data
+);
+
+conversation.push({
+  role: "assistant",
+  content: data.answer,
+});
+
+    console.log(
+      "Carbon Brain response:",
+      data
+    );
+  } catch (err) {
+    thinking.remove();
+
+    console.error(err);
+
+    const timedOut =
+      err?.name === "AbortError";
+
+    await appendMessage(
+      "assistant",
+      timedOut
+        ? "Request timed out. Please try again."
+        : err?.message
+          ? `Connection issue: ${err.message}`
+          : "Network error. Please try again.",
+      {
+        stream: true,
+      }
+    );
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.textContent = "Send";
+  }
+});
   const compareForm = document.getElementById("aiCompareForm");
   const compareBtn = document.getElementById("aiCompareBtn");
   const suggestionRow = document.getElementById("aiSuggestionRow");

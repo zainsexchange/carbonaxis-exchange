@@ -72,6 +72,14 @@ const knowledgeDocumentSchema = new mongoose.Schema(
       index: true,
     },
 
+    sourceTrustScore: {
+      type: Number,
+      default: 0.5,
+      min: 0,
+      max: 1,
+      index: true,
+    },
+
     officialUrl: {
       type: String,
       default: "",
@@ -93,6 +101,7 @@ const knowledgeDocumentSchema = new mongoose.Schema(
     mimeType: {
       type: String,
       default: "application/pdf",
+      trim: true,
     },
 
     fileSize: {
@@ -105,6 +114,7 @@ const knowledgeDocumentSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      trim: true,
       index: true,
     },
 
@@ -162,6 +172,90 @@ const knowledgeDocumentSchema = new mongoose.Schema(
       index: true,
     },
 
+    processingStage: {
+      type: String,
+      enum: [
+        "not_started",
+        "uploaded",
+        "extracting",
+        "metadata",
+        "chunking",
+        "embedding",
+        "indexing",
+        "completed",
+        "failed",
+      ],
+      default: "not_started",
+      index: true,
+    },
+
+    processingProgress: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+
+    processingMessage: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 500,
+    },
+
+    processingError: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 5000,
+    },
+
+    processingStartedAt: {
+      type: Date,
+      default: null,
+    },
+
+    processingCompletedAt: {
+      type: Date,
+      default: null,
+    },
+
+    indexedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+
+    chunkCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    embeddingCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    pageCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    extractedCharacterCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    active: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
+
     visibility: {
       type: String,
       enum: ["public", "internal", "private", "workspace"],
@@ -214,6 +308,7 @@ const knowledgeDocumentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
 
     verifiedBy: {
@@ -224,7 +319,7 @@ const knowledgeDocumentSchema = new mongoose.Schema(
 
     metadata: {
       type: mongoose.Schema.Types.Mixed,
-      default: {},
+      default: () => ({}),
     },
   },
   {
@@ -233,6 +328,9 @@ const knowledgeDocumentSchema = new mongoose.Schema(
   }
 );
 
+/*
+ * Full-text repository search.
+ */
 knowledgeDocumentSchema.index({
   title: "text",
   description: "text",
@@ -242,6 +340,9 @@ knowledgeDocumentSchema.index({
   tags: "text",
 });
 
+/*
+ * Standard repository filtering.
+ */
 knowledgeDocumentSchema.index({
   visibility: 1,
   status: 1,
@@ -249,8 +350,41 @@ knowledgeDocumentSchema.index({
   documentType: 1,
 });
 
+/*
+ * Processing queue and ingestion monitoring.
+ */
+knowledgeDocumentSchema.index({
+  active: 1,
+  processingStage: 1,
+  processingProgress: 1,
+  updatedAt: -1,
+});
+
+/*
+ * Permission-aware repository listing.
+ */
+knowledgeDocumentSchema.index({
+  workspaceId: 1,
+  ownerId: 1,
+  visibility: 1,
+  status: 1,
+  active: 1,
+});
+
+/*
+ * Source-quality and country analytics.
+ */
+knowledgeDocumentSchema.index({
+  sourceClass: 1,
+  sourceTrustScore: -1,
+  country: 1,
+});
+
 const KnowledgeDocument =
   mongoose.models.KnowledgeDocument ||
-  mongoose.model("KnowledgeDocument", knowledgeDocumentSchema);
+  mongoose.model(
+    "KnowledgeDocument",
+    knowledgeDocumentSchema
+  );
 
 export default KnowledgeDocument;
