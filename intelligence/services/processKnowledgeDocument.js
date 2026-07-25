@@ -18,15 +18,62 @@ function asDate(value) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+function isPlaceholderValue(value = "") {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase();
+
+  if (!normalized) return true;
+
+  return [
+    "other",
+    "global",
+    "unknown",
+    "unspecified",
+    "n/a",
+    "na",
+    "none",
+    "null",
+    "undefined",
+  ].includes(normalized);
+}
+
+/**
+ * Prefer real extracted metadata over upload placeholders like "Global".
+ * Keep a real manual value (e.g. Pakistan) unless extraction also has a real value
+ * and the existing value was only a placeholder.
+ */
 function pickExistingOrExtracted(existingValue, extractedValue) {
   const existing = String(existingValue || "").trim();
+  const extracted = String(extractedValue || "").trim();
 
-  if (existing && existing.toLowerCase() !== "other") {
-    return existingValue;
+  const existingIsPlaceholder = isPlaceholderValue(existing);
+  const extractedIsPlaceholder = isPlaceholderValue(extracted);
+
+  if (!extractedIsPlaceholder && existingIsPlaceholder) {
+    return extracted;
   }
 
-  return extractedValue;
+  if (!existingIsPlaceholder) {
+    return existing;
+  }
+
+  if (!extractedIsPlaceholder) {
+    return extracted;
+  }
+
+  return existing || extracted || "";
 }
+
+function resolveCountry(extractedCountry, existingCountry) {
+  const resolved = pickExistingOrExtracted(
+    existingCountry,
+    extractedCountry
+  );
+
+  return resolved || "Global";
+}
+
 
 async function updateJob(jobId, updates) {
   if (!jobId) return null;
@@ -42,6 +89,7 @@ async function updateJob(jobId, updates) {
     }
   );
 }
+
 
 export async function processKnowledgeDocument({
   documentId,
@@ -99,12 +147,12 @@ export async function processKnowledgeDocument({
     }
 
     document.status = "processing";
-document.processingStage = "extracting";
-document.processingProgress = 10;
-document.processingMessage = "Extracting document text.";
-document.processingError = "";
-document.processingStartedAt = new Date();
-document.processingCompletedAt = null;
+    document.processingStage = "extracting";
+    document.processingProgress = 10;
+    document.processingMessage = "Extracting document text.";
+    document.processingError = "";
+    document.processingStartedAt = new Date();
+    document.processingCompletedAt = null;
 
 await document.save();
 
@@ -115,13 +163,7 @@ await document.save();
       filePath: document.storageKey,
       mimeType: document.mimeType,
     });
-    await updateDocumentProgress(document._id, {
-  processingStage: "metadata",
-  processingProgress: 30,
-  processingMessage: "Extracting and enriching document metadata.",
-  extractedCharacterCount: extraction.characterCount,
-  pageCount: extraction.pageCount,
-});
+    
 
     await updateJob(jobId, {
       currentStep: "extracting_metadata",
@@ -134,7 +176,13 @@ await document.save();
       },
     });
 
-
+await updateDocumentProgress(document._id, {
+  processingStage: "metadata",
+  processingProgress: 30,
+  processingMessage: "Extracting and enriching document metadata.",
+  extractedCharacterCount: extraction.characterCount,
+  pageCount: extraction.pageCount,
+});
     /*
      * STEP 2: Extract structured metadata
      *
@@ -167,6 +215,12 @@ await document.save();
       });
 
       extractedMetadata = metadataEngineResult.metadata;
+      console.log("Extracted document metadata:", {
+  country: extractedMetadata.country,
+  jurisdiction: extractedMetadata.jurisdiction,
+  title: extractedMetadata.title,
+  documentType: extractedMetadata.documentType,
+});
     } catch (metadataError) {
       metadataWarning = metadataError.message;
 
@@ -210,20 +264,20 @@ await document.save();
         document.language ||
         "English",
 
-      country:
-        extractedMetadata?.country ||
-        document.country ||
-        "Global",
+      country: resolveCountry(
+        extractedMetadata?.country,
+        document.country
+      ),
 
-      documentType:
-        extractedMetadata?.documentType ||
-        document.documentType ||
-        "other",
+      documentType: pickExistingOrExtracted(
+        document.documentType,
+        extractedMetadata?.documentType
+      ) || "other",
 
-      sourceClass:
-        extractedMetadata?.sourceClass ||
-        document.sourceClass ||
-        "other",
+      sourceClass: pickExistingOrExtracted(
+        document.sourceClass,
+        extractedMetadata?.sourceClass
+      ) || "other",
 
       status: "processing",
 
@@ -355,9 +409,9 @@ await document.save();
         extractedMetadata.description
       );
 
-      document.country = pickExistingOrExtracted(
-        document.country,
-        extractedMetadata.country
+      document.country = resolveCountry(
+        extractedMetadata.country,
+        document.country
       );
 
       document.jurisdiction = pickExistingOrExtracted(
@@ -466,6 +520,21 @@ document.extractedCharacterCount = extraction.characterCount;
     };
 
     await document.save();
+
+    // Keep chunk metadata aligned with the final document country/type.
+    await KnowledgeChunk.updateMany(
+      { documentId: document._id },
+      {
+        $set: {
+          country: document.country || "Global",
+          language: document.language || "English",
+          documentType: document.documentType || "other",
+          sourceClass: document.sourceClass || "other",
+          status: "ready",
+          updatedAt: new Date(),
+        },
+      }
+    );
 
     const result = {
       documentId: document._id,
