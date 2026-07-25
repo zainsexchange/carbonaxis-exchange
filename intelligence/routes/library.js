@@ -6,6 +6,7 @@ import crypto from "crypto";
 import mongoose from "mongoose";
 
 import KnowledgeJob from "../models/KnowledgeJob.js";
+import KnowledgeChunk from "../models/KnowledgeChunk.js";
 import { processKnowledgeDocument } from "../services/processKnowledgeDocument.js";
 import {
   authenticateToken,
@@ -421,4 +422,137 @@ router.get(
     }
   }
 );
+
+/**
+ * Correct document metadata after upload/process.
+ * Example: set country from Global → Pakistan without re-uploading.
+ */
+router.patch(
+  "/:id",
+  authenticateToken,
+  requireAdminRole,
+  async (req, res) => {
+    try {
+      const documentId = String(req.params.id || "").trim();
+
+      if (!mongoose.Types.ObjectId.isValid(documentId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid knowledge document ID.",
+        });
+      }
+
+      const document = await KnowledgeDocument.findById(documentId);
+
+      if (!document) {
+        return res.status(404).json({
+          success: false,
+          message: "Knowledge document not found.",
+        });
+      }
+
+      const updatableStringFields = [
+        "title",
+        "description",
+        "country",
+        "jurisdiction",
+        "issuingAuthority",
+        "language",
+        "officialUrl",
+      ];
+
+      for (const field of updatableStringFields) {
+        if (Object.prototype.hasOwnProperty.call(req.body, field)) {
+          document[field] = String(req.body[field] || "").trim();
+        }
+      }
+
+      if (Object.prototype.hasOwnProperty.call(req.body, "documentType")) {
+        const allowed = [
+          "law",
+          "regulation",
+          "policy",
+          "strategy",
+          "framework",
+          "standard",
+          "methodology",
+          "guidance",
+          "research",
+          "report",
+          "internal",
+          "other",
+        ];
+        const nextType = String(req.body.documentType || "").trim();
+        if (allowed.includes(nextType)) {
+          document.documentType = nextType;
+        }
+      }
+
+      if (Object.prototype.hasOwnProperty.call(req.body, "sourceClass")) {
+        const allowed = [
+          "government",
+          "un",
+          "international_organization",
+          "registry",
+          "standard_body",
+          "research",
+          "internal",
+          "customer",
+          "other",
+        ];
+        const nextClass = String(req.body.sourceClass || "").trim();
+        if (allowed.includes(nextClass)) {
+          document.sourceClass = nextClass;
+        }
+      }
+
+      if (!document.country) {
+        document.country = "Global";
+      }
+
+      await document.save();
+
+      await KnowledgeChunk.updateMany(
+        { documentId: document._id },
+        {
+          $set: {
+            country: document.country || "Global",
+            language: document.language || "English",
+            documentType: document.documentType || "other",
+            sourceClass: document.sourceClass || "other",
+            updatedAt: new Date(),
+          },
+        }
+      );
+
+      return res.json({
+        success: true,
+        message: "Knowledge document metadata updated.",
+        document: {
+          id: document._id,
+          title: document.title,
+          country: document.country,
+          jurisdiction: document.jurisdiction,
+          issuingAuthority: document.issuingAuthority,
+          documentType: document.documentType,
+          sourceClass: document.sourceClass,
+          language: document.language,
+          status: document.status,
+        },
+      });
+    } catch (error) {
+      console.error("Knowledge document update error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Unable to update knowledge document.",
+        error:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : undefined,
+      });
+    }
+  }
+);
+
 export default router;
