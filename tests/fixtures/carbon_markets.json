@@ -1,0 +1,19 @@
+{
+  "name": "carbon_markets",
+  "entities": [
+    { "canonicalSubject": "Carbon Credit", "entityType": "INSTRUMENT" },
+    { "canonicalSubject": "ETS", "entityType": "MARKET" },
+    { "canonicalSubject": "Carbon Market", "entityType": "MARKET" }
+  ],
+  "relationships": [
+    { "subject": "Carbon Credit", "predicate": "TRADED_IN", "object": "ETS" },
+    { "subject": "ETS", "predicate": "IS_A", "object": "Carbon Market" }
+  ],
+  "questions": [
+    {
+      "question": "What is a Carbon Credit?",
+      "expectedStrategy": "ONTOLOGY",
+      "expectedTruthStatus": "SUPPORTED"
+    }
+  ]
+}

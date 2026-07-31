@@ -1,3 +1,6 @@
+import { resolveAuthority } from "./authorityResolver.js";
+import { calculateSourceQuality } from "./sourceQualityCalculator.js";
+
 function normalizeText(value = "") {
   return String(value)
     .replace(/\u0000/g, "")
@@ -62,6 +65,12 @@ function buildCitationKey(item = {}) {
 
 function createCitation(item, index) {
   const document = item.document || {};
+  const authority = resolveAuthority(document);
+
+  const quality = calculateSourceQuality({
+    document,
+    evidenceItem: item,
+  });
 
   const title = normalizeText(
     document.title || "Untitled source"
@@ -124,6 +133,27 @@ function createCitation(item, index) {
     sourceClass: normalizeText(
       document.sourceClass
     ),
+
+    authority: {
+      score: authority.score,
+      level: authority.level,
+      stars: authority.stars,
+      color: authority.color,
+      badge: authority.badge,
+      description: authority.description,
+    },
+
+    quality: {
+      score: quality.score,
+      percentage: quality.percentage,
+      level: quality.level,
+      label: quality.label,
+      stars: quality.stars,
+      color: quality.color,
+      breakdown: quality.breakdown,
+      strengths: quality.strengths,
+      warnings: quality.warnings,
+    },
 
     sectionTitle,
     pageNumber,

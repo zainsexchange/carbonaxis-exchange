@@ -1,0 +1,29 @@
+{
+  "name": "hydrogen",
+  "entities": [
+    { "canonicalSubject": "Green Hydrogen", "entityType": "TECHNOLOGY" },
+    { "canonicalSubject": "Blue Hydrogen", "entityType": "TECHNOLOGY" },
+    { "canonicalSubject": "Hydrogen", "entityType": "TECHNOLOGY" },
+    { "canonicalSubject": "Clean Fuel", "entityType": "CATEGORY" },
+    { "canonicalSubject": "Energy", "entityType": "CATEGORY" }
+  ],
+  "relationships": [
+    { "subject": "Green Hydrogen", "predicate": "IS_A", "object": "Hydrogen" },
+    { "subject": "Blue Hydrogen", "predicate": "IS_A", "object": "Hydrogen" },
+    { "subject": "Hydrogen", "predicate": "IS_A", "object": "Clean Fuel" },
+    { "subject": "Clean Fuel", "predicate": "IS_A", "object": "Energy" }
+  ],
+  "questions": [
+    {
+      "question": "What is Green Hydrogen?",
+      "expectedStrategy": "ONTOLOGY",
+      "expectedTruthStatus": "SUPPORTED"
+    },
+    {
+      "question": "Is Green Hydrogen a clean fuel?",
+      "expectedStrategy": "REASONING",
+      "expectedTruthStatus": "SUPPORTED",
+      "expectInference": true
+    }
+  ]
+}

@@ -18,6 +18,13 @@
   },
   "scripts": {
     "start": "node server.js",
-    "create-admin": "node scripts/create-admin.js"
+    "create-admin": "node scripts/create-admin.js",
+    "test": "node tests/runAll.js",
+    "test:unit": "node tests/runAll.js unit",
+    "test:integration": "node tests/runAll.js integration",
+    "test:regression": "node tests/runAll.js regression",
+    "test:performance": "node tests/runAll.js performance",
+    "bench": "node benchmarks/runBenchmarks.js smoke",
+    "bench:full": "node benchmarks/runBenchmarks.js full"
   }
 }

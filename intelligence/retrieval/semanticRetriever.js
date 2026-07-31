@@ -374,6 +374,21 @@ export async function semanticRetrieve({
   const results =
     await KnowledgeEmbedding.aggregate(pipeline);
 
+  console.log("Semantic Retrieval:", {
+    resultCount: results.length,
+    minimumScore: resolvedMinimumScore,
+    user,
+  });
+
+  if (results.length) {
+    console.log("Top Result:", {
+      score: results[0].score,
+      title: results[0].document?.title,
+      visibility: results[0].visibility,
+      status: results[0].document?.status,
+    });
+  }
+
   return {
     question: cleanedQuestion,
 

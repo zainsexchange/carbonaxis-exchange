@@ -50,6 +50,130 @@ function normalizeText(value = "") {
 function normalizeEnum(value = "") {
   return normalizeText(value).toLowerCase();
 }
+function escapeRegExp(value = "") {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function isComparisonQuestion(question = "") {
+  const normalizedQuestion = normalizeText(question).toLowerCase();
+
+  return /\b(compare|comparison|versus|vs\.?|difference|differences|between|relative to|compared with|compared to)\b/i.test(
+    normalizedQuestion
+  );
+}
+
+function detectRequestedCountries(question = "", results = []) {
+  const normalizedQuestion = normalizeText(question).toLowerCase();
+
+  if (!normalizedQuestion) {
+    return [];
+  }
+
+  const availableCountries = [
+    ...new Set(
+      results
+        .map((item) =>
+          normalizeText(item?.document?.country)
+        )
+        .filter(Boolean)
+        .filter(
+          (country) =>
+            ![
+              "global",
+              "other",
+              "unknown",
+              "unspecified",
+              "n/a",
+              "none",
+            ].includes(country.toLowerCase())
+        )
+    ),
+  ];
+
+  return availableCountries.filter((country) => {
+    const countryPattern = new RegExp(
+      `\\b${escapeRegExp(country.toLowerCase())}\\b`,
+      "i"
+    );
+
+    return countryPattern.test(normalizedQuestion);
+  });
+}
+
+function applyCountryScope(results = [], question = "") {
+  const requestedCountries = detectRequestedCountries(
+    question,
+    results
+  );
+
+  const comparisonQuestion =
+    isComparisonQuestion(question);
+
+  if (requestedCountries.length === 0) {
+  return {
+    results,
+    requestedCountries,
+    countryFilterApplied: false,
+    comparisonQuestion,
+    excludedCountryCount: 0,
+  };
+  }
+
+  const requestedCountrySet = new Set(
+    requestedCountries.map((country) =>
+      country.toLowerCase()
+    )
+  );
+
+  const scopedResults = results.filter((item) => {
+    const country = normalizeText(
+      item?.document?.country
+    ).toLowerCase();
+
+    /*
+     * Keep global or unspecified evidence because it may provide
+     * legitimate international context.
+     */
+    if (
+      !country ||
+      [
+        "global",
+        "other",
+        "unknown",
+        "unspecified",
+        "n/a",
+        "none",
+      ].includes(country)
+    ) {
+      return true;
+    }
+
+    return requestedCountrySet.has(country);
+  });
+
+  /*
+   * Avoid returning zero evidence if country metadata is incomplete
+   * or inconsistent.
+   */
+  if (scopedResults.length === 0) {
+    return {
+      results,
+      requestedCountries,
+      countryFilterApplied: false,
+      comparisonQuestion,
+      excludedCountryCount: 0,
+    };
+  }
+
+  return {
+    results: scopedResults,
+    requestedCountries,
+    countryFilterApplied: true,
+    comparisonQuestion,
+    excludedCountryCount:
+      results.length - scopedResults.length,
+  };
+}
 
 function calculateFreshnessScore(document = {}) {
   const relevantDate =
@@ -199,6 +323,7 @@ function createDeduplicationKey(item = {}) {
 export function rankEvidence(
   results,
   {
+    question = "",
     limit = 10,
     weights = DEFAULT_WEIGHTS,
   } = {}
@@ -208,6 +333,12 @@ export function rankEvidence(
       "Evidence results must be supplied as an array."
     );
   }
+  const countryScope = applyCountryScope(
+  results,
+  question
+);
+
+const scopedResults = countryScope.results;
 
   const resolvedWeights = validateWeights(weights);
   const resolvedLimit = Math.max(
@@ -218,7 +349,7 @@ export function rankEvidence(
   const seen = new Set();
   const ranked = [];
 
-  for (const item of results) {
+  for (const item of scopedResults) {
     if (!item?.content || !item?.documentId) {
       continue;
     }
@@ -257,6 +388,15 @@ export function rankEvidence(
 
     statistics: {
       inputCount: results.length,
+scopedInputCount: scopedResults.length,
+requestedCountries:
+  countryScope.requestedCountries,
+countryFilterApplied:
+  countryScope.countryFilterApplied,
+comparisonQuestion:
+  countryScope.comparisonQuestion,
+excludedCountryCount:
+  countryScope.excludedCountryCount,
       uniqueCount: ranked.length,
       returnedCount: Math.min(
         ranked.length,
@@ -282,4 +422,7 @@ export {
   DEFAULT_WEIGHTS,
   SOURCE_QUALITY_SCORES,
   STATUS_SCORES,
+  detectRequestedCountries,
+  isComparisonQuestion,
+  applyCountryScope,
 };

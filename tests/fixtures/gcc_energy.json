@@ -1,0 +1,28 @@
+{
+  "name": "gcc_energy",
+  "entities": [
+    { "canonicalSubject": "United Arab Emirates", "entityType": "COUNTRY" },
+    { "canonicalSubject": "Saudi Arabia", "entityType": "COUNTRY" },
+    { "canonicalSubject": "Green Hydrogen", "entityType": "TECHNOLOGY" },
+    { "canonicalSubject": "Hydrogen", "entityType": "TECHNOLOGY" },
+    { "canonicalSubject": "Clean Fuel", "entityType": "CATEGORY" }
+  ],
+  "relationships": [
+    { "subject": "United Arab Emirates", "predicate": "SUPPORTS", "object": "Green Hydrogen" },
+    { "subject": "Saudi Arabia", "predicate": "SUPPORTS", "object": "Green Hydrogen" },
+    { "subject": "Green Hydrogen", "predicate": "IS_A", "object": "Hydrogen" },
+    { "subject": "Hydrogen", "predicate": "IS_A", "object": "Clean Fuel" }
+  ],
+  "questions": [
+    {
+      "question": "How is UAE related to Green Hydrogen?",
+      "expectedStrategy": "GRAPH",
+      "expectedTruthStatus": "SUPPORTED"
+    },
+    {
+      "question": "Compare UAE and Saudi hydrogen policies.",
+      "expectedStrategy": "COMPARISON",
+      "expectedTruthStatus": "SUPPORTED"
+    }
+  ]
+}

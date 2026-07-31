@@ -311,13 +311,23 @@
   function setAssistantBody(el, text) {
     el.innerHTML = formatAssistantHtml(text);
   }
-  function getConfidenceClass(percentage) {
-  const score = Number(percentage || 0);
+  function getConfidenceClass(percentage, truthStatus = null) {
+    const truthColor = String(
+      truthStatus?.color || ""
+    ).toLowerCase();
 
-  if (score >= 80) return "is-high";
-  if (score >= 60) return "is-moderate";
-  return "is-low";
-}
+    if (truthColor === "green") return "is-high";
+    if (truthColor === "yellow") return "is-moderate";
+    if (truthColor === "red" || truthColor === "orange") {
+      return "is-low";
+    }
+    if (truthColor === "gray") return "is-neutral";
+
+    const score = Number(percentage || 0);
+    if (score >= 80) return "is-high";
+    if (score >= 50) return "is-moderate";
+    return "is-low";
+  }
 
 function formatCarbonDate(value) {
   if (!value) return "Not specified";
@@ -373,10 +383,22 @@ function renderCarbonBrainDetails(container, data) {
     data.confidence?.level || "unknown";
 
   const truthStatus =
-    data.truthStatus || "unknown";
+    data.truthStatus && typeof data.truthStatus === "object"
+      ? data.truthStatus
+      : {
+          code: data.truthStatus || "unknown",
+          label: data.truthStatus || "unknown",
+          color: "gray",
+          reason: "",
+        };
 
-  const confidenceClass =
-    getConfidenceClass(confidencePercentage);
+  const truthStatusLabel =
+    truthStatus.label || truthStatus.code || "unknown";
+
+  const confidenceClass = getConfidenceClass(
+    confidencePercentage,
+    truthStatus
+  );
 
   const citations = Array.isArray(data.citations)
     ? data.citations
@@ -458,7 +480,7 @@ function renderCarbonBrainDetails(container, data) {
 
         <div class="carbon-brain-confidence-meta">
           <span>${escapeHtml(confidenceLevel)}</span>
-          <span>${escapeHtml(truthStatus)} evidence</span>
+          <span>${escapeHtml(truthStatusLabel)}</span>
         </div>
       </div>
 
@@ -467,9 +489,18 @@ function renderCarbonBrainDetails(container, data) {
           Truth status
         </span>
 
-        <strong class="carbon-brain-truth-badge">
-          ${escapeHtml(truthStatus)}
+        <strong class="carbon-brain-truth-badge carbon-brain-truth-${escapeHtml(
+          truthStatus.color || "gray"
+        )}">
+          ${escapeHtml(truthStatusLabel)}
         </strong>
+        ${
+          truthStatus.reason
+            ? `<p class="carbon-brain-truth-reason">${escapeHtml(
+                truthStatus.reason
+              )}</p>`
+            : ""
+        }
       </div>
     </div>
 
@@ -1139,10 +1170,15 @@ form.addEventListener("submit", async (e) => {
       );
     }
 
+    const truthCode =
+      data.truthStatus && typeof data.truthStatus === "object"
+        ? data.truthStatus.code
+        : data.truthStatus;
+
     setModeBadge(
-      data.truthStatus === "strong"
+      truthCode === "supported"
         ? "green"
-        : data.truthStatus === "partial"
+        : truthCode === "partial_support"
           ? "compare"
           : "general"
     );

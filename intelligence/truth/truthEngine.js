@@ -1,333 +1,346 @@
-import { semanticRetrieve } from "../retrieval/semanticRetriever.js";
-import { rankEvidence } from "./evidenceRanker.js";
-import { clusterEvidence } from "./evidenceClusterer.js";
-import { detectConflicts } from "./conflictDetector.js";
-import { calculateConfidence } from "./confidenceCalculator.js";
-import { buildCitations } from "./citationBuilder.js";
+/**
+ * Truth Engine — thin orchestrator over the
+ * reasoning pipeline. No retrieval. No OpenAI.
+ */
 
-const DEFAULT_OPTIONS = Object.freeze({
-  retrievalLimit: 12,
-  evidenceLimit: 8,
-  minimumSemanticScore: 0.3,
-  maximumCitations: 8,
+import {
+  TRUTH_STATUS,
+  EVIDENCE_SOURCE,
+} from "./truthConstants.js";
 
-  // Multi-document evidence controls
-  maximumChunksPerDocument: 2,
-  maximumDocuments: 6,
+import {
+  runReasoningPipeline,
+} from "../reasoning/reasoningPipeline.js";
+
+import {
+  collectEvidence,
+} from "../reasoning/evidenceCollector.js";
+
+import {
+  detectContradictions,
+} from "../reasoning/contradictionDetector.js";
+
+import {
+  calculateConfidence,
+} from "../reasoning/confidenceEngine.js";
+
+import {
+  collectMetricsFromContext,
+  recordQueryMetrics,
+} from "../telemetry/metricsCollector.js";
+
+import {
+  recordPlannerPlan,
+} from "../telemetry/plannerStatistics.js";
+
+const STATUS_THRESHOLDS = Object.freeze({
+  supported: 0.75,
+  partial: 0.45,
 });
 
-function normalizeQuestion(value = "") {
-  const question = String(value)
-    .replace(/\u0000/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  if (question.length < 3) {
-    throw new Error("A valid question is required.");
+function buildRecommendations({
+  truthStatus,
+  contradictions = [],
+}) {
+  if (
+    truthStatus ===
+    TRUTH_STATUS.CONFLICTING
+  ) {
+    return [
+      "Human review required.",
+      `${contradictions.length} contradiction${
+        contradictions.length === 1
+          ? ""
+          : "s"
+      } detected across evidence sources.`,
+    ];
   }
 
-  if (question.length > 4000) {
-    throw new Error("Question cannot exceed 4,000 characters.");
+  if (
+    truthStatus ===
+    TRUTH_STATUS.INSUFFICIENT_EVIDENCE
+  ) {
+    return [
+      "Gather additional documentary or graph evidence before asserting this claim.",
+    ];
   }
 
-  return question;
-}
-
-function buildExplainability(evidence = [], conflicts = []) {
-  const reasons = [];
-
-  if (!evidence.length) {
-    reasons.push("No relevant evidence was found in the permitted knowledge library.");
-
-    return reasons;
+  if (
+    truthStatus ===
+    TRUTH_STATUS.PARTIALLY_SUPPORTED
+  ) {
+    return [
+      "Treat as provisional; seek corroborating sources.",
+    ];
   }
 
-  const officialEvidence = evidence.filter((item) =>
-    [
-      "government",
-      "un",
-      "standard_body",
-      "registry",
-      "international_organization",
-    ].includes(
-      String(item.document?.sourceClass || "").toLowerCase()
-    )
-  );
-
-  const verifiedEvidence = evidence.filter((item) =>
-    ["verified", "published"].includes(
-      String(item.document?.status || "").toLowerCase()
-    )
-  );
-
-  const recentEvidence = evidence.filter((item) => {
-    const dateValue =
-      item.document?.lastVerifiedAt ||
-      item.document?.effectiveDate ||
-      item.document?.publicationDate;
-
-    if (!dateValue) {
-      return false;
-    }
-
-    const date = new Date(dateValue);
-
-    if (Number.isNaN(date.getTime())) {
-      return false;
-    }
-
-    const ageInDays =
-      (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24);
-
-    return ageInDays <= 1095;
-  });
-
-  if (officialEvidence.length > 0) {
-    reasons.push(
-      `${officialEvidence.length} authoritative source${
-        officialEvidence.length === 1 ? "" : "s"
-      } supported the result.`
-    );
-  }
-
-  if (verifiedEvidence.length > 0) {
-    reasons.push(
-      `${verifiedEvidence.length} verified or published source${
-        verifiedEvidence.length === 1 ? "" : "s"
-      } were used.`
-    );
-  }
-
- if (recentEvidence.length > 0) {
-  reasons.push(
-    `${recentEvidence.length} source${
-      recentEvidence.length === 1 ? "" : "s"
-    } ${
-      recentEvidence.length === 1 ? "was" : "were"
-    } published, effective, or verified within the last three years.`
-  );
-}
-
-  if (conflicts.length === 0) {
-    reasons.push("No direct numeric conflicts were detected.");
-  } else {
-    reasons.push(
-      `${conflicts.length} potential conflict${
-        conflicts.length === 1 ? "" : "s"
-      } were detected and reduced confidence.`
-    );
-  }
-
-  const bestEvidence = evidence[0];
-
-  if (bestEvidence) {
-    reasons.push(
-      `The highest-ranked evidence had an evidence score of ${Math.round(
-        Number(bestEvidence.evidenceScore || 0) * 100
-      )}%.`
-    );
-  }
-
-  return reasons;
-}
-
-function buildEvidenceSummary(evidence = []) {
-  const uniqueDocumentIds = new Set(
-    evidence.map((item) => String(item.documentId))
-  );
-
-  const sourceClassCounts = evidence.reduce((counts, item) => {
-    const sourceClass =
-      String(item.document?.sourceClass || "other")
-        .trim()
-        .toLowerCase() || "other";
-
-    counts[sourceClass] = (counts[sourceClass] || 0) + 1;
-
-    return counts;
-  }, {});
-
-  const countries = [
-    ...new Set(
-      evidence
-        .map((item) => String(item.document?.country || "").trim())
-        .filter(Boolean)
-    ),
+  return [
+    "Evidence is consistent enough for a supported statement.",
   ];
-
-  return {
-    evidenceCount: evidence.length,
-    uniqueDocumentCount: uniqueDocumentIds.size,
-    sourceClassCounts,
-    countries,
-    highestEvidenceScore: evidence.length
-      ? Number(evidence[0].evidenceScore || 0)
-      : 0,
-    averageEvidenceScore: evidence.length
-      ? evidence.reduce(
-          (sum, item) => sum + Number(item.evidenceScore || 0),
-          0
-        ) / evidence.length
-      : 0,
-  };
 }
 
-function resolveTruthStatus({
-  evidence,
-  confidence,
-  conflicts,
-}) {
-  if (!evidence.length) {
-    return "insufficient_evidence";
-  }
-
-  if (conflicts.length > 0 && confidence.score < 0.62) {
-    return "conflicted";
-  }
-
-  if (confidence.score >= 0.78) {
-    return "strong";
-  }
-
-  if (confidence.score >= 0.52) {
-    return "partial";
-  }
-
-  return "weak";
-}
-
-export async function buildTruthPackage({
-  question,
-  user,
-  retrievalLimit = DEFAULT_OPTIONS.retrievalLimit,
-  evidenceLimit = DEFAULT_OPTIONS.evidenceLimit,
-  minimumSemanticScore =
-    DEFAULT_OPTIONS.minimumSemanticScore,
-  maximumCitations =
-    DEFAULT_OPTIONS.maximumCitations,
-  maximumChunksPerDocument =
-    DEFAULT_OPTIONS.maximumChunksPerDocument,
-  maximumDocuments =
-    DEFAULT_OPTIONS.maximumDocuments,
-}) {
-  const startedAt = Date.now();
-  const cleanedQuestion = normalizeQuestion(question);
-
-  /*
-   * STEP 1: Permission-aware semantic retrieval
-   */
-  const retrieval = await semanticRetrieve({
-    question: cleanedQuestion,
-    user,
-    limit: retrievalLimit,
-    minimumScore: minimumSemanticScore,
-  });
-
-  /*
-   * STEP 2: Rank evidence using authority, verification,
-   * freshness, metadata, and content quality.
-   */
-  const ranking = rankEvidence(retrieval.results, {
-  /*
-   * Rank the wider retrieval set first. The clusterer will
-   * then reduce document dominance and select the final set.
-   */
-  limit: Math.max(
-    evidenceLimit,
-    retrievalLimit
-  ),
-});
-/*
- * STEP 3: Group evidence by source document and prevent
- * one document from dominating the final truth package.
+/**
+ * Map reasoning pipeline output → truth result.
+ *
+ * @param {object} reasoning
+ * @returns {object}
  */
-const clustering = clusterEvidence(
-  ranking.evidence,
-  {
-    maximumChunksPerDocument,
-    maximumDocuments,
-  }
-);
+export function buildTruthResult(
+  reasoning = {},
+) {
+  const evidence = Array.isArray(
+    reasoning.evidence,
+  )
+    ? reasoning.evidence
+    : [];
 
-/*
- * Preserve the existing evidenceLimit contract.
- * Clustering may return several chunks per document, but the
- * final truth package remains capped at evidenceLimit items.
- */
-const clusteredEvidence =
-  clustering.flattenedEvidence.slice(
-    0,
-    evidenceLimit
+  const contradictions = Array.isArray(
+    reasoning.contradictions,
+  )
+    ? reasoning.contradictions
+    : [];
+
+  const confidence =
+    reasoning.confidence || {};
+
+  const explanationPacket =
+    reasoning.explanation || {};
+
+  const conflictingEvidence = [];
+  const conflictingIds = new Set();
+
+  for (const contradiction of contradictions) {
+    for (const record of (
+      contradiction.conflictingEvidence ||
+      []
+    )) {
+      if (
+        record?.evidenceId &&
+        !conflictingIds.has(
+          record.evidenceId,
+        )
+      ) {
+        conflictingIds.add(
+          record.evidenceId,
+        );
+        conflictingEvidence.push(record);
+      }
+    }
+  }
+
+  const supportingEvidence = evidence.filter(
+    (record) =>
+      !conflictingIds.has(
+        record.evidenceId,
+      ),
   );
 
-  /*
-   * STEP 3: Detect disagreements across separate documents.
-   */
-  const conflictResult =
-  detectConflicts(clusteredEvidence);
+  const inferredEvidence = evidence.filter(
+    (record) =>
+      record.inferred === true ||
+      record.sourceType ===
+        EVIDENCE_SOURCE.INFERENCE,
+  );
 
-  /*
-   * STEP 4: Calculate measurable confidence.
-   */
-  const confidence = calculateConfidence({
-  evidence: clusteredEvidence,
-  conflicts: conflictResult.conflicts,
-});
+  const ontologyEvidence = evidence.filter(
+    (record) =>
+      record.ontology === true ||
+      record.sourceType ===
+        EVIDENCE_SOURCE.ONTOLOGY,
+  );
 
-  /*
-   * STEP 5: Build safe, user-facing citations.
-   */
-  const citationResult = buildCitations(
-  clusteredEvidence,
-  {
-    maximumCitations,
+  const overall = Number(
+    confidence.overallConfidence,
+  );
+
+  const safeConfidence =
+    Number.isFinite(overall) ? overall : 0;
+
+  let truthStatus =
+    TRUTH_STATUS.INSUFFICIENT_EVIDENCE;
+
+  if (evidence.length === 0) {
+    truthStatus =
+      TRUTH_STATUS.INSUFFICIENT_EVIDENCE;
+  } else if (contradictions.length > 0) {
+    truthStatus =
+      TRUTH_STATUS.CONFLICTING;
+  } else if (
+    safeConfidence >=
+    STATUS_THRESHOLDS.supported
+  ) {
+    truthStatus = TRUTH_STATUS.SUPPORTED;
+  } else if (
+    safeConfidence >=
+    STATUS_THRESHOLDS.partial
+  ) {
+    truthStatus =
+      TRUTH_STATUS.PARTIALLY_SUPPORTED;
   }
-);
 
-  const truthStatus = resolveTruthStatus({
-  evidence: clusteredEvidence,
-  confidence,
-  conflicts: conflictResult.conflicts,
-});
-
-  const explainability = buildExplainability(
-  clusteredEvidence,
-  conflictResult.conflicts
-);
+  const explanation = Array.isArray(
+    explanationPacket.explanation,
+  )
+    ? explanationPacket.explanation
+    : [];
 
   return {
-    question: cleanedQuestion,
-
     truthStatus,
-
-    confidence,
-
-    evidenceSummary: buildEvidenceSummary(
-  clusteredEvidence
-),
-
-evidence: clusteredEvidence,
-
-    conflicts: conflictResult.conflicts,
-
-    citations: citationResult.citations,
-
-    explainability,
-
-    statistics: {
-  retrieval: retrieval.statistics,
-  ranking: ranking.statistics,
-
-  clustering: {
-    ...clustering.statistics,
-    selectedEvidenceCount:
-      clusteredEvidence.length,
-  },
-
-  conflicts: conflictResult.statistics,
-  citations: citationResult.statistics,
-  totalLatencyMs: Date.now() - startedAt,
-},
-
+    confidence: safeConfidence,
+    supportingEvidence,
+    conflictingEvidence,
+    inferredEvidence,
+    ontologyEvidence,
+    explanation,
+    explanationSummary:
+      explanationPacket.summary || null,
+    reasoningPath:
+      explanationPacket.reasoningPath ||
+      [],
+    recommendations: buildRecommendations({
+      truthStatus,
+      contradictions,
+    }),
+    confidenceBreakdown: confidence,
+    contradictions,
   };
 }
+
+/**
+ * @param {object|import("../reasoning/reasoningContext.js").ReasoningContext} input
+ * @param {object} [options]
+ * @returns {Promise<object>}
+ */
+export async function evaluateTruth(
+  input = {},
+  options = {},
+) {
+  const startedAt = Date.now();
+
+  const reasoningContext =
+    await runReasoningPipeline(
+      input,
+      options,
+    );
+
+  reasoningContext.beginStage(
+    "Truth Evaluation",
+  );
+
+  const result =
+    buildTruthResult(reasoningContext);
+
+  reasoningContext.truthResult = result;
+  reasoningContext.truthStatus =
+    result.truthStatus;
+
+  const truthEntry =
+    reasoningContext.endStage(
+      "Truth Evaluation",
+      {
+        truthStatus: result.truthStatus,
+        confidence: result.confidence,
+        supportingCount:
+          result.supportingEvidence
+            ?.length ?? 0,
+        conflictingCount:
+          result.conflictingEvidence
+            ?.length ?? 0,
+      },
+    );
+
+  reasoningContext.setMetric(
+    "truthTime",
+    truthEntry.duration,
+  );
+  reasoningContext.markTotal(startedAt);
+
+  if (reasoningContext.executionPlan) {
+    recordPlannerPlan(
+      reasoningContext.executionPlan,
+    );
+  }
+
+  const telemetry = recordQueryMetrics(
+    collectMetricsFromContext(
+      reasoningContext,
+      result,
+    ),
+  );
+
+  return {
+    question:
+      reasoningContext.question || null,
+    ...result,
+    executionPlan:
+      reasoningContext.executionPlan
+        ?.toJSON
+        ? reasoningContext.executionPlan.toJSON()
+        : reasoningContext.executionPlan,
+    executionTrace:
+      reasoningContext.executionTrace,
+    metrics: {
+      ...reasoningContext.metrics,
+    },
+    telemetry,
+    context: reasoningContext,
+  };
+}
+
+/*
+ * Compatibility aliases — keep older call sites
+ * working while the pipeline owns the logic.
+ */
+export function detectConflicts(evidence = []) {
+  const contradictions =
+    detectContradictions(evidence);
+
+  return {
+    hasConflicts: contradictions.length > 0,
+    conflicts: contradictions,
+    conflictingEvidenceIds: [
+      ...new Set(
+        contradictions.flatMap((item) =>
+          [
+            ...(item.supportingEvidence ||
+              []),
+            ...(item.conflictingEvidence ||
+              []),
+          ].map(
+            (record) => record.evidenceId,
+          ),
+        ),
+      ),
+    ],
+  };
+}
+
+export function scoreEvidence(
+  evidence = [],
+  conflictResult = null,
+) {
+  const contradictions =
+    conflictResult?.conflicts ||
+    detectContradictions(evidence);
+
+  const confidence =
+    calculateConfidence({
+      evidence,
+      contradictions,
+    });
+
+  return {
+    confidence:
+      confidence.overallConfidence,
+    ...confidence,
+    conflicts: contradictions,
+  };
+}
+
+export {
+  collectEvidence,
+  detectContradictions,
+  calculateConfidence,
+  TRUTH_STATUS,
+  EVIDENCE_SOURCE,
+};

@@ -1,0 +1,30 @@
+{
+  "version": "1.0.0",
+  "cases": [
+    {
+      "id": "def-green-hydrogen",
+      "question": "What is Green Hydrogen?",
+      "expectedStrategy": "ONTOLOGY",
+      "minConfidence": 0.5
+    },
+    {
+      "id": "rel-uae-green-hydrogen",
+      "question": "How is UAE related to Green Hydrogen?",
+      "expectedStrategy": "GRAPH",
+      "minConfidence": 0.5
+    },
+    {
+      "id": "class-clean-fuel",
+      "question": "Is Green Hydrogen a clean fuel?",
+      "expectedStrategy": "REASONING",
+      "minConfidence": 0.7,
+      "expectInference": true
+    },
+    {
+      "id": "compare-uae-saudi",
+      "question": "Compare UAE and Saudi hydrogen policies.",
+      "expectedStrategy": "COMPARISON",
+      "minConfidence": 0.5
+    }
+  ]
+}

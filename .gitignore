@@ -77,6 +77,28 @@ secrets/
 uploads/
 uploads/**
 
+# Binary / office documents — never commit corpora
+*.pdf
+*.docx
+*.doc
+*.xlsx
+*.xls
+*.pptx
+*.zip
+*.7z
+*.rar
+*.bin
+*.exe
+*.parquet
+*.sqlite
+*.db
+
+# Local debug / scratch outputs
+semantic-test-output.txt
+*.tmp
+tmp/
+temp/
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache

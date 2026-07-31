@@ -1,0 +1,21 @@
+{
+  "name": "renewable_targets",
+  "entities": [
+    { "canonicalSubject": "Solar PV", "entityType": "TECHNOLOGY" },
+    { "canonicalSubject": "Renewable Energy", "entityType": "CATEGORY" },
+    { "canonicalSubject": "Energy", "entityType": "CATEGORY" },
+    { "canonicalSubject": "United Arab Emirates", "entityType": "COUNTRY" }
+  ],
+  "relationships": [
+    { "subject": "Solar PV", "predicate": "IS_A", "object": "Renewable Energy" },
+    { "subject": "Renewable Energy", "predicate": "IS_A", "object": "Energy" },
+    { "subject": "United Arab Emirates", "predicate": "SUPPORTS", "object": "Solar PV" }
+  ],
+  "questions": [
+    {
+      "question": "Is Solar PV renewable energy?",
+      "expectedStrategy": "REASONING",
+      "expectedTruthStatus": "SUPPORTED"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+export const PROTECTED_CONCEPTS =
+  Object.freeze([
+    "research and development",
+    "research, development and innovation",
+    "carbon capture and storage",
+    "carbon capture, utilization and storage",
+    "carbon capture, utilisation and storage",
+    "monitoring, reporting and verification",
+    "measurement, reporting and verification",
+    "environmental, social and governance",
+    "law and order",
+    "supply and demand",
+    "health and safety",
+    "terms and conditions",
+    "loss and damage",
+    "energy and water",
+    "oil and gas",
+    "solar and wind",
+    "green hydrogen",
+    "energy storage",
+    "net zero",
+    "united arab emirates",
+  ]);
