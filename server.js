@@ -1269,9 +1269,39 @@ if (
 });
 app.post("/api/login", async (req, res) => {
   try {
-    let { email, password } = req.body;
+    const email = String(req.body?.email || "")
+      .toLowerCase()
+      .trim();
+    const password = String(req.body?.password || "");
 
-email = email.toLowerCase().trim();
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter email and password",
+      });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      console.error(
+        "Login misconfigured: JWT_SECRET is missing on the server.",
+      );
+      return res.status(500).json({
+        success: false,
+        message:
+          "Server auth is misconfigured (JWT_SECRET). Check Render environment variables.",
+      });
+    }
+
+    if (mongoose.connection.readyState !== 1) {
+      console.error(
+        "Login failed: MongoDB is not connected.",
+      );
+      return res.status(503).json({
+        success: false,
+        message:
+          "Database temporarily unavailable. Try again in a moment.",
+      });
+    }
 
     const user = await User.findOne({ email });
 
@@ -1282,7 +1312,21 @@ email = email.toLowerCase().trim();
       });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    if (!user.password) {
+      console.error(
+        `Login failed: user ${email} has no password hash.`,
+      );
+      return res.status(400).json({
+        success: false,
+        message:
+          "This account has no password set. Use Register or Forgot password.",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(
+      password,
+      user.password,
+    );
 
     if (!isMatch) {
       return res.status(400).json({
@@ -1299,7 +1343,7 @@ email = email.toLowerCase().trim();
         subscription: user.subscription,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
 
     res.json({
@@ -1317,7 +1361,7 @@ email = email.toLowerCase().trim();
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Login error:", error?.message || error);
 
     res.status(500).json({
       success: false,
