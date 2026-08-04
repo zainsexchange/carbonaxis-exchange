@@ -1,116 +1,75 @@
-const AUTHORITY_MATRIX = Object.freeze({
-  government: {
-    score: 100,
-    level: "Official",
-    stars: 5,
-    color: "green",
-    badge: "Government",
-    description:
-      "Official government publication.",
-  },
+import {
+  resolveSourceAuthorityScore,
+  SOURCE_AUTHORITY_SCORES,
+} from "../config/sourceAuthority.js";
 
-  un: {
-    score: 98,
-    level: "International",
-    stars: 5,
-    color: "green",
-    badge: "United Nations",
-    description:
-      "United Nations publication.",
-  },
+const LEVEL_BY_SCORE = Object.freeze([
+  { min: 95, level: "Official", stars: 5, color: "green" },
+  { min: 90, level: "Institutional", stars: 5, color: "green" },
+  { min: 80, level: "Research", stars: 4, color: "blue" },
+  { min: 70, level: "Industry", stars: 4, color: "blue" },
+  { min: 60, level: "Media", stars: 3, color: "orange" },
+  { min: 0, level: "Low Trust", stars: 2, color: "gray" },
+]);
 
-  standard_body: {
-    score: 96,
-    level: "Standards",
-    stars: 5,
-    color: "green",
-    badge: "Standards Body",
-    description:
-      "Recognized international standard.",
-  },
-
-  registry: {
-    score: 94,
-    level: "Registry",
-    stars: 5,
-    color: "green",
-    badge: "Certified Registry",
-    description:
-      "Verified environmental registry.",
-  },
-
-  international_organization: {
-    score: 92,
-    level: "Institution",
-    stars: 5,
-    color: "green",
-    badge: "International Organization",
-    description:
-      "Global institutional source.",
-  },
-
-  research: {
-    score: 82,
-    level: "Research",
-    stars: 4,
-    color: "blue",
-    badge: "Research",
-    description:
-      "Independent research publication.",
-  },
-
-  corporate: {
-    score: 78,
-    level: "Industry",
-    stars: 4,
-    color: "blue",
-    badge: "Corporate",
-    description:
-      "Industry publication.",
-  },
-
-  internal: {
-    score: 72,
-    level: "Internal",
-    stars: 3,
-    color: "yellow",
-    badge: "Internal Research",
-    description:
-      "Internal Carbon Brain document.",
-  },
-
-  customer: {
-    score: 60,
-    level: "Customer",
-    stars: 3,
-    color: "orange",
-    badge: "Customer",
-    description:
-      "Customer supplied information.",
-  },
-
-  other: {
-    score: 45,
-    level: "Unknown",
-    stars: 2,
-    color: "gray",
-    badge: "Other",
-    description:
-      "Unclassified source.",
-  },
+const BADGE_BY_CLASS = Object.freeze({
+  government: "Government",
+  un: "United Nations",
+  standard_body: "Standards Body",
+  registry: "Certified Registry",
+  international_organization: "International Organization",
+  research: "Research",
+  industry: "Industry",
+  corporate: "Corporate",
+  internal: "Internal Research",
+  customer: "Customer",
+  news: "News",
+  blog: "Blog",
+  other: "Other",
 });
 
+/**
+ * Resolve display + numeric authority for a knowledge document.
+ * Numeric sourceAuthorityScore (0–100) drives ranking.
+ */
 export function resolveAuthority(document = {}) {
-  const sourceClass = String(
-    document.sourceClass || "other"
-  )
+  const sourceClass = String(document.sourceClass || "other")
     .trim()
     .toLowerCase();
 
-  return (
-    AUTHORITY_MATRIX[sourceClass] ??
-    AUTHORITY_MATRIX.other
-  );
+  const score = resolveSourceAuthorityScore(document);
+  const band =
+    LEVEL_BY_SCORE.find((entry) => score >= entry.min) ||
+    LEVEL_BY_SCORE[LEVEL_BY_SCORE.length - 1];
+
+  return {
+    score,
+    level: band.level,
+    stars: band.stars,
+    color: band.color,
+    badge: BADGE_BY_CLASS[sourceClass] || BADGE_BY_CLASS.other,
+    description: `Source authority score ${score}/100.`,
+    sourceAuthorityScore: score,
+  };
 }
 
-export { AUTHORITY_MATRIX };
+/**
+ * Back-compat matrix for older callers that expect class → score.
+ */
+export const AUTHORITY_MATRIX = Object.freeze(
+  Object.fromEntries(
+    Object.entries(SOURCE_AUTHORITY_SCORES).map(([key, score]) => [
+      key,
+      {
+        score,
+        level: resolveAuthority({ sourceClass: key }).level,
+        stars: resolveAuthority({ sourceClass: key }).stars,
+        color: resolveAuthority({ sourceClass: key }).color,
+        badge: BADGE_BY_CLASS[key] || BADGE_BY_CLASS.other,
+        description: `Source authority score ${score}/100.`,
+      },
+    ])
+  )
+);
+
+export default resolveAuthority;

@@ -1,13 +1,21 @@
+import {
+  resolveSourceAuthorityUnitScore,
+  resolveCurationTier,
+} from "../config/sourceAuthority.js";
+
 const SOURCE_QUALITY_SCORES = Object.freeze({
   government: 1.0,
   un: 0.98,
   standard_body: 0.95,
-  registry: 0.93,
-  international_organization: 0.9,
-  research: 0.78,
+  registry: 0.94,
+  international_organization: 0.96,
+  research: 0.9,
+  industry: 0.8,
   internal: 0.72,
-  customer: 0.65,
-  other: 0.5,
+  customer: 0.7,
+  news: 0.6,
+  blog: 0.3,
+  other: 0.45,
 });
 
 const STATUS_SCORES = Object.freeze({
@@ -22,9 +30,13 @@ const STATUS_SCORES = Object.freeze({
 });
 
 const DEFAULT_WEIGHTS = Object.freeze({
-  semanticSimilarity: 0.45,
-  sourceQuality: 0.2,
-  verificationStatus: 0.15,
+  /*
+   * Source authority is deliberately heavy so an official ministry
+   * document outranks a consultancy report at equal semantic score.
+   */
+  semanticSimilarity: 0.38,
+  sourceQuality: 0.3,
+  verificationStatus: 0.12,
   freshness: 0.1,
   metadataQuality: 0.05,
   contentQuality: 0.05,
@@ -325,9 +337,16 @@ function calculateContentQuality(item = {}) {
 }
 
 function resolveSourceQuality(document = {}) {
-  const sourceClass = normalizeEnum(document.sourceClass);
+  /*
+   * Prefer persisted / resolved sourceAuthorityScore (0–100 → 0–1).
+   * Soft boost for Tier-1 curated official docs.
+   */
+  const authorityUnit = resolveSourceAuthorityUnitScore(document || {});
+  const curationTier = resolveCurationTier(document || {});
+  const tierBoost =
+    curationTier === 1 ? 0.03 : curationTier === 2 ? 0.015 : 0;
 
-  return SOURCE_QUALITY_SCORES[sourceClass] ?? 0.5;
+  return clamp(authorityUnit + tierBoost);
 }
 
 function resolveVerificationStatus(document = {}) {
@@ -447,7 +466,12 @@ const scopedResults = countryScope.results;
       ...item,
 
       evidenceScore: ranking.evidenceScore,
-      evidenceSignals: ranking.signals,
+      evidenceSignals: {
+        ...ranking.signals,
+        sourceAuthorityScore:
+          resolveSourceAuthorityUnitScore(item.document) * 100,
+        curationTier: resolveCurationTier(item.document),
+      },
     });
   }
 

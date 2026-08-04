@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carbon Brain Admin | Knowledge Library</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <script>
+    const __adminUser = JSON.parse(localStorage.getItem("adminUser") || "{}");
+    const __adminToken = localStorage.getItem("adminToken");
+    if (!__adminToken || __adminUser.role !== "admin") {
+      window.location.href = "admin-login.html?next=admin-knowledge-library.html";
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #06110e;
+      --panel: #0d1c18;
+      --line: rgba(0, 229, 176, 0.22);
+      --text: #e9fff9;
+      --muted: rgba(233, 255, 249, 0.58);
+      --accent: #00e5b0;
+      --warn: #ffc857;
+      --danger: #ff8f8f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, sans-serif;
+      background: radial-gradient(circle at top, #0d241e 0%, var(--bg) 45%);
+      color: var(--text);
+    }
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 28px 18px 72px; }
+    a { color: var(--accent); }
+    h1 { margin: 0 0 6px; font-size: clamp(1.7rem, 3vw, 2.4rem); color: var(--accent); }
+    .meta { color: var(--muted); margin: 0 0 18px; }
+    .nav a { margin-right: 14px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .card, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .card h3, .panel h2 {
+      margin: 0 0 10px;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .card .value { font-size: 1.9rem; font-weight: 700; color: #fff; }
+    .card .sub { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .panel { margin-bottom: 16px; }
+    .panel p, .panel li { color: rgba(233,255,249,.8); font-size: 14px; line-height: 1.5; }
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    input, select, button {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: #06110e;
+      color: #fff;
+      padding: 9px 10px;
+      font: inherit;
+    }
+    button {
+      background: var(--accent);
+      color: #04241c;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid rgba(0,229,176,.35);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td {
+      text-align: left;
+      padding: 9px 8px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      vertical-align: top;
+    }
+    th { color: var(--muted); font-weight: 600; }
+    tr:hover td { background: rgba(0,229,176,.04); cursor: pointer; }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(0,229,176,.12);
+      color: var(--accent);
+      font-size: 11px;
+    }
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .bar > i {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, #00e5b0, #3dffc5);
+      width: 0;
+    }
+    .heat {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+    }
+    .heat-item {
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(0,0,0,.18);
+    }
+    .timeline {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+    .tl-year {
+      min-width: 160px;
+      border-left: 2px solid rgba(0,229,176,.35);
+      padding-left: 10px;
+    }
+    .chain {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .chain .node {
+      border: 1px solid rgba(0,229,176,.3);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: rgba(0,229,176,.06);
+      max-width: 220px;
+    }
+    .arrow { color: var(--muted); }
+    .msg { color: var(--muted); font-size: 13px; margin: 8px 0; }
+    .msg.err { color: var(--danger); }
+    .msg.ok { color: var(--accent); }
+    .two {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 980px) {
+      .two { grid-template-columns: 1fr; }
+    }
+    .split { display: flex; gap: 8px; }
+    .split > * { flex: 1; }
+    .sug-high { color: var(--warn); }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 8px;
+    }
+    .detail-grid div {
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: rgba(0,0,0,.16);
+    }
+    .detail-grid span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <p class="meta">Carbon Brain Admin</p>
+      <h1>Knowledge Library</h1>
+      <p class="meta">Enterprise knowledge operations · live Mongo data · does not change the RAG ask engine.</p>
+      <div class="nav">
+        <a href="/admin.html">← Admin home</a>
+        <a href="/admin-carbon-brain-library.html">Knowledge Upload</a>
+        <a href="/intelligence-center.html">Intelligence Center</a>
+        <a href="/carbon-brain.html">Executive Workspace</a>
+      </div>
+      <p class="msg" id="bootMsg">Loading dashboard…</p>
+    </header>
+
+    <!-- Phase 1 -->
+    <section class="grid" id="actionCards"></section>
+
+    <div class="two">
+      <section class="panel">
+        <h2>Authorities</h2>
+        <div id="authoritySplit" class="msg">—</div>
+      </section>
+      <section class="panel">
+        <h2>Country coverage</h2>
+        <div id="coverageMini" class="heat"></div>
+      </section>
+    </div>
+
+    <!-- Phase 2 -->
+    <section class="panel">
+      <h2>Document Explorer</h2>
+      <div class="filters">
+        <input id="fQ" placeholder="Search title / authority" />
+        <input id="fCountry" placeholder="Country" />
+        <input id="fAuthority" placeholder="Authority" />
+        <input id="fSector" placeholder="Sector" />
+        <input id="fYear" placeholder="Year" />
+        <select id="fStatus">
+          <option value="">Status</option>
+          <option>draft</option>
+          <option>pending_review</option>
+          <option>verified</option>
+          <option>published</option>
+          <option>failed</option>
+          <option>superseded</option>
+          <option>archived</option>
+        </select>
+        <select id="fSource">
+          <option value="">Source</option>
+          <option value="government">government</option>
+          <option value="un">un</option>
+          <option value="international_organization">international_organization</option>
+          <option value="standard_body">standard_body</option>
+          <option value="registry">registry</option>
+          <option value="research">research</option>
+          <option value="other">other</option>
+        </select>
+        <input id="fLanguage" placeholder="Language" />
+        <select id="fVisibility">
+          <option value="">Visibility</option>
+          <option>public</option>
+          <option>internal</option>
+          <option>private</option>
+        </select>
+        <button type="button" id="btnSearch">Search</button>
+        <button type="button" class="secondary" id="btnReset">Reset</button>
+      </div>
+      <div class="msg" id="explorerMsg"></div>
+      <div style="overflow:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Country</th>
+              <th>Authority</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Quality</th>
+              <th>Last Verified</th>
+              <th>Version</th>
+            </tr>
+          </thead>
+          <tbody id="explorerBody">
+            <tr><td colspan="8">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="two">
+      <!-- Phase 3 + 5 -->
+      <section class="panel">
+        <h2>Quality Score · Metadata</h2>
+        <div class="msg" id="detailMsg">Select a document from the explorer.</div>
+        <div id="detailPanel" hidden>
+          <div class="value" id="detailTitle" style="font-size:1.2rem;font-weight:700;margin-bottom:8px;"></div>
+          <div class="card" style="margin-bottom:12px;">
+            <h3>Quality Score</h3>
+            <div class="value" id="detailQuality">—</div>
+            <div class="bar"><i id="detailQualityBar"></i></div>
+            <div class="sub" id="detailQualityBreak"></div>
+          </div>
+          <div class="detail-grid" id="detailMeta"></div>
+        </div>
+      </section>
+
+      <!-- Phase 4 -->
+      <section class="panel">
+        <h2>Relationship Graph</h2>
+        <div class="msg" id="graphMsg">Select a document to inspect relationships.</div>
+        <div id="graphPanel" hidden>
+          <div class="chain" id="graphChain"></div>
+          <p class="meta" style="margin-top:12px;">Supersedes</p>
+          <div id="graphSupersedes" class="msg">—</div>
+          <p class="meta">Superseded by</p>
+          <div id="graphSupersededBy" class="msg">—</div>
+          <p class="meta">Similar documents</p>
+          <div id="graphSimilar" class="msg">—</div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Phase 6 -->
+    <section class="panel">
+      <h2>Knowledge Health</h2>
+      <div class="grid" id="healthCards"></div>
+      <ul id="healthIssues"></ul>
+    </section>
+
+    <!-- Phase 7 -->
+    <section class="panel">
+      <h2>Suggestions</h2>
+      <ul id="suggestions"></ul>
+    </section>
+
+    <!-- Phase 8 -->
+    <section class="panel">
+      <h2>Knowledge Timeline</h2>
+      <div class="timeline" id="timeline"></div>
+    </section>
+
+    <!-- Phase 9 -->
+    <section class="panel">
+      <h2>Country Heat Map</h2>
+      <div class="heat" id="heatMap"></div>
+    </section>
+
+    <!-- Phase 10 -->
+    <section class="panel">
+      <h2>Authority Ranking</h2>
+      <div style="overflow:auto;">
+        <table>
+          <thead>
+            <tr><th>Authority</th><th>Docs</th><th>Source class</th></tr>
+          </thead>
+          <tbody id="authorityRank"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const token = localStorage.getItem("adminToken");
+    const API_BASE = (window.API && window.API.BASE) || "http://localhost:5000/api";
+    const LIBRARY = API_BASE + "/intelligence/library";
+
+    function authHeaders() {
+      return { Authorization: "Bearer " + token };
+    }
+
+    function fmtDate(value) {
+      if (!value) return "—";
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return "—";
+      return d.toISOString().slice(0, 10);
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    async function readJson(res) {
+      const text = await res.text();
+      const trimmed = text.trim();
+      if (trimmed.startsWith("<")) {
+        throw new Error("API returned HTML. Deploy latest Render backend for /api/intelligence/library/dashboard.");
+      }
+      return JSON.parse(text);
+    }
+
+    function renderActionCards(dashboard) {
+      const a = dashboard.actionable || {};
+      const t = dashboard.totals || {};
+      const auth = dashboard.authorities || {};
+      const health = dashboard.health || {};
+      const cards = [
+        {
+          title: "Documents",
+          value: t.documents ?? 0,
+          sub:
+            "+" + (a.addedThisWeek || 0) + " this week<br>" +
+            (a.awaitingReview || 0) + " awaiting review<br>" +
+            (a.outdated || 0) + " outdated",
+        },
+        {
+          title: "Authorities",
+          value: auth.total ?? 0,
+          sub:
+            "Government " + (auth.government || 0) + "<br>" +
+            "International " + (auth.international || 0),
+        },
+        {
+          title: "Chunks",
+          value: t.knowledgeChunks ?? 0,
+          sub: "Embeddings " + (t.embeddings || 0),
+        },
+        {
+          title: "Knowledge Health",
+          value: (health.overall ?? 0) + "%",
+          sub: (a.failedEmbeddings || 0) + " embedding failures",
+        },
+      ];
+      document.getElementById("actionCards").innerHTML = cards
+        .map(
+          (c) =>
+            '<article class="card"><h3>' +
+            escapeHtml(c.title) +
+            '</h3><div class="value">' +
+            escapeHtml(String(c.value)) +
+            '</div><div class="sub">' +
+            c.sub +
+            "</div></article>"
+        )
+        .join("");
+
+      document.getElementById("authoritySplit").innerHTML =
+        "<p><strong>Government:</strong> " +
+        (auth.government || 0) +
+        "</p><p><strong>International:</strong> " +
+        (auth.international || 0) +
+        "</p>";
+    }
+
+    function renderCoverage(rows) {
+      const html = (rows || [])
+        .map(
+          (row) =>
+            '<div class="heat-item"><strong>' +
+            escapeHtml((row.flag || "") + " " + row.country) +
+            '</strong><div class="value" style="font-size:1.3rem">' +
+            row.percent +
+            '%</div><div class="sub">' +
+            row.count +
+            " / " +
+            row.target +
+            '</div><div class="bar"><i style="width:' +
+            row.percent +
+            '%"></i></div></div>'
+        )
+        .join("");
+      document.getElementById("coverageMini").innerHTML = html || "—";
+      document.getElementById("heatMap").innerHTML = html || "—";
+    }
+
+    function renderHealth(health) {
+      const cards = [
+        ["Coverage", (health.coverage ?? 0) + "%"],
+        ["Metadata", (health.metadata ?? 0) + "%"],
+        ["Embeddings", (health.embeddings ?? 0) + "%"],
+        ["Relationships", (health.relationships ?? 0) + "%"],
+        ["Broken refs", health.brokenLinks ?? 0],
+        ["Duplicates", health.duplicates ?? 0],
+      ];
+      document.getElementById("healthCards").innerHTML = cards
+        .map(
+          ([t, v]) =>
+            '<article class="card"><h3>' +
+            t +
+            '</h3><div class="value" style="font-size:1.4rem">' +
+            escapeHtml(String(v)) +
+            "</div></article>"
+        )
+        .join("");
+
+      const issues = [];
+      if ((health.missingThemes || []).length) {
+        issues.push(
+          "Missing theme signals: " + health.missingThemes.join(", ")
+        );
+      }
+      if (health.failedEmbeddings) {
+        issues.push(health.failedEmbeddings + " documents with failed/missing embeddings.");
+      }
+      if (health.brokenLinks) {
+        issues.push(health.brokenLinks + " broken source URL references.");
+      }
+      if (health.duplicates) {
+        issues.push(health.duplicates + " duplicate/superseded markers.");
+      }
+      if (!issues.length) issues.push("No critical health explanations yet — keep curating Tier 1 docs.");
+      document.getElementById("healthIssues").innerHTML = issues
+        .map((item) => "<li>" + escapeHtml(item) + "</li>")
+        .join("");
+    }
+
+    function renderSuggestions(list) {
+      document.getElementById("suggestions").innerHTML = (list || [])
+        .map(
+          (item) =>
+            '<li class="' +
+            (item.level === "high" ? "sug-high" : "") +
+            '">' +
+            escapeHtml(item.text) +
+            "</li>"
+        )
+        .join("") || "<li>No suggestions right now.</li>";
+    }
+
+    function renderTimeline(rows) {
+      document.getElementById("timeline").innerHTML = (rows || [])
+        .map(
+          (row) =>
+            '<div class="tl-year"><strong>' +
+            row.year +
+            '</strong><div class="sub">' +
+            row.count +
+            " docs</div>" +
+            (row.documents || [])
+              .map(
+                (d) =>
+                  "<div style='margin-top:6px;font-size:12px;'>" +
+                  escapeHtml(d.title) +
+                  "</div>"
+              )
+              .join("") +
+            "</div>"
+        )
+        .join("") || '<div class="msg">No dated documents yet.</div>';
+    }
+
+    function renderAuthorityRank(rows) {
+      document.getElementById("authorityRank").innerHTML = (rows || [])
+        .map(
+          (row) =>
+            "<tr><td>" +
+            escapeHtml(row.name) +
+            "</td><td>" +
+            row.count +
+            "</td><td><span class='pill'>" +
+            escapeHtml(row.sourceClass || "") +
+            "</span></td></tr>"
+        )
+        .join("") || "<tr><td colspan='3'>No authorities yet.</td></tr>";
+    }
+
+    function renderExplorer(docs) {
+      const body = document.getElementById("explorerBody");
+      if (!docs.length) {
+        body.innerHTML = "<tr><td colspan='8'>No documents match filters.</td></tr>";
+        return;
+      }
+      body.innerHTML = docs
+        .map(
+          (doc) =>
+            "<tr data-id='" +
+            escapeHtml(doc.id) +
+            "'><td><strong>" +
+            escapeHtml(doc.title) +
+            "</strong></td><td>" +
+            escapeHtml(doc.country) +
+            "</td><td>" +
+            escapeHtml(doc.issuingAuthority || "—") +
+            "</td><td>" +
+            escapeHtml(doc.documentType) +
+            "</td><td><span class='pill'>" +
+            escapeHtml(doc.status) +
+            "</span></td><td>" +
+            (doc.qualityScore ?? "—") +
+            "</td><td>" +
+            fmtDate(doc.lastVerifiedAt) +
+            "</td><td>" +
+            (doc.version || 1) +
+            "</td></tr>"
+        )
+        .join("");
+    }
+
+    async function loadDetail(id) {
+      document.getElementById("detailMsg").textContent = "Loading…";
+      document.getElementById("graphMsg").textContent = "Loading…";
+      const res = await fetch(LIBRARY + "/documents/" + id, {
+        headers: authHeaders(),
+      });
+      const data = await readJson(res);
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Detail failed");
+      }
+      const doc = data.document;
+      document.getElementById("detailPanel").hidden = false;
+      document.getElementById("graphPanel").hidden = false;
+      document.getElementById("detailMsg").textContent = "";
+      document.getElementById("graphMsg").textContent = "";
+      document.getElementById("detailTitle").textContent = doc.title;
+      document.getElementById("detailQuality").textContent =
+        (doc.qualityScore ?? 0) + " / 100";
+      document.getElementById("detailQualityBar").style.width =
+        Math.min(100, Number(doc.qualityScore || 0)) + "%";
+      const br = doc.qualityBreakdown || {};
+      document.getElementById("detailQualityBreak").innerHTML = Object.keys(br)
+        .map((k) => escapeHtml(k) + ": " + br[k])
+        .join(" · ");
+
+      const meta = [
+        ["Authority", doc.issuingAuthority],
+        ["Country", doc.country],
+        ["Sector", (doc.sectors || []).join(", ") || "—"],
+        ["Technology", (doc.technologies || []).join(", ") || "—"],
+        ["Topics", (doc.topics || []).join(", ") || "—"],
+        ["Publication Date", fmtDate(doc.publicationDate)],
+        ["Effective Date", fmtDate(doc.effectiveDate)],
+        ["Language", doc.language],
+        ["Version", doc.version],
+        ["Source URL", doc.sourceUrl || doc.officialUrl || "—"],
+        ["Status", doc.status],
+        ["Authority Score", doc.sourceAuthorityScore],
+        ["Visibility", doc.visibility],
+        ["Chunks / Embeddings", (doc.chunkCount || 0) + " / " + (doc.embeddingCount || 0)],
+      ];
+      document.getElementById("detailMeta").innerHTML = meta
+        .map(
+          ([k, v]) =>
+            "<div><span>" +
+            escapeHtml(k) +
+            "</span><strong>" +
+            escapeHtml(String(v ?? "—")) +
+            "</strong></div>"
+        )
+        .join("");
+
+      const rel = doc.relationships || {};
+      const chain = rel.chain || [];
+      document.getElementById("graphChain").innerHTML = chain
+        .map(
+          (node, idx) =>
+            (idx ? '<span class="arrow">↓</span>' : "") +
+            '<div class="node"><strong>' +
+            escapeHtml(node.title) +
+            "</strong><div class='sub'>" +
+            escapeHtml(node.status) +
+            "</div></div>"
+        )
+        .join("") || "No supersedes chain yet.";
+
+      document.getElementById("graphSupersedes").textContent = rel.supersedes
+        ? rel.supersedes.title
+        : "None";
+      document.getElementById("graphSupersededBy").innerHTML = (rel.supersededBy || [])
+        .map((item) => escapeHtml(item.title))
+        .join("<br>") || "None";
+      document.getElementById("graphSimilar").innerHTML = (rel.similar || [])
+        .map((item) => escapeHtml(item.title))
+        .join("<br>") || "None";
+    }
+
+    async function loadExplorer() {
+      const params = new URLSearchParams();
+      const map = {
+        q: "fQ",
+        country: "fCountry",
+        authority: "fAuthority",
+        sector: "fSector",
+        year: "fYear",
+        status: "fStatus",
+        source: "fSource",
+        language: "fLanguage",
+        visibility: "fVisibility",
+      };
+      Object.entries(map).forEach(([key, id]) => {
+        const value = document.getElementById(id).value.trim();
+        if (value) params.set(key, value);
+      });
+      params.set("limit", "150");
+      document.getElementById("explorerMsg").textContent = "Searching…";
+      const res = await fetch(LIBRARY + "/documents?" + params.toString(), {
+        headers: authHeaders(),
+      });
+      const data = await readJson(res);
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Explorer failed");
+      }
+      document.getElementById("explorerMsg").textContent =
+        data.count + " document(s)";
+      renderExplorer(data.documents || []);
+    }
+
+    async function boot() {
+      const bootMsg = document.getElementById("bootMsg");
+      try {
+        const res = await fetch(LIBRARY + "/dashboard", {
+          headers: authHeaders(),
+        });
+        const data = await readJson(res);
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || "Dashboard failed");
+        }
+        const d = data.dashboard;
+        renderActionCards(d);
+        renderCoverage(d.countryCoverage || []);
+        renderHealth(d.health || {});
+        renderSuggestions(d.suggestions || []);
+        renderTimeline(d.timeline || []);
+        renderAuthorityRank((d.authorities && d.authorities.top) || []);
+        renderExplorer(d.documents || []);
+        bootMsg.className = "msg ok";
+        bootMsg.textContent =
+          "Live Mongo dashboard · " +
+          (d.totals?.documents || 0) +
+          " docs · updated " +
+          fmtDate(d.updatedAt);
+      } catch (err) {
+        bootMsg.className = "msg err";
+        bootMsg.textContent = String(err.message || err);
+        document.getElementById("explorerBody").innerHTML =
+          "<tr><td colspan='8'>Could not load documents.</td></tr>";
+      }
+    }
+
+    document.getElementById("btnSearch").addEventListener("click", () => {
+      loadExplorer().catch((err) => {
+        document.getElementById("explorerMsg").textContent = String(
+          err.message || err
+        );
+      });
+    });
+    document.getElementById("btnReset").addEventListener("click", () => {
+      [
+        "fQ",
+        "fCountry",
+        "fAuthority",
+        "fSector",
+        "fYear",
+        "fStatus",
+        "fSource",
+        "fLanguage",
+        "fVisibility",
+      ].forEach((id) => {
+        document.getElementById(id).value = "";
+      });
+      loadExplorer().catch(() => {});
+    });
+    document.getElementById("explorerBody").addEventListener("click", (e) => {
+      const row = e.target.closest("tr[data-id]");
+      if (!row) return;
+      loadDetail(row.getAttribute("data-id")).catch((err) => {
+        document.getElementById("detailMsg").textContent = String(
+          err.message || err
+        );
+      });
+    });
+
+    boot();
+  </script>
+</body>
+</html>
