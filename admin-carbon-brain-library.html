@@ -234,6 +234,7 @@
     <section class="card">
       <h2>Uploaded documents</h2>
       <button type="button" class="secondary" id="refreshBtn">Refresh list</button>
+      <button type="button" id="promoteBtn">Publish official docs for answers</button>
       <div class="msg" id="listMsg"></div>
       <div style="overflow:auto; margin-top:12px;">
         <table>
@@ -339,6 +340,11 @@
               doc.status === "draft" ||
               doc.status === "failed" ||
               doc.status === "pending_review";
+            const canPublish =
+              doc.chunkCount > 0 &&
+              (doc.status === "pending_review" ||
+                doc.status === "verified" ||
+                (doc.status === "published" && doc.visibility !== "public"));
             return (
               "<tr>" +
               "<td><strong>" +
@@ -351,6 +357,8 @@
               "<td><span class='pill'>" +
               escapeHtml(doc.status) +
               "</span><br>" +
+              escapeHtml(doc.visibility || "") +
+              " · " +
               escapeHtml(doc.processingStage || "") +
               " · " +
               (doc.processingProgress || 0) +
@@ -367,6 +375,11 @@
                 ? "<button type='button' data-process='" +
                   doc.id +
                   "'>Process</button>"
+                : "") +
+              (canPublish
+                ? "<button type='button' data-publish='" +
+                  doc.id +
+                  "'>Publish</button>"
                 : "") +
               "</td>" +
               "</tr>"
@@ -388,6 +401,42 @@
     }
 
     document.getElementById("docsBody").addEventListener("click", async (e) => {
+      const publishBtn = e.target.closest("[data-publish]");
+      if (publishBtn) {
+        const id = publishBtn.getAttribute("data-publish");
+        publishBtn.disabled = true;
+        publishBtn.textContent = "Publishing…";
+        try {
+          const res = await fetch(LIBRARY_API + "/" + id, {
+            method: "PATCH",
+            headers: {
+              ...authHeaders(),
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              status: "published",
+              visibility: "public",
+              sourceClass: "government",
+            }),
+          });
+          const data = await readApiJson(res);
+          if (!res.ok || !data.success) {
+            throw new Error(data.message || "Publish failed");
+          }
+          setMsg(
+            document.getElementById("listMsg"),
+            "Published for answers · " + (data.document?.title || id),
+            "ok"
+          );
+          await loadDocuments();
+        } catch (err) {
+          setMsg(document.getElementById("listMsg"), String(err.message || err), "err");
+          publishBtn.disabled = false;
+          publishBtn.textContent = "Publish";
+        }
+        return;
+      }
+
       const btn = e.target.closest("[data-process]");
       if (!btn) return;
       const id = btn.getAttribute("data-process");
@@ -412,6 +461,29 @@
         setMsg(document.getElementById("listMsg"), String(err.message || err), "err");
         btn.disabled = false;
         btn.textContent = "Process";
+      }
+    });
+
+    document.getElementById("promoteBtn").addEventListener("click", async () => {
+      const btn = document.getElementById("promoteBtn");
+      const listMsg = document.getElementById("listMsg");
+      btn.disabled = true;
+      setMsg(listMsg, "Publishing official docs…");
+      try {
+        const res = await fetch(LIBRARY_API + "/promote-authoritative", {
+          method: "POST",
+          headers: authHeaders(),
+        });
+        const data = await readApiJson(res);
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || "Promote failed");
+        }
+        setMsg(listMsg, data.message, "ok");
+        await loadDocuments();
+      } catch (err) {
+        setMsg(listMsg, String(err.message || err), "err");
+      } finally {
+        btn.disabled = false;
       }
     });
 
