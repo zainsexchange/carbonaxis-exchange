@@ -267,6 +267,14 @@ app.post("/api/billing/webhook", express.raw({ type: "application/json" }), asyn
 
 app.use(express.json());
 
+/*
+ * Knowledge Library must mount BEFORE /api/intelligence so
+ * /api/intelligence/library/* is not swallowed by the ask router.
+ * Keep /api/library as a compatibility alias.
+ */
+app.use("/api/intelligence/library", libraryRoutes);
+app.use("/api/library", libraryRoutes);
+
 app.use("/api/intelligence", carbonBrainRoutes);
 
 resolveMongoUri(process.env.MONGO_URI)
@@ -2726,7 +2734,6 @@ app.get("/api/profile", authenticateToken, async (req, res) => {
     });
   }
 });
-app.use("/api/library", libraryRoutes);
 app.put("/api/profile", authenticateToken, async (req, res) => {
   try {
     const {
