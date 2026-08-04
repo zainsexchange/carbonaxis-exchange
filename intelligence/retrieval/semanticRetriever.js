@@ -258,19 +258,16 @@ export async function semanticRetrieve({
     },
 
     /*
-     * Public users should only receive published public documents.
-     * Admins may inspect internal and pending-review material.
+     * Answers only cite verified/published documents.
+     * pending_review stays out of Carbon Brain responses until promoted.
+     * Public users still need visibility:public + status:published.
      */
     {
       $match:
         normalizeRole(user?.role) === "admin"
           ? {
               "document.status": {
-                $in: [
-                  "pending_review",
-                  "verified",
-                  "published",
-                ],
+                $in: ["verified", "published"],
               },
             }
           : {
@@ -285,11 +282,7 @@ export async function semanticRetrieve({
                     user?.id || user?._id
                   ),
                   "document.status": {
-                    $in: [
-                      "pending_review",
-                      "verified",
-                      "published",
-                    ],
+                    $in: ["verified", "published"],
                   },
                 },
                 ...(asObjectId(user?.workspaceId)
@@ -300,11 +293,7 @@ export async function semanticRetrieve({
                           user.workspaceId
                         ),
                         "document.status": {
-                          $in: [
-                            "pending_review",
-                            "verified",
-                            "published",
-                          ],
+                          $in: ["verified", "published"],
                         },
                       },
                     ]

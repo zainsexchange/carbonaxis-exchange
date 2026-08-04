@@ -618,10 +618,20 @@ function renderCarbonBrainDetails(container, data) {
                   ? `
                 <p class="carbon-brain-source-section">
                   Section:
-                  ${escapeHtml(citation.sectionTitle)}
+                  ${escapeHtml(citation.sectionTitle)}${
+                    citation.pageNumber
+                      ? ` · Page ${escapeHtml(String(citation.pageNumber))}`
+                      : ""
+                  }
                 </p>
               `
-                  : ""
+                  : citation.pageNumber
+                    ? `
+                <p class="carbon-brain-source-section">
+                  Page ${escapeHtml(String(citation.pageNumber))}
+                </p>
+              `
+                    : ""
               }
 
               ${
