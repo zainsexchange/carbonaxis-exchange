@@ -40,22 +40,24 @@ router.post(
         await RetrievalAudit.create({
           userId: req.user.id,
           question,
-          mode: "green",
+          mode: result.answerMode === "general" ? "general" : "green",
 
-          retrievedChunks: result.citations.map((citation) => ({
-            chunkId: citation.reference.chunkId,
-            documentId: citation.reference.documentId,
-            score: citation.semanticScore,
-            pageNumber: citation.pageNumber,
-            sectionTitle: citation.sectionTitle,
-            visibility: citation.visibility,
-          })),
+          retrievedChunks: Array.isArray(result.citations)
+            ? result.citations.map((citation) => ({
+                chunkId: citation.reference?.chunkId,
+                documentId: citation.reference?.documentId,
+                score: citation.semanticScore,
+                pageNumber: citation.pageNumber,
+                sectionTitle: citation.sectionTitle,
+                visibility: citation.visibility,
+              }))
+            : [],
 
           sourceDocumentIds: [
             ...new Set(
-              result.citations.map(
-                (citation) => citation.reference.documentId
-              )
+              (result.citations || [])
+                .map((citation) => citation.reference?.documentId)
+                .filter(Boolean)
             ),
           ],
 
@@ -63,10 +65,10 @@ router.post(
           model: result.model,
 
           reliabilityLevel:
-            result.confidence.reliabilityLevel,
+            result.confidence?.reliabilityLevel || null,
 
           reliabilityScore:
-            result.confidence.score,
+            result.confidence?.score ?? 0,
 
           answer: result.answer,
 
@@ -75,9 +77,14 @@ router.post(
           tokenUsage: result.tokenUsage,
 
           metadata: {
+            answerMode: result.answerMode || "evidence",
             truthStatus: result.truthStatus,
-            citationCount: result.citations.length,
-            conflictCount: result.conflicts.length,
+            citationCount: Array.isArray(result.citations)
+              ? result.citations.length
+              : 0,
+            conflictCount: Array.isArray(result.conflicts)
+              ? result.conflicts.length
+              : 0,
             explainability: result.explainability,
           },
         });
