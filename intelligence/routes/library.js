@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 
 import KnowledgeJob from "../models/KnowledgeJob.js";
 import KnowledgeChunk from "../models/KnowledgeChunk.js";
+import KnowledgeEmbedding from "../models/KnowledgeEmbedding.js";
 import { processKnowledgeDocument } from "../services/processKnowledgeDocument.js";
 import {
   authenticateToken,
@@ -19,6 +20,44 @@ const router = express.Router();
 
 const uploadFolder = path.resolve("uploads", "knowledge");
 fs.mkdirSync(uploadFolder, { recursive: true });
+
+const AUTHORITATIVE_SOURCE_CLASSES = new Set([
+  "government",
+  "un",
+  "international_organization",
+  "registry",
+  "standard_body",
+]);
+
+async function syncDocumentAccessFields(document) {
+  const accessUpdate = {
+    visibility: document.visibility,
+    ownerId: document.ownerId || null,
+    workspaceId: document.workspaceId || null,
+    country: document.country || "Global",
+    language: document.language || "English",
+    documentType: document.documentType || "other",
+    sourceClass: document.sourceClass || "other",
+    updatedAt: new Date(),
+  };
+
+  await KnowledgeChunk.updateMany(
+    { documentId: document._id },
+    { $set: accessUpdate }
+  );
+
+  await KnowledgeEmbedding.updateMany(
+    { documentId: document._id },
+    {
+      $set: {
+        visibility: document.visibility,
+        ownerId: document.ownerId || null,
+        workspaceId: document.workspaceId || null,
+        updatedAt: new Date(),
+      },
+    }
+  );
+}
 
 function sanitizeFileName(fileName = "document.pdf") {
   return path
@@ -560,24 +599,43 @@ router.patch(
         }
       }
 
+      if (Object.prototype.hasOwnProperty.call(req.body, "visibility")) {
+        const allowed = ["public", "internal", "private", "workspace"];
+        const nextVisibility = String(req.body.visibility || "").trim();
+        if (allowed.includes(nextVisibility)) {
+          document.visibility = nextVisibility;
+          document.ownerId =
+            nextVisibility === "private" ? req.user.id : null;
+        }
+      }
+
+      if (Object.prototype.hasOwnProperty.call(req.body, "status")) {
+        const allowed = [
+          "draft",
+          "processing",
+          "pending_review",
+          "verified",
+          "published",
+          "archived",
+          "superseded",
+          "failed",
+        ];
+        const nextStatus = String(req.body.status || "").trim();
+        if (allowed.includes(nextStatus)) {
+          document.status = nextStatus;
+          if (nextStatus === "verified" || nextStatus === "published") {
+            document.lastVerifiedAt = new Date();
+            document.verifiedBy = req.user.id;
+          }
+        }
+      }
+
       if (!document.country) {
         document.country = "Global";
       }
 
       await document.save();
-
-      await KnowledgeChunk.updateMany(
-        { documentId: document._id },
-        {
-          $set: {
-            country: document.country || "Global",
-            language: document.language || "English",
-            documentType: document.documentType || "other",
-            sourceClass: document.sourceClass || "other",
-            updatedAt: new Date(),
-          },
-        }
-      );
+      await syncDocumentAccessFields(document);
 
       return res.json({
         success: true,
@@ -591,6 +649,7 @@ router.patch(
           documentType: document.documentType,
           sourceClass: document.sourceClass,
           language: document.language,
+          visibility: document.visibility,
           status: document.status,
         },
       });
@@ -600,6 +659,63 @@ router.patch(
       return res.status(500).json({
         success: false,
         message: "Unable to update knowledge document.",
+        error:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : undefined,
+      });
+    }
+  }
+);
+
+/**
+ * Promote processed official docs into answer-eligible status.
+ * government/public → published; other authoritative → verified.
+ */
+router.post(
+  "/promote-authoritative",
+  authenticateToken,
+  requireAdminRole,
+  async (req, res) => {
+    try {
+      const documents = await KnowledgeDocument.find({
+        sourceClass: { $in: [...AUTHORITATIVE_SOURCE_CLASSES] },
+        status: { $in: ["pending_review", "verified"] },
+        chunkCount: { $gt: 0 },
+        embeddingCount: { $gt: 0 },
+      });
+
+      const promoted = [];
+
+      for (const document of documents) {
+        // Make authoritative processed docs answer-eligible for all users.
+        document.visibility = "public";
+        document.status = "published";
+        document.lastVerifiedAt = new Date();
+        document.verifiedBy = req.user.id;
+        await document.save();
+        await syncDocumentAccessFields(document);
+
+        promoted.push({
+          id: document._id,
+          title: document.title,
+          status: document.status,
+          visibility: document.visibility,
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: `Promoted ${promoted.length} authoritative document(s) for answer retrieval.`,
+        count: promoted.length,
+        documents: promoted,
+      });
+    } catch (error) {
+      console.error("Knowledge promote error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Unable to promote authoritative documents.",
         error:
           process.env.NODE_ENV === "development"
             ? error.message
