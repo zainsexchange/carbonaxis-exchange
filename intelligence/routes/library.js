@@ -56,7 +56,7 @@ const upload = multer({
   storage,
 
   limits: {
-    fileSize: 25 * 1024 * 1024,
+    fileSize: 100 * 1024 * 1024,
   },
 
   fileFilter(_req, file, cb) {
@@ -250,6 +250,60 @@ router.post(
     }
   }
 );
+
+router.get(
+  "/documents",
+  authenticateToken,
+  requireAdminRole,
+  async (req, res) => {
+    try {
+      const limit = Math.min(
+        200,
+        Math.max(1, Number(req.query.limit) || 50)
+      );
+
+      const documents = await KnowledgeDocument.find({})
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .select(
+          "title fileName country jurisdiction issuingAuthority documentType sourceClass language status processingStage processingProgress chunkCount pageCount embeddingCount visibility createdAt updatedAt"
+        )
+        .lean();
+
+      return res.json({
+        success: true,
+        count: documents.length,
+        documents: documents.map((doc) => ({
+          id: doc._id,
+          title: doc.title,
+          fileName: doc.fileName,
+          country: doc.country,
+          jurisdiction: doc.jurisdiction,
+          issuingAuthority: doc.issuingAuthority,
+          documentType: doc.documentType,
+          sourceClass: doc.sourceClass,
+          language: doc.language,
+          status: doc.status,
+          processingStage: doc.processingStage,
+          processingProgress: doc.processingProgress,
+          chunkCount: doc.chunkCount,
+          pageCount: doc.pageCount,
+          embeddingCount: doc.embeddingCount,
+          visibility: doc.visibility,
+          createdAt: doc.createdAt,
+          updatedAt: doc.updatedAt,
+        })),
+      });
+    } catch (error) {
+      console.error("Knowledge documents list error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Unable to list knowledge documents.",
+      });
+    }
+  }
+);
+
 router.post(
   "/:id/process",
   authenticateToken,

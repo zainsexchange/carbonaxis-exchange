@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+import dns from "node:dns";
 import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -23,7 +24,26 @@ import {
   getCalculatorCatalog,
   runCalculator,
 } from "./services/carbonCalculators.js";
+import { resolveMongoUri } from "./intelligence/config/mongoUri.js";
 dotenv.config();
+
+/*
+ * Windows / some corporate resolvers refuse Node SRV lookups
+ * (querySrv ECONNREFUSED for mongodb+srv). Public DNS fixes Atlas.
+ * Override with DNS_SERVERS=... or set DNS_SERVERS= to keep system DNS.
+ */
+const dnsServers = String(
+  process.env.DNS_SERVERS ??
+    (process.platform === "win32" ? "8.8.8.8,1.1.1.1" : "")
+)
+  .split(",")
+  .map((value) => value.trim())
+  .filter(Boolean);
+
+if (dnsServers.length > 0) {
+  dns.setServers(dnsServers);
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -249,8 +269,13 @@ app.use(express.json());
 
 app.use("/api/intelligence", carbonBrainRoutes);
 
-mongoose
-  .connect(process.env.MONGO_URI)
+resolveMongoUri(process.env.MONGO_URI)
+  .then((mongoUri) =>
+    mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 20_000,
+      family: 4,
+    })
+  )
   .then(() => console.log("MongoDB connected"))
   .catch((error) => console.error("MongoDB connection error:", error));
 

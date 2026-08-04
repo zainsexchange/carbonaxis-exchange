@@ -194,6 +194,40 @@
     return html;
   }
 
+  function verdictBadgeClass(verdict) {
+    const v = String(verdict || "")
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, "_");
+
+    if (v === "PROCEED" || v === "LONG_TERM") {
+      return "is-proceed";
+    }
+    if (v === "PROCEED_SHORT_TERM" || v === "SHORT_TERM") {
+      return "is-short";
+    }
+    if (v === "CAUTION" || v === "MIXED") {
+      return "is-caution";
+    }
+    if (v === "AVOID") {
+      return "is-avoid";
+    }
+    return "is-neutral";
+  }
+
+  function renderVerdictBadgeLine(line) {
+    const match = String(line || "").match(
+      /^\*{0,2}Verdict\*{0,2}\s*:\s*\*{0,2}(PROCEED_SHORT_TERM|PROCEED|CAUTION|AVOID|LONG_TERM|SHORT_TERM|MIXED)\*{0,2}\s*$/i
+    );
+
+    if (!match) return null;
+
+    const verdict = match[1].toUpperCase();
+    const cls = verdictBadgeClass(verdict);
+
+    return `<div class="ai-verdict-row"><span class="ai-verdict-label">Verdict</span><span class="ai-verdict-badge ${cls}">${escapeHtml(verdict.replace(/_/g, " "))}</span></div>`;
+  }
+
   function renderMdTable(rows) {
     if (!rows.length) return "";
     const dataRows = rows.filter((r) => !isMdTableSeparator(r));
@@ -263,6 +297,13 @@
           i += 1;
         }
         blocks.push(renderMdTable(tableRows));
+        continue;
+      }
+
+      const verdictHtml = renderVerdictBadgeLine(trimmed);
+      if (verdictHtml) {
+        blocks.push(verdictHtml);
+        i += 1;
         continue;
       }
 

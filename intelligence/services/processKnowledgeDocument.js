@@ -255,7 +255,7 @@ await updateDocumentProgress(document._id, {
 
       chunkIndex: chunk.chunkIndex,
       content: chunk.content,
-      pageNumber: null,
+      pageNumber: chunk.pageNumber || null,
       sectionTitle: chunk.sectionTitle,
       tokenCount: chunk.tokenCount,
 
@@ -288,6 +288,8 @@ await updateDocumentProgress(document._id, {
 
       metadata: {
         characterCount: chunk.characterCount,
+        pageStart: chunk.pageStart || null,
+        pageEnd: chunk.pageEnd || null,
       },
 
       createdAt: new Date(),

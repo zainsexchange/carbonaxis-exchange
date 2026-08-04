@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import { resolveMongoUri } from "../config/mongoUri.js";
 
 dotenv.config();
 
@@ -11,7 +12,11 @@ async function connectMongo() {
         return mongoose.connection;
     }
 
-    await mongoose.connect(process.env.MONGO_URI);
+    const mongoUri = await resolveMongoUri(process.env.MONGO_URI);
+    await mongoose.connect(mongoUri, {
+        serverSelectionTimeoutMS: 20_000,
+        family: 4,
+    });
 
     return mongoose.connection;
 }
