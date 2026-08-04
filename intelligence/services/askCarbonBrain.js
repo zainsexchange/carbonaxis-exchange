@@ -21,6 +21,7 @@ import {
   buildSemanticKnowledge,
 } from "../truth/semanticPipeline.js";
 import generateCarbonBrainResponse from "./generateCarbonBrainResponse.js";
+import { runGreenIntelligence } from "../../services/greenAI.js";
 
 const DEFAULT_OPTIONS = Object.freeze({
   retrievalLimit: 12,
@@ -175,9 +176,9 @@ function createInsufficientEvidenceResponse(truthPackage) {
 
     citations: [],
 
-    conflicts: truthPackage.conflicts,
+    conflicts: truthPackage.conflicts || [],
 
-    explainability: truthPackage.explainability,
+    explainability: truthPackage.explainability || [],
 
     relatedQuestions: [],
 
@@ -202,6 +203,101 @@ function createInsufficientEvidenceResponse(truthPackage) {
       inputTokens: 0,
       outputTokens: 0,
       totalTokens: 0,
+    },
+  };
+}
+
+async function createGeneralKnowledgeFallback({
+  question,
+  conversation,
+  truthPackage,
+  startedAt,
+}) {
+  const requestedCountries =
+    truthPackage.statistics?.ranking?.requestedCountries || [];
+
+  let general;
+
+  try {
+    general = await runGreenIntelligence({
+      question,
+      country: requestedCountries[0] || "",
+      product: "",
+      subscription: "pro",
+      conversation,
+    });
+  } catch (error) {
+    console.error(
+      "General AI fallback failed:",
+      error?.message || error
+    );
+
+    return {
+      ...createInsufficientEvidenceResponse(truthPackage),
+      answerMode: "library_empty",
+      question,
+      entityComparison: null,
+      entityComparisonSummary: null,
+      statistics: {
+        ...truthPackage.statistics,
+        totalLatencyMs: Date.now() - startedAt,
+        answerMode: "library_empty",
+      },
+    };
+  }
+
+  const answer = String(general?.answer || "").trim();
+
+  if (!answer) {
+    return {
+      ...createInsufficientEvidenceResponse(truthPackage),
+      answerMode: "library_empty",
+      question,
+      entityComparison: null,
+      entityComparisonSummary: null,
+      statistics: {
+        ...truthPackage.statistics,
+        totalLatencyMs: Date.now() - startedAt,
+        answerMode: "library_empty",
+      },
+    };
+  }
+
+  return {
+    answerMode: "general",
+    answer,
+    question,
+
+    /*
+     * General answers intentionally omit the Carbon Brain trust panel.
+     * Do not attach fake confidence, citations, or limitations.
+     */
+    truthStatus: null,
+    confidence: null,
+    citations: [],
+    conflicts: [],
+    explainability: [],
+    relatedQuestions: [],
+    limitations: [],
+
+    entityComparison: null,
+    entityComparisonSummary: null,
+
+    provider: general.provider || "general_ai",
+    model: general.model || null,
+    responseId: general.responseId || null,
+    tokenUsage: general.tokenUsage || {
+      inputTokens: 0,
+      outputTokens: 0,
+      totalTokens: 0,
+    },
+
+    statistics: {
+      ...truthPackage.statistics,
+      totalLatencyMs: Date.now() - startedAt,
+      answerMode: "general",
+      libraryEvidenceCount: 0,
+      generalMode: general.mode || "general",
     },
   };
 }
@@ -236,7 +332,8 @@ export async function askCarbonBrain({
   });
 
   /*
-   * Do not ask the model to invent an answer when retrieval failed.
+   * No library evidence → general AI answer (no trust panel).
+   * Library evidence → Carbon Brain evidence-backed answer + confidence UI.
    */
   if (
     truthPackage.truthStatus?.code ===
@@ -246,23 +343,12 @@ export async function askCarbonBrain({
       "insufficient_evidence" ||
     truthPackage.evidence.length === 0
   ) {
-    const fallback =
-      createInsufficientEvidenceResponse(truthPackage);
-
-    return {
-      ...fallback,
-
+    return createGeneralKnowledgeFallback({
       question: cleanedQuestion,
-
-      entityComparison: null,
-
-      entityComparisonSummary: null,
-
-      statistics: {
-        ...truthPackage.statistics,
-        totalLatencyMs: Date.now() - startedAt,
-      },
-    };
+      conversation: cleanedConversation,
+      truthPackage,
+      startedAt,
+    });
   }
 
   const selectedEvidence = truthPackage.evidence;
@@ -452,7 +538,7 @@ const groupedEntityFacts =
         .join("\n\n")
     : "No previous conversation was supplied.";
 
-  return await generateCarbonBrainResponse({
+  const evidenceAnswer = await generateCarbonBrainResponse({
     question: cleanedQuestion,
 
     conversationContext,
@@ -477,4 +563,14 @@ const groupedEntityFacts =
 
     startedAt,
   });
+
+  return {
+    ...evidenceAnswer,
+    answerMode: "evidence",
+    statistics: {
+      ...(evidenceAnswer.statistics || {}),
+      answerMode: "evidence",
+      libraryEvidenceCount: selectedEvidence.length,
+    },
+  };
 }

@@ -1226,31 +1226,39 @@ form.addEventListener("submit", async (e) => {
         ? data.truthStatus.code
         : data.truthStatus;
 
+    const isEvidenceAnswer =
+      data.answerMode === "evidence" ||
+      (data.answerMode !== "general" &&
+        data.answerMode !== "library_empty" &&
+        Array.isArray(data.citations) &&
+        data.citations.length > 0);
+
     setModeBadge(
-      truthCode === "supported"
-        ? "green"
-        : truthCode === "partial_support"
-          ? "compare"
-          : "general"
+      !isEvidenceAnswer
+        ? "general"
+        : truthCode === "supported"
+          ? "green"
+          : truthCode === "partial_support"
+            ? "compare"
+            : "general"
     );
 
     const assistantBody = await appendMessage(
-  "assistant",
-  data.answer,
-  {
-    stream: true,
-  }
-);
+      "assistant",
+      data.answer,
+      {
+        stream: true,
+      }
+    );
 
-renderCarbonBrainDetails(
-  assistantBody,
-  data
-);
+    if (isEvidenceAnswer) {
+      renderCarbonBrainDetails(assistantBody, data);
+    }
 
-conversation.push({
-  role: "assistant",
-  content: data.answer,
-});
+    conversation.push({
+      role: "assistant",
+      content: data.answer,
+    });
 
     console.log(
       "Carbon Brain response:",
