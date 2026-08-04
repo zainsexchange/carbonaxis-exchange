@@ -80,6 +80,40 @@ const knowledgeDocumentSchema = new mongoose.Schema(
       index: true,
     },
 
+    /*
+     * 0–100 authority score used by evidence ranking.
+     * Government = 100, UN = 98, IEA/IRENA = 97, … Blog = 30.
+     */
+    sourceAuthorityScore: {
+      type: Number,
+      default: 45,
+      min: 0,
+      max: 100,
+      index: true,
+    },
+
+    /*
+     * Library curation priority 1–5 (~70% of corpus should be Tier 1).
+     */
+    curationTier: {
+      type: Number,
+      default: 5,
+      min: 1,
+      max: 5,
+      index: true,
+    },
+
+    /*
+     * CB-STD-001 authority tier (1 strongest). Kept in sync with curationTier.
+     */
+    authorityTier: {
+      type: Number,
+      default: 5,
+      min: 1,
+      max: 5,
+      index: true,
+    },
+
     officialUrl: {
       type: String,
       default: "",

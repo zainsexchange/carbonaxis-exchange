@@ -15,6 +15,14 @@ import {
 } from "../../middleware/auth.js";
 
 import KnowledgeDocument from "../models/KnowledgeDocument.js";
+import {
+  buildAuthorityFields,
+} from "../config/sourceAuthority.js";
+import {
+  buildLibraryDashboard,
+  listLibraryDocuments,
+  getLibraryDocumentDetail,
+} from "../services/libraryOperations.js";
 
 const router = express.Router();
 
@@ -192,6 +200,12 @@ router.post(
         ? req.body.visibility
         : "internal";
 
+      const authorityFields = buildAuthorityFields({
+        sourceClass,
+        documentType,
+        issuingAuthority: String(req.body.issuingAuthority || "").trim(),
+      });
+
       const document = await KnowledgeDocument.create({
         title: String(
           req.body.title || req.file.originalname
@@ -209,6 +223,11 @@ router.post(
 
         documentType,
         sourceClass,
+
+        sourceAuthorityScore: authorityFields.sourceAuthorityScore,
+        curationTier: authorityFields.curationTier,
+        authorityTier: authorityFields.authorityTier,
+        sourceTrustScore: authorityFields.sourceTrustScore,
 
         officialUrl: String(req.body.officialUrl || "").trim(),
 
@@ -291,53 +310,79 @@ router.post(
 );
 
 router.get(
+  "/dashboard",
+  authenticateToken,
+  requireAdminRole,
+  async (_req, res) => {
+    try {
+      const dashboard = await buildLibraryDashboard();
+      return res.json({
+        success: true,
+        dashboard,
+      });
+    } catch (error) {
+      console.error("Knowledge library dashboard error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Unable to build knowledge library dashboard.",
+      });
+    }
+  }
+);
+
+router.get(
   "/documents",
   authenticateToken,
   requireAdminRole,
   async (req, res) => {
     try {
-      const limit = Math.min(
-        200,
-        Math.max(1, Number(req.query.limit) || 50)
-      );
-
-      const documents = await KnowledgeDocument.find({})
-        .sort({ createdAt: -1 })
-        .limit(limit)
-        .select(
-          "title fileName country jurisdiction issuingAuthority documentType sourceClass language status processingStage processingProgress chunkCount pageCount embeddingCount visibility createdAt updatedAt"
-        )
-        .lean();
-
+      const result = await listLibraryDocuments(req.query || {});
       return res.json({
         success: true,
-        count: documents.length,
-        documents: documents.map((doc) => ({
-          id: doc._id,
-          title: doc.title,
-          fileName: doc.fileName,
-          country: doc.country,
-          jurisdiction: doc.jurisdiction,
-          issuingAuthority: doc.issuingAuthority,
-          documentType: doc.documentType,
-          sourceClass: doc.sourceClass,
-          language: doc.language,
-          status: doc.status,
-          processingStage: doc.processingStage,
-          processingProgress: doc.processingProgress,
-          chunkCount: doc.chunkCount,
-          pageCount: doc.pageCount,
-          embeddingCount: doc.embeddingCount,
-          visibility: doc.visibility,
-          createdAt: doc.createdAt,
-          updatedAt: doc.updatedAt,
-        })),
+        count: result.count,
+        documents: result.documents,
       });
     } catch (error) {
       console.error("Knowledge documents list error:", error);
       return res.status(500).json({
         success: false,
         message: "Unable to list knowledge documents.",
+      });
+    }
+  }
+);
+
+router.get(
+  "/documents/:id",
+  authenticateToken,
+  requireAdminRole,
+  async (req, res) => {
+    try {
+      const documentId = String(req.params.id || "").trim();
+      if (!mongoose.Types.ObjectId.isValid(documentId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid knowledge document ID.",
+        });
+      }
+
+      const document = await getLibraryDocumentDetail(documentId);
+      if (!document) {
+        return res.status(404).json({
+          success: false,
+          message: "Knowledge document not found.",
+        });
+      }
+
+      return res.json({
+        success: true,
+        document,
+      });
+    } catch (error) {
+      console.error("Knowledge document detail error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Unable to load knowledge document.",
       });
     }
   }
@@ -633,6 +678,13 @@ router.patch(
       if (!document.country) {
         document.country = "Global";
       }
+
+      const authorityFields = buildAuthorityFields(document);
+      document.sourceAuthorityScore =
+        authorityFields.sourceAuthorityScore;
+      document.curationTier = authorityFields.curationTier;
+      document.authorityTier = authorityFields.authorityTier;
+      document.sourceTrustScore = authorityFields.sourceTrustScore;
 
       await document.save();
       await syncDocumentAccessFields(document);

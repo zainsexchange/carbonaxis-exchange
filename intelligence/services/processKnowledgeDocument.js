@@ -9,6 +9,7 @@ import { extractDocumentText } from "./extractDocumentText.js";
 import { extractDocumentMetadata } from "./extractDocumentMetadata.js";
 import { chunkDocumentText } from "./chunkDocumentText.js";
 import { generateEmbeddings } from "./generateEmbeddings.js";
+import { buildAuthorityFields } from "../config/sourceAuthority.js";
 
 function asDate(value) {
   if (!value) return null;
@@ -493,6 +494,14 @@ await updateDocumentProgress(document._id, {
     ) {
       document.lastVerifiedAt = new Date();
     }
+
+    const authorityFields = buildAuthorityFields(document);
+    document.sourceAuthorityScore =
+      authorityFields.sourceAuthorityScore;
+    document.curationTier = authorityFields.curationTier;
+    document.authorityTier = authorityFields.authorityTier;
+    document.sourceTrustScore = authorityFields.sourceTrustScore;
+
     document.processingStage = "completed";
     document.processingProgress = 100;
     document.processingMessage = metadataWarning
