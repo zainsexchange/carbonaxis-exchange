@@ -8,6 +8,7 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import { resolveMongoUri } from "../intelligence/config/mongoUri.js";
 
 dotenv.config();
 
@@ -40,7 +41,11 @@ const userSchema = new mongoose.Schema(
 const User = mongoose.model("User", userSchema);
 
 async function main() {
-  await mongoose.connect(process.env.MONGO_URI);
+  const mongoUri = await resolveMongoUri(process.env.MONGO_URI);
+  await mongoose.connect(mongoUri, {
+    serverSelectionTimeoutMS: 20_000,
+    family: 4,
+  });
   const hashed = await bcrypt.hash(password, 12);
 
   const user = await User.findOneAndUpdate(

@@ -6,6 +6,9 @@ const DEFAULT_OPTIONS = Object.freeze({
   maximumChunks: 5000,
 });
 
+const PAGE_MARKER_PATTERN =
+  /(?:^|\n)\s*--\s*(\d+)\s+of\s+(\d+)\s*--\s*(?:\n|$)/gi;
+
 function normalizeText(value = "") {
   return String(value)
     .replace(/\u0000/g, "")
@@ -41,7 +44,8 @@ function looksLikeHeading(paragraph = "") {
       text
     );
 
-  const numericHeading = /^\d+(\.\d+){0,4}[\s.)-]+\S+/.test(text);
+  const numericHeading =
+    /^\d+(\.\d+){0,4}[\s.)-]+\S+/.test(text);
 
   const uppercaseHeading =
     text.length >= 4 &&
@@ -65,7 +69,10 @@ function looksLikeHeading(paragraph = "") {
   );
 }
 
-function splitLongParagraph(paragraph, maximumCharacters) {
+function splitLongParagraph(
+  paragraph,
+  maximumCharacters
+) {
   const text = paragraph.trim();
 
   if (text.length <= maximumCharacters) {
@@ -73,7 +80,9 @@ function splitLongParagraph(paragraph, maximumCharacters) {
   }
 
   const sentences =
-    text.match(/[^.!?\n]+(?:[.!?]+|$)/g)?.map((item) => item.trim()) ||
+    text
+      .match(/[^.!?\n]+(?:[.!?]+|$)/g)
+      ?.map((item) => item.trim()) ||
     [text];
 
   const parts = [];
@@ -84,7 +93,8 @@ function splitLongParagraph(paragraph, maximumCharacters) {
 
     if (
       current &&
-      current.length + sentence.length + 1 > maximumCharacters
+      current.length + sentence.length + 1 >
+        maximumCharacters
     ) {
       parts.push(current.trim());
       current = "";
@@ -102,14 +112,21 @@ function splitLongParagraph(paragraph, maximumCharacters) {
         index += maximumCharacters
       ) {
         parts.push(
-          sentence.slice(index, index + maximumCharacters).trim()
+          sentence
+            .slice(
+              index,
+              index + maximumCharacters
+            )
+            .trim()
         );
       }
 
       continue;
     }
 
-    current = current ? `${current} ${sentence}` : sentence;
+    current = current
+      ? `${current} ${sentence}`
+      : sentence;
   }
 
   if (current.trim()) {
@@ -119,66 +136,213 @@ function splitLongParagraph(paragraph, maximumCharacters) {
   return parts.filter(Boolean);
 }
 
-function createOverlap(previousContent, overlapCharacters) {
-  if (!previousContent || overlapCharacters <= 0) {
+function createOverlap(
+  previousContent,
+  overlapCharacters
+) {
+  if (
+    !previousContent ||
+    overlapCharacters <= 0
+  ) {
     return "";
   }
 
-  const tail = previousContent.slice(-overlapCharacters);
-  const sentenceBoundary = tail.search(/[.!?]\s+/);
+  const tail =
+    previousContent.slice(-overlapCharacters);
+
+  const sentenceBoundary =
+    tail.search(/[.!?]\s+/);
 
   if (sentenceBoundary >= 0) {
-    return tail.slice(sentenceBoundary + 2).trim();
+    return tail
+      .slice(sentenceBoundary + 2)
+      .trim();
   }
 
   return tail.trim();
 }
 
 function estimateTokenCount(text = "") {
-  // Safe approximation for storage and monitoring.
-  return Math.ceil(String(text).length / 4);
+  return Math.ceil(
+    String(text).length / 4
+  );
 }
 
-export function chunkDocumentText(text, options = {}) {
-  const config = {
-    ...DEFAULT_OPTIONS,
-    ...options,
-  };
+function splitTextIntoPages(text) {
+  const normalized = normalizeText(text);
+  const matches = [
+    ...normalized.matchAll(
+      PAGE_MARKER_PATTERN
+    ),
+  ];
 
-  if (
-    config.targetCharacters < 500 ||
-    config.maximumCharacters < config.targetCharacters ||
-    config.minimumCharacters < 50 ||
-    config.overlapCharacters < 0 ||
-    config.overlapCharacters >= config.targetCharacters
-  ) {
-    throw new Error("Invalid chunking configuration.");
+  if (!matches.length) {
+    return [
+      {
+        pageNumber: null,
+        totalPages: null,
+        text: normalized,
+      },
+    ];
   }
 
-  const cleanedText = normalizeText(text);
+  const pages = [];
 
-  if (cleanedText.length < config.minimumCharacters) {
-    throw new Error(
-      "Document text is too short to create useful knowledge chunks."
-    );
+  const firstMarkerIndex =
+    matches[0].index || 0;
+
+  const leadingText = normalized
+    .slice(0, firstMarkerIndex)
+    .trim();
+
+  for (
+    let index = 0;
+    index < matches.length;
+    index += 1
+  ) {
+    const match = matches[index];
+
+    const pageNumber =
+      Number(match[1]) || null;
+
+    const totalPages =
+      Number(match[2]) || null;
+
+    const contentStart =
+      (match.index || 0) +
+      match[0].length;
+
+    const contentEnd =
+      index + 1 < matches.length
+        ? matches[index + 1].index
+        : normalized.length;
+
+    let pageText = normalized
+      .slice(contentStart, contentEnd)
+      .trim();
+
+    if (
+      index === 0 &&
+      leadingText
+    ) {
+      pageText =
+        `${leadingText}\n\n${pageText}`.trim();
+    }
+
+    pages.push({
+      pageNumber,
+      totalPages,
+      text: pageText,
+    });
+  }
+
+  return pages;
+}
+
+function mergeShortPages(
+  pages,
+  minimumCharacters
+) {
+  const merged = [];
+  let pending = null;
+
+  for (const page of pages) {
+    const pageText = normalizeText(page.text);
+
+    if (!pageText) {
+      continue;
+    }
+
+    const normalizedPage = {
+      ...page,
+      text: pageText,
+      pageStart: page.pageNumber,
+      pageEnd: page.pageNumber,
+    };
+
+    if (pending) {
+      pending.text =
+        `${pending.text}\n\n${normalizedPage.text}`.trim();
+
+      pending.pageEnd =
+        normalizedPage.pageEnd;
+
+      if (
+        pending.text.length >=
+        minimumCharacters
+      ) {
+        merged.push(pending);
+        pending = null;
+      }
+
+      continue;
+    }
+
+    if (
+      normalizedPage.text.length <
+      minimumCharacters
+    ) {
+      pending = normalizedPage;
+      continue;
+    }
+
+    merged.push(normalizedPage);
+  }
+
+  /*
+   * If the final page is short, merge it into
+   * the previous page group instead of losing it.
+   */
+  if (pending) {
+    const previous =
+      merged[merged.length - 1];
+
+    if (previous) {
+      previous.text =
+        `${previous.text}\n\n${pending.text}`.trim();
+
+      previous.pageEnd =
+        pending.pageEnd;
+    } else {
+      merged.push(pending);
+    }
+  }
+
+  return merged;
+}
+
+function chunkSinglePage(
+  page,
+  config,
+  chunkOffset
+) {
+  const cleanedText =
+    normalizeText(page.text);
+
+  if (
+    cleanedText.length <
+    config.minimumCharacters
+  ) {
+    return [];
   }
 
   const rawParagraphs = cleanedText
     .split(/\n\s*\n/)
-    .map((paragraph) => paragraph.trim())
+    .map((paragraph) =>
+      paragraph.trim()
+    )
     .filter(Boolean);
 
   const blocks = [];
 
   for (const paragraph of rawParagraphs) {
-    const pieces = splitLongParagraph(
-      paragraph,
-      config.maximumCharacters
-    );
+    const pieces =
+      splitLongParagraph(
+        paragraph,
+        config.maximumCharacters
+      );
 
-    for (const piece of pieces) {
-      blocks.push(piece);
-    }
+    blocks.push(...pieces);
   }
 
   const chunks = [];
@@ -186,7 +350,9 @@ export function chunkDocumentText(text, options = {}) {
   let currentParts = [];
 
   function currentContent() {
-    return currentParts.join("\n\n").trim();
+    return currentParts
+      .join("\n\n")
+      .trim();
   }
 
   function flushChunk() {
@@ -196,28 +362,56 @@ export function chunkDocumentText(text, options = {}) {
       return;
     }
 
-    const previousChunk = chunks[chunks.length - 1];
-    const overlap = previousChunk
-      ? createOverlap(
-          previousChunk.content,
-          config.overlapCharacters
-        )
-      : "";
+    const previousChunk =
+      chunks[chunks.length - 1];
+
+    const overlap =
+      previousChunk
+        ? createOverlap(
+            previousChunk.content,
+            config.overlapCharacters
+          )
+        : "";
 
     const finalContent =
-      overlap && !content.startsWith(overlap)
+      overlap &&
+      !content.startsWith(overlap)
         ? `${overlap}\n\n${content}`
         : content;
 
     chunks.push({
-      chunkIndex: chunks.length,
+      chunkIndex:
+        chunkOffset +
+        chunks.length,
+
       content: finalContent,
-      sectionTitle: currentSectionTitle,
-      tokenCount: estimateTokenCount(finalContent),
-      characterCount: finalContent.length,
+
+      sectionTitle:
+        currentSectionTitle,
+
+      tokenCount:
+        estimateTokenCount(
+          finalContent
+        ),
+
+      characterCount:
+        finalContent.length,
+
+      pageNumber:
+        page.pageStart,
+
+      pageStart:
+        page.pageStart,
+
+      pageEnd:
+        page.pageEnd,
     });
 
-    if (chunks.length > config.maximumChunks) {
+    if (
+      chunkOffset +
+        chunks.length >
+      config.maximumChunks
+    ) {
       throw new Error(
         `Document exceeded the maximum of ${config.maximumChunks} chunks.`
       );
@@ -228,70 +422,173 @@ export function chunkDocumentText(text, options = {}) {
 
   for (const block of blocks) {
     if (looksLikeHeading(block)) {
-      const existingContent = currentContent();
+      const existingContent =
+        currentContent();
 
       if (
-        existingContent.length >= config.minimumCharacters
+        existingContent.length >=
+        config.minimumCharacters
       ) {
         flushChunk();
       }
 
-      currentSectionTitle = normalizeHeading(block);
+      currentSectionTitle =
+        normalizeHeading(block);
+
       currentParts.push(block);
       continue;
     }
 
-    const candidate = currentParts.length
-      ? `${currentContent()}\n\n${block}`
-      : block;
+    const candidate =
+      currentParts.length
+        ? `${currentContent()}\n\n${block}`
+        : block;
 
     if (
-      candidate.length > config.maximumCharacters &&
-      currentContent().length >= config.minimumCharacters
+      candidate.length >
+        config.maximumCharacters &&
+      currentContent().length >=
+        config.minimumCharacters
     ) {
       flushChunk();
 
       if (currentSectionTitle) {
-        currentParts.push(currentSectionTitle);
+        currentParts.push(
+          currentSectionTitle
+        );
       }
     }
 
     currentParts.push(block);
 
     if (
-      currentContent().length >= config.targetCharacters
+      currentContent().length >=
+      config.targetCharacters
     ) {
       flushChunk();
 
       if (currentSectionTitle) {
-        currentParts.push(currentSectionTitle);
+        currentParts.push(
+          currentSectionTitle
+        );
       }
     }
   }
 
   flushChunk();
 
-  if (!chunks.length) {
-    throw new Error("No knowledge chunks could be generated.");
+  return chunks;
+}
+
+export function chunkDocumentText(
+  text,
+  options = {}
+) {
+  const config = {
+    ...DEFAULT_OPTIONS,
+    ...options,
+  };
+
+  if (
+    config.targetCharacters < 500 ||
+    config.maximumCharacters <
+      config.targetCharacters ||
+    config.minimumCharacters < 50 ||
+    config.overlapCharacters < 0 ||
+    config.overlapCharacters >=
+      config.targetCharacters
+  ) {
+    throw new Error(
+      "Invalid chunking configuration."
+    );
   }
+
+  const extractedPages =
+    splitTextIntoPages(text);
+
+  const pages =
+    mergeShortPages(
+      extractedPages,
+      config.minimumCharacters
+    );
+
+  const chunks = [];
+
+  for (const page of pages) {
+    const pageChunks =
+      chunkSinglePage(
+        page,
+        config,
+        chunks.length
+      );
+
+    chunks.push(...pageChunks);
+  }
+
+  if (!chunks.length) {
+    throw new Error(
+      "No knowledge chunks could be generated."
+    );
+  }
+
+  const sourceCharacters =
+    pages.reduce(
+      (total, page) =>
+        total +
+        page.text.length,
+      0
+    );
 
   return {
     chunks,
+
     statistics: {
-      sourceCharacters: cleanedText.length,
-      sourceParagraphs: rawParagraphs.length,
-      chunkCount: chunks.length,
-      averageChunkCharacters: Math.round(
+      sourceCharacters,
+      sourcePages:
+        extractedPages.filter(
+          (page) =>
+            Number.isInteger(
+              page.pageNumber
+            )
+        ).length,
+
+      chunkedPageGroups:
+        pages.length,
+
+      untextualPages:
+        extractedPages
+          .filter(
+            (page) =>
+              !normalizeText(page.text)
+          )
+          .map(
+            (page) =>
+              page.pageNumber
+          ),
+
+      chunkCount:
+        chunks.length,
+
+      averageChunkCharacters:
+        Math.round(
+          chunks.reduce(
+            (total, chunk) =>
+              total +
+              chunk.characterCount,
+            0
+          ) /
+            chunks.length
+        ),
+
+      estimatedTokens:
         chunks.reduce(
-          (total, chunk) => total + chunk.characterCount,
+          (total, chunk) =>
+            total +
+            chunk.tokenCount,
           0
-        ) / chunks.length
-      ),
-      estimatedTokens: chunks.reduce(
-        (total, chunk) => total + chunk.tokenCount,
-        0
-      ),
+        ),
     },
+
     configuration: config,
   };
 }
