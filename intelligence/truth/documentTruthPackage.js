@@ -1,5 +1,9 @@
 import { semanticRetrieve } from "../retrieval/semanticRetriever.js";
-import { rankEvidence } from "./evidenceRanker.js";
+import {
+  rankEvidence,
+  detectRequestedCountries,
+  canonicalizeCountry,
+} from "./evidenceRanker.js";
 import { clusterEvidence } from "./evidenceClusterer.js";
 import { detectConflicts } from "./conflictDetector.js";
 import { calculateConfidence } from "./confidenceCalculator.js";
@@ -33,10 +37,29 @@ function normalizeQuestion(value = "") {
   return question;
 }
 
-function buildExplainability(evidence = [], conflicts = []) {
+function buildExplainability(
+  evidence = [],
+  conflicts = [],
+  {
+    requestedCountries = [],
+    jurisdictionMiss = false,
+  } = {}
+) {
   const reasons = [];
 
   if (!evidence.length) {
+    if (jurisdictionMiss || requestedCountries.length > 0) {
+      reasons.push(
+        `No permitted in-jurisdiction evidence was found for ${
+          requestedCountries.join(", ") || "the requested country"
+        }.`
+      );
+      reasons.push(
+        "Out-of-country retrieval hits were excluded and were not counted as support."
+      );
+      return reasons;
+    }
+
     reasons.push("No relevant evidence was found in the permitted knowledge library.");
 
     return reasons;
@@ -176,6 +199,8 @@ function resolveTruthStatus({
   evidence,
   confidence,
   conflicts,
+  question = "",
+  rankingStatistics = {},
 }) {
   const evidenceCount = evidence.length;
   const conflictCount = conflicts.length;
@@ -184,6 +209,12 @@ function resolveTruthStatus({
       .map((item) => String(item.documentId || ""))
       .filter(Boolean)
   ).size;
+
+  const requestedCountries =
+    Array.isArray(rankingStatistics.requestedCountries) &&
+    rankingStatistics.requestedCountries.length
+      ? rankingStatistics.requestedCountries
+      : detectRequestedCountries(question);
 
   const authoritativeEvidence = evidence.filter((item) =>
     [
@@ -207,6 +238,20 @@ function resolveTruthStatus({
    * No evidence available.
    */
   if (evidenceCount === 0) {
+    if (
+      requestedCountries.length > 0 ||
+      rankingStatistics.jurisdictionMiss
+    ) {
+      return {
+        code: "no_evidence",
+        label: "No Evidence",
+        color: "gray",
+        reason: `No in-jurisdiction evidence was found for ${requestedCountries.join(
+          ", "
+        ) || "the requested country"}. Out-of-country sources were not used as support.`,
+      };
+    }
+
     return {
       code: "no_evidence",
       label: "No Evidence",
@@ -214,6 +259,37 @@ function resolveTruthStatus({
       reason:
         "No relevant evidence was found in the knowledge library.",
     };
+  }
+
+  /*
+   * Safety net: never mark Supported when every hit is outside
+   * the countries named in the question.
+   */
+  if (requestedCountries.length > 0) {
+    const requestedSet = new Set(
+      requestedCountries.map((country) =>
+        canonicalizeCountry(country).toLowerCase()
+      )
+    );
+
+    const inJurisdictionCount = evidence.filter((item) => {
+      const country = canonicalizeCountry(
+        item.document?.country || item.document?.jurisdiction || ""
+      ).toLowerCase();
+
+      return country && requestedSet.has(country);
+    }).length;
+
+    if (inJurisdictionCount === 0) {
+      return {
+        code: "no_evidence",
+        label: "No Evidence",
+        color: "gray",
+        reason: `Retrieved sources are outside ${requestedCountries.join(
+          ", "
+        )} and cannot support this answer.`,
+      };
+    }
   }
 
   /*
@@ -298,10 +374,38 @@ export function buildTruthPackageFromEvidence({
   const evaluationStartedAt = Date.now();
   const cleanedQuestion = normalizeQuestion(question);
 
-  const normalizedEvidence =
-    Array.isArray(evidence)
-      ? evidence
-      : [];
+  const rankingStatistics = upstreamStatistics?.ranking || {};
+  const requestedCountries =
+    Array.isArray(rankingStatistics.requestedCountries) &&
+    rankingStatistics.requestedCountries.length
+      ? rankingStatistics.requestedCountries
+      : detectRequestedCountries(cleanedQuestion);
+
+  let normalizedEvidence = Array.isArray(evidence)
+    ? evidence
+    : [];
+
+  /*
+   * Final jurisdiction gate: drop out-of-country hits before
+   * confidence, citations, and SUPPORTED labels are computed.
+   */
+  if (requestedCountries.length > 0) {
+    const requestedSet = new Set(
+      requestedCountries.map((country) =>
+        canonicalizeCountry(country).toLowerCase()
+      )
+    );
+
+    normalizedEvidence = normalizedEvidence.filter((item) => {
+      const country = canonicalizeCountry(
+        item.document?.country ||
+          item.document?.jurisdiction ||
+          ""
+      ).toLowerCase();
+
+      return country && requestedSet.has(country);
+    });
+  }
 
   /*
    * Detect disagreements across the evidence selected by
@@ -314,12 +418,21 @@ export function buildTruthPackageFromEvidence({
    * Calculate confidence from the final evidence set and
    * detected conflicts.
    */
-  const confidence =
+  let confidence =
     calculateConfidence({
       evidence: normalizedEvidence,
       conflicts:
         conflictResult.conflicts,
     });
+
+  if (normalizedEvidence.length === 0) {
+    confidence = {
+      ...confidence,
+      score: 0,
+      label: "Insufficient",
+      percentage: 0,
+    };
+  }
 
   /*
    * Build safe user-facing citations.
@@ -338,12 +451,27 @@ export function buildTruthPackageFromEvidence({
       confidence,
       conflicts:
         conflictResult.conflicts,
+      question: cleanedQuestion,
+      rankingStatistics: {
+        ...rankingStatistics,
+        requestedCountries,
+        jurisdictionMiss:
+          Boolean(rankingStatistics.jurisdictionMiss) ||
+          (requestedCountries.length > 0 &&
+            normalizedEvidence.length === 0),
+      },
     });
 
   const explainability =
     buildExplainability(
       normalizedEvidence,
-      conflictResult.conflicts
+      conflictResult.conflicts,
+      {
+        requestedCountries,
+        jurisdictionMiss:
+          requestedCountries.length > 0 &&
+          normalizedEvidence.length === 0,
+      }
     );
 
   const completedAt = Date.now();

@@ -54,6 +54,75 @@ function escapeRegExp(value = "") {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/**
+ * Canonical country names used for jurisdiction gating.
+ * Detection must come from the question, not from retrieved hits,
+ * otherwise an Oman ask with only UAE docs never applies a filter.
+ */
+const COUNTRY_ALIASES = Object.freeze([
+  {
+    canonical: "United Arab Emirates",
+    aliases: ["united arab emirates", "uae", "u.a.e.", "u.a.e", "emirati", "emirates"],
+  },
+  {
+    canonical: "Saudi Arabia",
+    aliases: ["saudi arabia", "kingdom of saudi arabia", "ksa", "saudi", "saudi arabian"],
+  },
+  {
+    canonical: "Oman",
+    aliases: ["oman", "sultanate of oman", "omani"],
+  },
+  {
+    canonical: "Qatar",
+    aliases: ["qatar", "qatari", "state of qatar"],
+  },
+  {
+    canonical: "Bahrain",
+    aliases: ["bahrain", "bahraini", "kingdom of bahrain"],
+  },
+  {
+    canonical: "Kuwait",
+    aliases: ["kuwait", "kuwaiti", "state of kuwait"],
+  },
+  {
+    canonical: "Pakistan",
+    aliases: ["pakistan", "pakistani"],
+  },
+  {
+    canonical: "India",
+    aliases: ["india", "indian"],
+  },
+  {
+    canonical: "China",
+    aliases: ["china", "chinese", "prc"],
+  },
+  {
+    canonical: "United Kingdom",
+    aliases: ["united kingdom", "uk", "u.k.", "great britain", "british"],
+  },
+  {
+    canonical: "United States",
+    aliases: ["united states of america", "united states", "usa", "u.s.a.", "u.s.", "american"],
+  },
+  {
+    canonical: "European Union",
+    aliases: ["european union", "eu", "european"],
+  },
+]);
+
+const UNSPECIFIED_COUNTRIES = Object.freeze([
+  "",
+  "global",
+  "other",
+  "unknown",
+  "unspecified",
+  "n/a",
+  "na",
+  "none",
+  "null",
+  "undefined",
+]);
+
 function isComparisonQuestion(question = "") {
   const normalizedQuestion = normalizeText(question).toLowerCase();
 
@@ -62,116 +131,123 @@ function isComparisonQuestion(question = "") {
   );
 }
 
-function detectRequestedCountries(question = "", results = []) {
+function wantsInternationalContext(question = "") {
+  return /\b(global|international|worldwide|world\s+wide|across\s+countries|gcc|gulf\s+cooperation)\b/i.test(
+    normalizeText(question)
+  );
+}
+
+function canonicalizeCountry(value = "") {
+  const normalized = normalizeText(value).toLowerCase();
+
+  if (!normalized || UNSPECIFIED_COUNTRIES.includes(normalized)) {
+    return "";
+  }
+
+  for (const entry of COUNTRY_ALIASES) {
+    if (entry.canonical.toLowerCase() === normalized) {
+      return entry.canonical;
+    }
+
+    for (const alias of entry.aliases) {
+      if (alias === normalized) {
+        return entry.canonical;
+      }
+    }
+  }
+
+  return normalizeText(value);
+}
+
+/**
+ * Detect countries named in the question using the alias table.
+ * Do not require those countries to already exist in retrieval hits.
+ */
+function detectRequestedCountries(question = "") {
   const normalizedQuestion = normalizeText(question).toLowerCase();
 
   if (!normalizedQuestion) {
     return [];
   }
 
-  const availableCountries = [
-    ...new Set(
-      results
-        .map((item) =>
-          normalizeText(item?.document?.country)
-        )
-        .filter(Boolean)
-        .filter(
-          (country) =>
-            ![
-              "global",
-              "other",
-              "unknown",
-              "unspecified",
-              "n/a",
-              "none",
-            ].includes(country.toLowerCase())
-        )
-    ),
-  ];
+  const matches = [];
 
-  return availableCountries.filter((country) => {
-    const countryPattern = new RegExp(
-      `\\b${escapeRegExp(country.toLowerCase())}\\b`,
-      "i"
-    );
+  for (const entry of COUNTRY_ALIASES) {
+    const patterns = [entry.canonical, ...entry.aliases]
+      .map((alias) => alias.toLowerCase())
+      .sort((a, b) => b.length - a.length);
 
-    return countryPattern.test(normalizedQuestion);
-  });
+    const hit = patterns.some((alias) => {
+      const pattern = new RegExp(
+        `\\b${escapeRegExp(alias)}\\b`,
+        "i"
+      );
+      return pattern.test(normalizedQuestion);
+    });
+
+    if (hit) {
+      matches.push(entry.canonical);
+    }
+  }
+
+  return [...new Set(matches)];
+}
+
+function getEvidenceCountry(item = {}) {
+  return canonicalizeCountry(
+    item?.document?.country ||
+      item?.document?.jurisdiction ||
+      item?.country ||
+      item?.jurisdiction ||
+      ""
+  );
 }
 
 function applyCountryScope(results = [], question = "") {
-  const requestedCountries = detectRequestedCountries(
-    question,
-    results
-  );
-
-  const comparisonQuestion =
-    isComparisonQuestion(question);
+  const requestedCountries = detectRequestedCountries(question);
+  const comparisonQuestion = isComparisonQuestion(question);
+  const allowUnspecified = wantsInternationalContext(question);
 
   if (requestedCountries.length === 0) {
-  return {
-    results,
-    requestedCountries,
-    countryFilterApplied: false,
-    comparisonQuestion,
-    excludedCountryCount: 0,
-  };
+    return {
+      results,
+      requestedCountries,
+      countryFilterApplied: false,
+      comparisonQuestion,
+      jurisdictionMiss: false,
+      excludedCountryCount: 0,
+    };
   }
 
   const requestedCountrySet = new Set(
-    requestedCountries.map((country) =>
-      country.toLowerCase()
-    )
+    requestedCountries.map((country) => country.toLowerCase())
   );
 
   const scopedResults = results.filter((item) => {
-    const country = normalizeText(
-      item?.document?.country
-    ).toLowerCase();
+    const country = getEvidenceCountry(item).toLowerCase();
 
-    /*
-     * Keep global or unspecified evidence because it may provide
-     * legitimate international context.
-     */
-    if (
-      !country ||
-      [
-        "global",
-        "other",
-        "unknown",
-        "unspecified",
-        "n/a",
-        "none",
-      ].includes(country)
-    ) {
-      return true;
+    if (!country) {
+      /*
+       * For a specific-country ask, do not let Global/blank metadata
+       * masquerade as in-jurisdiction policy evidence.
+       */
+      return allowUnspecified || comparisonQuestion;
     }
 
     return requestedCountrySet.has(country);
   });
 
   /*
-   * Avoid returning zero evidence if country metadata is incomplete
-   * or inconsistent.
+   * Never fall back to out-of-jurisdiction hits. An Oman question must
+   * not be "supported" by UAE documents just because they are similar.
    */
-  if (scopedResults.length === 0) {
-    return {
-      results,
-      requestedCountries,
-      countryFilterApplied: false,
-      comparisonQuestion,
-      excludedCountryCount: 0,
-    };
-  }
-
   return {
     results: scopedResults,
     requestedCountries,
     countryFilterApplied: true,
     comparisonQuestion,
-    excludedCountryCount:
-      results.length - scopedResults.length,
+    jurisdictionMiss: scopedResults.length === 0,
+    excludedCountryCount: results.length - scopedResults.length,
   };
 }
 
@@ -395,6 +471,8 @@ countryFilterApplied:
   countryScope.countryFilterApplied,
 comparisonQuestion:
   countryScope.comparisonQuestion,
+jurisdictionMiss:
+  Boolean(countryScope.jurisdictionMiss),
 excludedCountryCount:
   countryScope.excludedCountryCount,
       uniqueCount: ranked.length,
@@ -425,4 +503,5 @@ export {
   detectRequestedCountries,
   isComparisonQuestion,
   applyCountryScope,
+  canonicalizeCountry,
 };

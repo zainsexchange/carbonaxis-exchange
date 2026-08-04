@@ -148,15 +148,32 @@ function buildSemanticSourceText(evidence = []) {
 }
 
 function createInsufficientEvidenceResponse(truthPackage) {
+  const requestedCountries =
+    truthPackage.statistics?.ranking?.requestedCountries || [];
+  const jurisdictionMiss =
+    Boolean(truthPackage.statistics?.ranking?.jurisdictionMiss) ||
+    (requestedCountries.length > 0 &&
+      !(truthPackage.evidence || []).length);
+
+  const countryLabel = requestedCountries.length
+    ? requestedCountries.join(", ")
+    : "the requested jurisdiction";
+
   return {
-    answer:
-      "I could not find enough permitted evidence in the Carbon Axis Knowledge Library to answer this reliably.",
+    answer: jurisdictionMiss
+      ? `I could not find permitted evidence for ${countryLabel} in the Carbon Axis Knowledge Library. Sources from other countries were not used to support this answer.`
+      : "I could not find enough permitted evidence in the Carbon Axis Knowledge Library to answer this reliably.",
 
     truthStatus: truthPackage.truthStatus,
 
-    confidence: truthPackage.confidence,
+    confidence: {
+      ...(truthPackage.confidence || {}),
+      score: 0,
+      percentage: 0,
+      label: "Insufficient",
+    },
 
-    citations: truthPackage.citations,
+    citations: [],
 
     conflicts: truthPackage.conflicts,
 
@@ -164,10 +181,16 @@ function createInsufficientEvidenceResponse(truthPackage) {
 
     relatedQuestions: [],
 
-    limitations: [
-      "No sufficiently relevant evidence was found in the permitted knowledge library.",
-      "The system did not generate a factual answer from unsupported model knowledge.",
-    ],
+    limitations: jurisdictionMiss
+      ? [
+          `No in-jurisdiction evidence was available for ${countryLabel}.`,
+          "Out-of-country documents were excluded from support and citations.",
+          "The system did not invent an answer from unsupported model knowledge.",
+        ]
+      : [
+          "No sufficiently relevant evidence was found in the permitted knowledge library.",
+          "The system did not generate a factual answer from unsupported model knowledge.",
+        ],
 
     provider: "carbon_brain",
 
