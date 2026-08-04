@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carbon Brain | Knowledge Upload Admin</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <script>
+    const __adminUser = JSON.parse(localStorage.getItem("adminUser") || "{}");
+    const __adminToken = localStorage.getItem("adminToken");
+    if (!__adminToken || __adminUser.role !== "admin") {
+      localStorage.removeItem("adminLoggedIn");
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminUser");
+      window.location.href = "admin-login.html?next=admin-carbon-brain-library.html";
+    }
+  </script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, sans-serif;
+      background: #06110e;
+      color: #e9fff9;
+      padding: 28px;
+    }
+    a { color: #00e5b0; }
+    h1 { margin: 0 0 8px; color: #00e5b0; font-size: 1.8rem; }
+    .meta { color: rgba(233,255,249,.6); margin-bottom: 24px; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 18px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: #0d1c18;
+      border: 1px solid rgba(0,229,176,.2);
+      border-radius: 14px;
+      padding: 18px;
+    }
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: .95rem;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: #00e5b0;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      color: rgba(233,255,249,.65);
+      margin: 10px 0 4px;
+    }
+    input, select, textarea {
+      width: 100%;
+      box-sizing: border-box;
+      background: #06110e;
+      border: 1px solid rgba(255,255,255,.12);
+      color: #fff;
+      border-radius: 8px;
+      padding: 10px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    button {
+      margin-top: 14px;
+      background: #00e5b0;
+      color: #04241c;
+      border: none;
+      border-radius: 8px;
+      padding: 11px 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: transparent;
+      color: #00e5b0;
+      border: 1px solid rgba(0,229,176,.35);
+    }
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+    .msg {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #9db0a9;
+      white-space: pre-wrap;
+    }
+    .msg.err { color: #ff8f8f; }
+    .msg.ok { color: #00e5b0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px 6px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      vertical-align: top;
+    }
+    th { color: rgba(233,255,249,.55); font-weight: 600; }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(0,229,176,.12);
+      color: #00e5b0;
+      font-size: 11px;
+    }
+    .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .actions button { margin-top: 0; padding: 7px 10px; font-size: 12px; }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div>
+      <h1>Carbon Brain · Knowledge Upload</h1>
+      <p class="meta">
+        Admin only · API <code>/api/intelligence/library/upload</code> + <code>/api/intelligence/library/:id/process</code>
+        · Signed in as <strong id="who">admin</strong>
+      </p>
+    </div>
+    <div>
+      <a href="/admin.html">← Admin home</a>
+      ·
+      <a href="/admin-knowledge-library.html">Stats war room</a>
+    </div>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Upload document</h2>
+      <form id="uploadForm">
+        <label>PDF / DOCX / TXT</label>
+        <input id="document" type="file" accept=".pdf,.docx,.txt,application/pdf" required />
+
+        <label>Title</label>
+        <input id="title" required placeholder="UAE Energy Strategy 2050" />
+
+        <div class="row">
+          <div>
+            <label>Country</label>
+            <input id="country" value="United Arab Emirates" />
+          </div>
+          <div>
+            <label>Jurisdiction</label>
+            <input id="jurisdiction" value="United Arab Emirates" />
+          </div>
+        </div>
+
+        <label>Issuing Authority</label>
+        <input id="issuingAuthority" value="Ministry of Energy and Infrastructure" />
+
+        <div class="row">
+          <div>
+            <label>Document Type</label>
+            <select id="documentType">
+              <option value="strategy" selected>strategy</option>
+              <option value="report">report</option>
+              <option value="policy">policy</option>
+              <option value="law">law</option>
+              <option value="regulation">regulation</option>
+              <option value="framework">framework</option>
+              <option value="guidance">guidance</option>
+              <option value="other">other</option>
+            </select>
+          </div>
+          <div>
+            <label>Source Class</label>
+            <select id="sourceClass">
+              <option value="government" selected>government</option>
+              <option value="un">un</option>
+              <option value="international_organization">international_organization</option>
+              <option value="registry">registry</option>
+              <option value="standard_body">standard_body</option>
+              <option value="research">research</option>
+              <option value="other">other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Language</label>
+            <input id="language" value="English" />
+          </div>
+          <div>
+            <label>Visibility</label>
+            <select id="visibility">
+              <option value="public" selected>public</option>
+              <option value="internal">internal</option>
+              <option value="private">private</option>
+            </select>
+          </div>
+        </div>
+        <p class="msg" style="margin-top:8px;">
+          Official UAE.gov PDFs: keep <strong>Source Class = government</strong> and
+          <strong>Visibility = public</strong>. After Process they become
+          <code>published</code> and can appear in answers. Research/other stays
+          <code>pending_review</code> until verified.
+        </p>
+
+        <label>Topics (comma-separated)</label>
+        <input id="topics" value="renewable energy, net zero, hydrogen, energy strategy" />
+
+        <label>Sectors</label>
+        <input id="sectors" value="energy" />
+
+        <label>Tags</label>
+        <input id="tags" value="UAE, Energy Strategy 2050, official" />
+
+        <button type="submit" id="uploadBtn">Upload</button>
+        <button type="button" class="secondary" id="fillDoc2">Fill defaults for UAE-RE-000002</button>
+        <div class="msg" id="uploadMsg"></div>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Uploaded documents</h2>
+      <button type="button" class="secondary" id="refreshBtn">Refresh list</button>
+      <div class="msg" id="listMsg"></div>
+      <div style="overflow:auto; margin-top:12px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Chunks</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="docsBody">
+            <tr><td colspan="4">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const token = localStorage.getItem("adminToken");
+    const user = JSON.parse(localStorage.getItem("adminUser") || "{}");
+    document.getElementById("who").textContent = user.email || "admin";
+
+    const API_BASE = (window.API && window.API.BASE) || "http://localhost:5000/api";
+    const isLiveHost =
+      location.hostname.includes("carbonaxisexchange.com");
+
+    function setMsg(el, text, kind) {
+      el.className = "msg" + (kind ? " " + kind : "");
+      el.textContent = text || "";
+    }
+
+    function authHeaders() {
+      return { Authorization: "Bearer " + token };
+    }
+
+    async function readApiJson(res) {
+      const text = await res.text();
+      const trimmed = text.trim();
+      if (trimmed.startsWith("<!") || trimmed.startsWith("<html")) {
+        throw new Error(
+          "API returned HTML instead of JSON. " +
+            (isLiveHost
+              ? "Render backend is missing GET /api/intelligence/library/documents — deploy latest code, or use localhost:5000."
+              : "Check npm start is running and open this page via http://localhost:5000/...")
+        );
+      }
+      try {
+        return JSON.parse(text);
+      } catch {
+        throw new Error("Invalid API response: " + trimmed.slice(0, 120));
+      }
+    }
+
+    const LIBRARY_API = API_BASE + "/intelligence/library";
+
+    if (isLiveHost) {
+      setMsg(
+        document.getElementById("listMsg"),
+        "LIVE site needs Render deploy with /api/intelligence/library. Prefer localhost:5000 until Render is updated.",
+        "err"
+      );
+    }
+
+    document.getElementById("fillDoc2").addEventListener("click", () => {
+      document.getElementById("title").value =
+        "Brief of Energy Strategies to Achieve Net Zero";
+      document.getElementById("documentType").value = "report";
+      document.getElementById("sourceClass").value = "government";
+      document.getElementById("topics").value =
+        "net zero, renewable energy, hydrogen strategy";
+      document.getElementById("sectors").value = "energy";
+      document.getElementById("tags").value = "UAE, Net Zero, official";
+      setMsg(
+        document.getElementById("uploadMsg"),
+        "Filled metadata for document 2. Choose UAE-RE-000002.pdf and click Upload.",
+        "ok"
+      );
+    });
+
+    async function loadDocuments() {
+      const body = document.getElementById("docsBody");
+      const listMsg = document.getElementById("listMsg");
+      setMsg(listMsg, "Loading…");
+      try {
+        const res = await fetch(LIBRARY_API + "/documents", {
+          headers: authHeaders(),
+        });
+        const data = await readApiJson(res);
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || "Failed to list documents");
+        }
+        setMsg(listMsg, data.count + " document(s)", "ok");
+        if (!data.documents.length) {
+          body.innerHTML = "<tr><td colspan='4'>No documents yet.</td></tr>";
+          return;
+        }
+        body.innerHTML = data.documents
+          .map((doc) => {
+            const canProcess =
+              doc.status === "draft" ||
+              doc.status === "failed" ||
+              doc.status === "pending_review";
+            return (
+              "<tr>" +
+              "<td><strong>" +
+              escapeHtml(doc.title) +
+              "</strong><br><span style='opacity:.65'>" +
+              escapeHtml(doc.fileName || "") +
+              "<br>" +
+              escapeHtml(doc.id) +
+              "</span></td>" +
+              "<td><span class='pill'>" +
+              escapeHtml(doc.status) +
+              "</span><br>" +
+              escapeHtml(doc.processingStage || "") +
+              " · " +
+              (doc.processingProgress || 0) +
+              "%</td>" +
+              "<td>" +
+              (doc.chunkCount || 0) +
+              " / emb " +
+              (doc.embeddingCount || 0) +
+              "<br>pages " +
+              (doc.pageCount || 0) +
+              "</td>" +
+              "<td class='actions'>" +
+              (canProcess
+                ? "<button type='button' data-process='" +
+                  doc.id +
+                  "'>Process</button>"
+                : "") +
+              "</td>" +
+              "</tr>"
+            );
+          })
+          .join("");
+      } catch (err) {
+        body.innerHTML = "<tr><td colspan='4'>Could not load list.</td></tr>";
+        setMsg(listMsg, String(err.message || err), "err");
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    document.getElementById("docsBody").addEventListener("click", async (e) => {
+      const btn = e.target.closest("[data-process]");
+      if (!btn) return;
+      const id = btn.getAttribute("data-process");
+      btn.disabled = true;
+      btn.textContent = "Starting…";
+      try {
+        const res = await fetch(LIBRARY_API + "/" + id + "/process", {
+          method: "POST",
+          headers: authHeaders(),
+        });
+        const data = await readApiJson(res);
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || "Process failed");
+        }
+        setMsg(
+          document.getElementById("listMsg"),
+          "Processing started · job " + (data.job?.id || ""),
+          "ok"
+        );
+        await loadDocuments();
+      } catch (err) {
+        setMsg(document.getElementById("listMsg"), String(err.message || err), "err");
+        btn.disabled = false;
+        btn.textContent = "Process";
+      }
+    });
+
+    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("uploadMsg");
+      const btn = document.getElementById("uploadBtn");
+      const file = document.getElementById("document").files[0];
+      if (!file) {
+        setMsg(msg, "Choose a file first.", "err");
+        return;
+      }
+
+      const form = new FormData();
+      form.append("document", file);
+      form.append("title", document.getElementById("title").value.trim());
+      form.append("country", document.getElementById("country").value.trim());
+      form.append("jurisdiction", document.getElementById("jurisdiction").value.trim());
+      form.append(
+        "issuingAuthority",
+        document.getElementById("issuingAuthority").value.trim()
+      );
+      form.append("documentType", document.getElementById("documentType").value);
+      form.append("sourceClass", document.getElementById("sourceClass").value);
+      form.append("language", document.getElementById("language").value.trim());
+      form.append("visibility", document.getElementById("visibility").value);
+      form.append("topics", document.getElementById("topics").value.trim());
+      form.append("sectors", document.getElementById("sectors").value.trim());
+      form.append("tags", document.getElementById("tags").value.trim());
+
+      btn.disabled = true;
+      setMsg(msg, "Uploading…");
+      try {
+        const res = await fetch(LIBRARY_API + "/upload", {
+          method: "POST",
+          headers: authHeaders(),
+          body: form,
+        });
+        const data = await readApiJson(res);
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || "Upload failed");
+        }
+        setMsg(
+          msg,
+          "Uploaded OK · id " + data.document.id + " · status " + data.document.status,
+          "ok"
+        );
+        document.getElementById("document").value = "";
+        await loadDocuments();
+      } catch (err) {
+        setMsg(msg, String(err.message || err), "err");
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById("refreshBtn").addEventListener("click", loadDocuments);
+    loadDocuments();
+  </script>
+</body>
+</html>

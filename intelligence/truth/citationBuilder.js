@@ -55,12 +55,11 @@ function buildCitationLabel({
 }
 
 function buildCitationKey(item = {}) {
-  return [
-    String(item.documentId || ""),
-    String(item.chunkId || ""),
-    normalizeText(item.sectionTitle),
-    String(item.pageNumber || ""),
-  ].join("::");
+  /*
+   * Sources UI is document-level. Multiple chunks from one PDF
+   * must not create duplicate CA-00N cards with the same title.
+   */
+  return String(item.documentId || "");
 }
 
 function createCitation(item, index) {
@@ -248,7 +247,7 @@ export function buildCitations(
 
     const key = buildCitationKey(item);
 
-    if (seen.has(key)) {
+    if (!key || seen.has(key)) {
       continue;
     }
 

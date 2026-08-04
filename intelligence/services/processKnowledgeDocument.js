@@ -38,6 +38,27 @@ function isPlaceholderValue(value = "") {
   ].includes(normalized);
 }
 
+/** Official / institutional sources may enter answers after successful process. */
+const AUTHORITATIVE_SOURCE_CLASSES = new Set([
+  "government",
+  "un",
+  "international_organization",
+  "registry",
+  "standard_body",
+]);
+
+function resolveCompletedStatus(document) {
+  if (!AUTHORITATIVE_SOURCE_CLASSES.has(document.sourceClass)) {
+    return "pending_review";
+  }
+
+  if (document.visibility === "public") {
+    return "published";
+  }
+
+  return "verified";
+}
+
 /**
  * Prefer real extracted metadata over upload placeholders like "Global".
  * Keep a real manual value (e.g. Pakistan) unless extraction also has a real value
@@ -465,15 +486,23 @@ await updateDocumentProgress(document._id, {
           : extractedMetadata.tags;
     }
 
-    document.status = "pending_review";
+    document.status = resolveCompletedStatus(document);
+    if (
+      document.status === "verified" ||
+      document.status === "published"
+    ) {
+      document.lastVerifiedAt = new Date();
+    }
     document.processingStage = "completed";
-document.processingProgress = 100;
-document.processingMessage = metadataWarning
-  ? "Processing completed with a metadata warning. Human review is required."
-  : "Document processing completed successfully.";
-document.processingError = "";
-document.processingCompletedAt = new Date();
-document.indexedAt = new Date();
+    document.processingProgress = 100;
+    document.processingMessage = metadataWarning
+      ? "Processing completed with a metadata warning. Human review is still recommended."
+      : document.status === "pending_review"
+        ? "Document processing completed successfully. Human review is required before answers may cite it."
+        : `Document processing completed successfully. Status set to ${document.status} for answer retrieval.`;
+    document.processingError = "";
+    document.processingCompletedAt = new Date();
+    document.indexedAt = new Date();
 
 document.chunkCount = insertedChunks.length;
 document.embeddingCount = insertedEmbeddings.length;
