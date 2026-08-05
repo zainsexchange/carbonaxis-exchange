@@ -125,6 +125,33 @@
       align-items: flex-start;
       margin-bottom: 8px;
     }
+    .stage-bar {
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .stage-bar > i {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, #00e5b0, #3dffc5);
+      width: 0;
+    }
+    .queue-mini {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+      max-height: 280px;
+      overflow: auto;
+    }
+    .queue-mini-item {
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px;
+      padding: 10px;
+      background: rgba(0,0,0,.2);
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
@@ -232,6 +259,13 @@
     </section>
 
     <section class="card">
+      <h2>Live Processing Queue</h2>
+      <p class="meta" style="margin:0 0 8px;">Uploading → OCR → Chunking → Embedding → Publishing</p>
+      <div class="msg" id="queueMsg">Loading…</div>
+      <div class="queue-mini" id="queueMini"></div>
+    </section>
+
+    <section class="card">
       <h2>Uploaded documents</h2>
       <button type="button" class="secondary" id="refreshBtn">Refresh list</button>
       <button type="button" id="promoteBtn">Publish official docs for answers</button>
@@ -316,6 +350,65 @@
         "ok"
       );
     });
+
+    async function loadQueue() {
+      const msg = document.getElementById("queueMsg");
+      const host = document.getElementById("queueMini");
+      try {
+        const res = await fetch(LIBRARY_API + "/queue?limit=20&active=1", {
+          headers: authHeaders(),
+        });
+        const data = await readApiJson(res);
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || "Queue failed");
+        }
+        const queue = data.queue || {};
+        const counts = queue.counts || {};
+        const items = queue.items || [];
+        msg.textContent =
+          (counts.active || 0) +
+          " active · " +
+          (counts.failed || 0) +
+          " failed · auto-refresh";
+        if (!items.length) {
+          host.innerHTML = '<div class="msg">Queue idle.</div>';
+        } else {
+          host.innerHTML = items
+            .map((item) => {
+              const bars = (item.bars || [])
+                .map(
+                  (bar) =>
+                    "<div><span>" +
+                    escapeHtml(bar.label) +
+                    " " +
+                    (bar.fill || 0) +
+                    '%</span><div class="stage-bar"><i style="width:' +
+                    (bar.fill || 0) +
+                    '%"></i></div></div>'
+                )
+                .join("");
+              return (
+                '<div class="queue-mini-item"><strong>' +
+                escapeHtml(item.title) +
+                "</strong><div class=\"msg\">" +
+                escapeHtml(item.stageLabel || "") +
+                " · " +
+                escapeHtml(item.documentStatus || "") +
+                "</div>" +
+                bars +
+                "</div>"
+              );
+            })
+            .join("");
+        }
+        const active = Number(counts.active || 0);
+        clearTimeout(window.__queueTimer);
+        window.__queueTimer = setTimeout(loadQueue, active > 0 ? 3000 : 10000);
+      } catch (err) {
+        msg.className = "msg err";
+        msg.textContent = String(err.message || err);
+      }
+    }
 
     async function loadDocuments() {
       const body = document.getElementById("docsBody");
@@ -457,6 +550,7 @@
           "ok"
         );
         await loadDocuments();
+        await loadQueue();
       } catch (err) {
         setMsg(document.getElementById("listMsg"), String(err.message || err), "err");
         btn.disabled = false;
@@ -533,6 +627,7 @@
         );
         document.getElementById("document").value = "";
         await loadDocuments();
+        await loadQueue();
       } catch (err) {
         setMsg(msg, String(err.message || err), "err");
       } finally {
@@ -540,8 +635,12 @@
       }
     });
 
-    document.getElementById("refreshBtn").addEventListener("click", loadDocuments);
+    document.getElementById("refreshBtn").addEventListener("click", () => {
+      loadDocuments();
+      loadQueue();
+    });
     loadDocuments();
+    loadQueue();
   </script>
 </body>
 </html>
