@@ -71,6 +71,7 @@ function normalizeCountry(value = "") {
 
 /**
  * Document quality score 0–100 for library ops (not answer confidence).
+ * Additive signals only — does not affect RAG evidence ranking.
  */
 export function calculateDocumentQualityScore(doc = {}) {
   const breakdown = {};
@@ -88,33 +89,51 @@ export function calculateDocumentQualityScore(doc = {}) {
     doc.officialUrl || doc.sourceUrl || "",
   ];
   const metaFilled = metaFields.filter(Boolean).length;
-  breakdown.metadata = Math.round((metaFilled / metaFields.length) * 25);
+  breakdown.metadata = Math.round((metaFilled / metaFields.length) * 20);
 
   const authority = Number(
     doc.sourceAuthorityScore ?? resolveSourceAuthorityScore(doc)
   );
-  breakdown.officialSource = Math.round((Math.min(100, authority) / 100) * 25);
+  breakdown.officialSource = Math.round((Math.min(100, authority) / 100) * 20);
 
   const chars = Number(doc.extractedCharacterCount || 0);
-  breakdown.ocrText =
-    chars >= 5000 ? 10 : chars >= 500 ? 7 : chars > 0 ? 4 : 0;
+  const pages = Number(doc.pageCount || 0);
+  // OCR / extract quality proxy: text density vs pages when available.
+  if (chars <= 0) {
+    breakdown.ocrText = 0;
+  } else if (pages > 0) {
+    const density = chars / pages;
+    breakdown.ocrText =
+      density >= 800 ? 12 : density >= 300 ? 9 : density >= 80 ? 6 : 3;
+  } else {
+    breakdown.ocrText =
+      chars >= 5000 ? 12 : chars >= 500 ? 8 : 4;
+  }
 
   const chunks = Number(doc.chunkCount || 0);
   breakdown.chunks =
-    chunks >= 8 ? 15 : chunks >= 3 ? 11 : chunks >= 1 ? 7 : 0;
+    chunks >= 8 ? 12 : chunks >= 3 ? 9 : chunks >= 1 ? 5 : 0;
 
   const embeddings = Number(doc.embeddingCount || 0);
-  breakdown.embeddings =
-    embeddings > 0 && embeddings >= chunks
-      ? 15
-      : embeddings > 0
-        ? 10
-        : 0;
+  if (embeddings <= 0) {
+    breakdown.embeddings = 0;
+  } else if (chunks > 0 && embeddings >= chunks) {
+    breakdown.embeddings = 12;
+  } else if (embeddings > 0) {
+    breakdown.embeddings = 7;
+  } else {
+    breakdown.embeddings = 0;
+  }
 
   const citationSignals =
     (Array.isArray(doc.topics) ? doc.topics.length : 0) +
-    (Array.isArray(doc.tags) ? doc.tags.length : 0);
-  breakdown.citations = citationSignals >= 4 ? 5 : citationSignals > 0 ? 3 : 0;
+    (Array.isArray(doc.tags) ? doc.tags.length : 0) +
+    (Array.isArray(doc.technologies) ? doc.technologies.length : 0) +
+    (Array.isArray(doc.metadata?.technologies)
+      ? doc.metadata.technologies.length
+      : 0);
+  breakdown.citations =
+    citationSignals >= 6 ? 8 : citationSignals >= 3 ? 5 : citationSignals > 0 ? 3 : 0;
 
   const hasRelations = Boolean(
     doc.supersedesDocumentId ||
@@ -123,7 +142,17 @@ export function calculateDocumentQualityScore(doc = {}) {
         doc.metadata.relatedDocuments.length) ||
       (Array.isArray(doc.relatedDocuments) && doc.relatedDocuments.length)
   );
-  breakdown.relationships = hasRelations ? 5 : 0;
+  breakdown.relationships = hasRelations ? 8 : 0;
+
+  const status = String(doc.status || "").toLowerCase();
+  breakdown.publishReadiness =
+    status === "published" || status === "verified"
+      ? 8
+      : status === "pending_review"
+        ? 4
+        : status === "failed"
+          ? 0
+          : 2;
 
   const total = Object.values(breakdown).reduce((sum, n) => sum + n, 0);
 
@@ -286,37 +315,61 @@ export async function getLibraryDocumentDetail(documentId) {
   if (!doc) return null;
 
   const base = serializeDocument(doc);
+  const all = await KnowledgeDocument.find({})
+    .select(
+      "title country status issuingAuthority documentType sourceAuthorityScore supersedesDocumentId topics tags description metadata"
+    )
+    .lean();
 
   const supersedes = doc.supersedesDocumentId
-    ? await KnowledgeDocument.findById(doc.supersedesDocumentId)
-        .select("title country status issuingAuthority")
-        .lean()
+    ? all.find((item) => String(item._id) === String(doc.supersedesDocumentId))
     : null;
 
-  const supersededBy = await KnowledgeDocument.find({
-    supersedesDocumentId: doc._id,
-  })
-    .select("title country status issuingAuthority")
-    .limit(20)
-    .lean();
+  const supersededBy = all.filter(
+    (item) =>
+      item.supersedesDocumentId &&
+      String(item.supersedesDocumentId) === String(doc._id)
+  );
 
-  const similar = await KnowledgeDocument.find({
-    _id: { $ne: doc._id },
-    $or: [
-      { country: doc.country },
-      { issuingAuthority: doc.issuingAuthority },
-      {
-        topics: {
-          $in: Array.isArray(doc.topics) ? doc.topics.slice(0, 5) : [],
-        },
-      },
-    ],
-  })
-    .select(
-      "title country status issuingAuthority documentType sourceAuthorityScore"
-    )
-    .limit(8)
-    .lean();
+  const titleToken = String(doc.title || "")
+    .trim()
+    .toLowerCase();
+
+  const citedBy = all
+    .filter((item) => String(item._id) !== String(doc._id))
+    .filter((item) => {
+      const blob = `${item.title || ""} ${item.description || ""} ${(item.topics || []).join(" ")} ${item.metadata?.summary || ""}`.toLowerCase();
+      return (
+        titleToken.length >= 12 &&
+        blob.includes(titleToken.slice(0, Math.min(40, titleToken.length)))
+      );
+    })
+    .slice(0, 8);
+
+  const similar = all
+    .filter((item) => String(item._id) !== String(doc._id))
+    .map((item) => {
+      let score = 0;
+      if (item.country && item.country === doc.country) score += 2;
+      if (
+        item.issuingAuthority &&
+        item.issuingAuthority === doc.issuingAuthority
+      ) {
+        score += 2;
+      }
+      const sharedTopics = (item.topics || []).filter((topic) =>
+        (doc.topics || []).includes(topic)
+      );
+      score += Math.min(3, sharedTopics.length);
+      if (item.documentType && item.documentType === doc.documentType) {
+        score += 1;
+      }
+      return { item, score };
+    })
+    .filter((row) => row.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 8)
+    .map((row) => row.item);
 
   const chain = [];
   let cursor = doc;
@@ -328,9 +381,9 @@ export async function getLibraryDocumentDetail(documentId) {
   });
 
   while (cursor?.supersedesDocumentId && chain.length < 8) {
-    const next = await KnowledgeDocument.findById(cursor.supersedesDocumentId)
-      .select("title status supersedesDocumentId")
-      .lean();
+    const next = all.find(
+      (item) => String(item._id) === String(cursor.supersedesDocumentId)
+    );
     if (!next || seen.has(String(next._id))) break;
     seen.add(String(next._id));
     chain.push({
@@ -339,6 +392,61 @@ export async function getLibraryDocumentDetail(documentId) {
       status: next.status,
     });
     cursor = next;
+  }
+
+  const graphNodes = [
+    {
+      id: String(doc._id),
+      title: doc.title,
+      kind: "focus",
+      status: doc.status,
+    },
+  ];
+  const graphEdges = [];
+  const addNode = (item, kind) => {
+    if (!item) return;
+    const id = String(item._id || item.id);
+    if (!graphNodes.some((node) => node.id === id)) {
+      graphNodes.push({
+        id,
+        title: item.title,
+        kind,
+        status: item.status,
+      });
+    }
+  };
+
+  if (supersedes) {
+    addNode(supersedes, "supersedes");
+    graphEdges.push({
+      from: String(doc._id),
+      to: String(supersedes._id),
+      type: "supersedes",
+    });
+  }
+  for (const item of supersededBy) {
+    addNode(item, "superseded_by");
+    graphEdges.push({
+      from: String(item._id),
+      to: String(doc._id),
+      type: "supersedes",
+    });
+  }
+  for (const item of citedBy) {
+    addNode(item, "cited_by");
+    graphEdges.push({
+      from: String(item._id),
+      to: String(doc._id),
+      type: "cites",
+    });
+  }
+  for (const item of similar.slice(0, 5)) {
+    addNode(item, "similar");
+    graphEdges.push({
+      from: String(doc._id),
+      to: String(item._id),
+      type: "similar",
+    });
   }
 
   return {
@@ -365,6 +473,13 @@ export async function getLibraryDocumentDetail(documentId) {
         status: item.status,
         issuingAuthority: item.issuingAuthority,
       })),
+      citedBy: citedBy.map((item) => ({
+        id: String(item._id),
+        title: item.title,
+        country: item.country,
+        status: item.status,
+        issuingAuthority: item.issuingAuthority,
+      })),
       similar: similar.map((item) => ({
         id: String(item._id),
         title: item.title,
@@ -375,6 +490,10 @@ export async function getLibraryDocumentDetail(documentId) {
         sourceAuthorityScore: item.sourceAuthorityScore,
       })),
       chain,
+      graph: {
+        nodes: graphNodes,
+        edges: graphEdges,
+      },
     },
   };
 }
@@ -530,41 +649,46 @@ export async function buildLibraryDashboard() {
       4
   );
 
-  const suggestions = [];
+  const ruleSuggestions = [];
 
   if (!documents.some((doc) => /hydrogen/i.test(doc.title || ""))) {
-    suggestions.push({
+    ruleSuggestions.push({
       level: "high",
+      source: "rules",
       text: "Upload a national Hydrogen Roadmap / Hydrogen Strategy (Tier 1).",
     });
   }
 
   for (const row of countryCoverage) {
     if (row.percent < 50) {
-      suggestions.push({
+      ruleSuggestions.push({
         level: "medium",
+        source: "rules",
         text: `${row.country} coverage is ${row.percent}% of target (${row.count}/${row.target}). Prioritize Tier 1 government docs.`,
       });
     }
   }
 
   if (awaitingReview > 0) {
-    suggestions.push({
+    ruleSuggestions.push({
       level: "high",
+      source: "rules",
       text: `${awaitingReview} document(s) awaiting review/publish before they can power answers.`,
     });
   }
 
   if (outdated > 0) {
-    suggestions.push({
+    ruleSuggestions.push({
       level: "medium",
+      source: "rules",
       text: `${outdated} document(s) look outdated (>1 year since verify/publication). Re-verify or supersede.`,
     });
   }
 
   if (failedEmbeddings.length > 0) {
-    suggestions.push({
+    ruleSuggestions.push({
       level: "high",
+      source: "rules",
       text: `${failedEmbeddings.length} document(s) have chunks but no embeddings — re-process them.`,
     });
   }
@@ -581,18 +705,31 @@ export async function buildLibraryDashboard() {
     ([, count]) => count > 1
   );
   if (duplicateTitles.length > 0) {
-    suggestions.push({
+    ruleSuggestions.push({
       level: "medium",
+      source: "rules",
       text: `Duplicate titles detected (${duplicateTitles.length} groups). Review for better-version / archive.`,
     });
   }
 
   if (missingThemes.length > 0) {
-    suggestions.push({
+    ruleSuggestions.push({
       level: "medium",
+      source: "rules",
       text: `Missing theme coverage signals: ${missingThemes.slice(0, 4).join(", ")}.`,
     });
   }
+
+  const suggestions = await enrichSuggestionsWithAi({
+    ruleSuggestions,
+    totals: {
+      documents: documents.length,
+      awaitingReview,
+      outdated,
+      missingThemes,
+      countryCoverage,
+    },
+  });
 
   const timelineMap = new Map();
   for (const doc of documents) {
@@ -632,6 +769,23 @@ export async function buildLibraryDashboard() {
       status: doc.status,
     }));
 
+  const libraryGraph = {
+    nodes: documents.slice(0, 40).map((doc) => ({
+      id: String(doc._id),
+      title: doc.title,
+      country: normalizeCountry(doc.country),
+      status: doc.status,
+      sourceClass: doc.sourceClass,
+    })),
+    edges: documents
+      .filter((doc) => doc.supersedesDocumentId)
+      .map((doc) => ({
+        from: String(doc._id),
+        to: String(doc.supersedesDocumentId),
+        type: "supersedes",
+      })),
+  };
+
   const serialized = documents.map((doc) => serializeDocument(doc));
 
   return {
@@ -670,8 +824,92 @@ export async function buildLibraryDashboard() {
     suggestions,
     timeline,
     relationshipNodes,
+    libraryGraph,
     documents: serialized.slice(0, 100),
   };
+}
+
+/**
+ * Optional AI enrichment for admin suggestions only.
+ * Soft-fails to rule suggestions — never touches RAG ask path.
+ */
+async function enrichSuggestionsWithAi({
+  ruleSuggestions = [],
+  totals = {},
+} = {}) {
+  const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
+  if (!apiKey) {
+    return ruleSuggestions;
+  }
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+        temperature: 0.2,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are Carbon Brain Knowledge Ops. Return 3-5 short actionable library curation suggestions as a JSON array of strings. Focus on missing Tier-1 official GCC documents, duplicates, outdated docs, and coverage gaps. No markdown.",
+          },
+          {
+            role: "user",
+            content: JSON.stringify({
+              totals,
+              existingSuggestions: ruleSuggestions.map((item) => item.text),
+            }),
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      return ruleSuggestions;
+    }
+
+    const payload = await response.json();
+    const content = String(payload?.choices?.[0]?.message?.content || "").trim();
+    const match = content.match(/\[[\s\S]*\]/);
+    if (!match) {
+      return ruleSuggestions;
+    }
+
+    const parsed = JSON.parse(match[0]);
+    if (!Array.isArray(parsed) || !parsed.length) {
+      return ruleSuggestions;
+    }
+
+    const aiItems = parsed
+      .map((text) => String(text || "").trim())
+      .filter(Boolean)
+      .slice(0, 5)
+      .map((text) => ({
+        level: "medium",
+        source: "ai",
+        text,
+      }));
+
+    const merged = [...ruleSuggestions];
+    for (const item of aiItems) {
+      if (
+        !merged.some(
+          (existing) =>
+            existing.text.toLowerCase() === item.text.toLowerCase()
+        )
+      ) {
+        merged.push(item);
+      }
+    }
+    return merged.slice(0, 12);
+  } catch {
+    return ruleSuggestions;
+  }
 }
 
 export { serializeDocument, GCC_TARGETS };

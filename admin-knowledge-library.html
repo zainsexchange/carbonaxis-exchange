@@ -127,6 +127,65 @@
       padding: 12px;
       background: rgba(0,0,0,.18);
     }
+    .gcc-map-wrap {
+      display: grid;
+      grid-template-columns: minmax(280px, 1.1fr) 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .gcc-map-wrap { grid-template-columns: 1fr; }
+    }
+    .gcc-svg {
+      width: 100%;
+      max-width: 520px;
+      height: auto;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+    }
+    .gcc-svg .country-shape {
+      stroke: rgba(255,255,255,.28);
+      stroke-width: 1.5;
+      transition: opacity .2s ease;
+      cursor: default;
+    }
+    .gcc-svg text {
+      fill: #e8f7f2;
+      font-size: 11px;
+      font-weight: 600;
+      pointer-events: none;
+    }
+    .rel-svg {
+      width: 100%;
+      height: 260px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      background: rgba(0,0,0,.2);
+      margin-top: 12px;
+    }
+    .rel-svg .edge { stroke: rgba(0,229,176,.45); stroke-width: 1.5; fill: none; }
+    .rel-svg .edge-cites { stroke: rgba(255,184,77,.55); stroke-dasharray: 4 3; }
+    .rel-svg .edge-similar { stroke: rgba(148,163,184,.4); stroke-dasharray: 2 3; }
+    .rel-svg .node-circle { stroke: rgba(255,255,255,.25); stroke-width: 1; }
+    .rel-svg .node-focus { fill: #00e5b0; }
+    .rel-svg .node-supersedes { fill: #3b82f6; }
+    .rel-svg .node-superseded_by { fill: #f59e0b; }
+    .rel-svg .node-cited_by { fill: #f97316; }
+    .rel-svg .node-similar { fill: #64748b; }
+    .rel-svg text { fill: #e8f7f2; font-size: 10px; }
+    .sug-source {
+      display: inline-block;
+      margin-left: 6px;
+      font-size: 10px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 999px;
+      padding: 1px 6px;
+    }
+    .sug-source.ai { color: var(--accent); border-color: rgba(0,229,176,.35); }
     .timeline {
       display: flex;
       gap: 12px;
@@ -294,16 +353,18 @@
         </div>
       </section>
 
-      <!-- Phase 4 -->
       <section class="panel">
         <h2>Relationship Graph</h2>
         <div class="msg" id="graphMsg">Select a document to inspect relationships.</div>
         <div id="graphPanel" hidden>
           <div class="chain" id="graphChain"></div>
+          <svg class="rel-svg" id="relGraphSvg" viewBox="0 0 640 260" role="img" aria-label="Document relationship graph"></svg>
           <p class="meta" style="margin-top:12px;">Supersedes</p>
           <div id="graphSupersedes" class="msg">—</div>
           <p class="meta">Superseded by</p>
           <div id="graphSupersededBy" class="msg">—</div>
+          <p class="meta">Cited by (title overlap)</p>
+          <div id="graphCitedBy" class="msg">—</div>
           <p class="meta">Similar documents</p>
           <div id="graphSimilar" class="msg">—</div>
         </div>
@@ -329,10 +390,12 @@
       <div class="timeline" id="timeline"></div>
     </section>
 
-    <!-- Phase 9 -->
     <section class="panel">
       <h2>Country Heat Map</h2>
-      <div class="heat" id="heatMap"></div>
+      <div class="gcc-map-wrap">
+        <div id="gccSvgMap"></div>
+        <div class="heat" id="heatMap"></div>
+      </div>
     </section>
 
     <!-- Phase 10 -->
@@ -436,6 +499,107 @@
         "</p>";
     }
 
+    function coverageColor(percent) {
+      const p = Math.max(0, Math.min(100, Number(percent) || 0));
+      if (p >= 80) return "#00e5b0";
+      if (p >= 50) return "#3dffc5";
+      if (p >= 25) return "#f59e0b";
+      if (p > 0) return "#f97316";
+      return "#334155";
+    }
+
+    function renderGccSvgMap(rows) {
+      const byCountry = {};
+      (rows || []).forEach((row) => {
+        byCountry[row.country] = row;
+      });
+      // Simplified GCC layout (schematic, not geographic precision).
+      const shapes = [
+        {
+          key: "Kuwait",
+          d: "M360,42 L410,42 L418,78 L352,78 Z",
+          labelX: 372,
+          labelY: 64,
+        },
+        {
+          key: "Bahrain",
+          d: "M318,118 L338,118 L340,138 L316,138 Z",
+          labelX: 308,
+          labelY: 152,
+        },
+        {
+          key: "Qatar",
+          d: "M350,108 L392,108 L400,168 L348,168 Z",
+          labelX: 356,
+          labelY: 142,
+        },
+        {
+          key: "United Arab Emirates",
+          d: "M360,178 L458,168 L470,230 L352,236 Z",
+          labelX: 378,
+          labelY: 208,
+        },
+        {
+          key: "Oman",
+          d: "M430,150 L510,140 L530,260 L420,270 L400,200 Z",
+          labelX: 448,
+          labelY: 210,
+        },
+        {
+          key: "Saudi Arabia",
+          d: "M120,70 L350,55 L348,250 L180,270 L110,180 Z",
+          labelX: 190,
+          labelY: 160,
+        },
+      ];
+
+      const legend = shapes
+        .map((shape) => {
+          const row = byCountry[shape.key] || { percent: 0, count: 0, target: 0 };
+          return (
+            '<text x="' +
+            shape.labelX +
+            '" y="' +
+            shape.labelY +
+            '">' +
+            escapeHtml(shape.key.replace("United Arab Emirates", "UAE")) +
+            " " +
+            (row.percent || 0) +
+            "%</text>"
+          );
+        })
+        .join("");
+
+      const paths = shapes
+        .map((shape) => {
+          const row = byCountry[shape.key] || { percent: 0 };
+          return (
+            '<path class="country-shape" data-country="' +
+            escapeHtml(shape.key) +
+            '" d="' +
+            shape.d +
+            '" fill="' +
+            coverageColor(row.percent) +
+            '"><title>' +
+            escapeHtml(shape.key) +
+            ": " +
+            (row.count || 0) +
+            "/" +
+            (row.target || 0) +
+            " (" +
+            (row.percent || 0) +
+            "%)</title></path>"
+          );
+        })
+        .join("");
+
+      document.getElementById("gccSvgMap").innerHTML =
+        '<svg class="gcc-svg" viewBox="0 0 560 300" role="img" aria-label="GCC coverage heat map">' +
+        paths +
+        legend +
+        "</svg>";
+    }
+
     function renderCoverage(rows) {
       const html = (rows || [])
         .map(
@@ -455,6 +619,7 @@
         .join("");
       document.getElementById("coverageMini").innerHTML = html || "—";
       document.getElementById("heatMap").innerHTML = html || "—";
+      renderGccSvgMap(rows || []);
     }
 
     function renderHealth(health) {
@@ -506,9 +671,98 @@
             (item.level === "high" ? "sug-high" : "") +
             '">' +
             escapeHtml(item.text) +
-            "</li>"
+            '<span class="sug-source' +
+            (item.source === "ai" ? " ai" : "") +
+            '">' +
+            escapeHtml(item.source || "rules") +
+            "</span></li>"
         )
         .join("") || "<li>No suggestions right now.</li>";
+    }
+
+    function truncateLabel(text, max) {
+      const s = String(text || "");
+      return s.length > max ? s.slice(0, max - 1) + "…" : s;
+    }
+
+    function renderRelGraphSvg(graph) {
+      const svg = document.getElementById("relGraphSvg");
+      const nodes = (graph && graph.nodes) || [];
+      const edges = (graph && graph.edges) || [];
+      if (!nodes.length) {
+        svg.innerHTML =
+          '<text x="24" y="40">No relationship nodes for this document.</text>';
+        return;
+      }
+
+      const focus = nodes.find((n) => n.kind === "focus") || nodes[0];
+      const others = nodes.filter((n) => n.id !== focus.id);
+      const cx = 320;
+      const cy = 130;
+      const radius = 95;
+      const positions = {};
+      positions[focus.id] = { x: cx, y: cy };
+      others.forEach((node, idx) => {
+        const angle = (Math.PI * 2 * idx) / Math.max(others.length, 1) - Math.PI / 2;
+        positions[node.id] = {
+          x: cx + Math.cos(angle) * radius,
+          y: cy + Math.sin(angle) * radius,
+        };
+      });
+
+      const edgeHtml = edges
+        .map((edge) => {
+          const a = positions[edge.from];
+          const b = positions[edge.to];
+          if (!a || !b) return "";
+          const cls =
+            edge.type === "cites"
+              ? "edge edge-cites"
+              : edge.type === "similar"
+                ? "edge edge-similar"
+                : "edge";
+          return (
+            '<line class="' +
+            cls +
+            '" x1="' +
+            a.x +
+            '" y1="' +
+            a.y +
+            '" x2="' +
+            b.x +
+            '" y2="' +
+            b.y +
+            '" />'
+          );
+        })
+        .join("");
+
+      const nodeHtml = nodes
+        .map((node) => {
+          const p = positions[node.id];
+          if (!p) return "";
+          const kind = node.kind || "similar";
+          return (
+            '<circle class="node-circle node-' +
+            escapeHtml(kind) +
+            '" cx="' +
+            p.x +
+            '" cy="' +
+            p.y +
+            '" r="' +
+            (kind === "focus" ? 14 : 10) +
+            '" /><text x="' +
+            (p.x + 14) +
+            '" y="' +
+            (p.y + 4) +
+            '">' +
+            escapeHtml(truncateLabel(node.title, 28)) +
+            "</text>"
+          );
+        })
+        .join("");
+
+      svg.innerHTML = edgeHtml + nodeHtml;
     }
 
     function renderTimeline(rows) {
@@ -652,9 +906,13 @@
       document.getElementById("graphSupersededBy").innerHTML = (rel.supersededBy || [])
         .map((item) => escapeHtml(item.title))
         .join("<br>") || "None";
+      document.getElementById("graphCitedBy").innerHTML = (rel.citedBy || [])
+        .map((item) => escapeHtml(item.title))
+        .join("<br>") || "None";
       document.getElementById("graphSimilar").innerHTML = (rel.similar || [])
         .map((item) => escapeHtml(item.title))
         .join("<br>") || "None";
+      renderRelGraphSvg(rel.graph || { nodes: [], edges: [] });
     }
 
     async function loadExplorer() {
