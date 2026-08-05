@@ -22,6 +22,7 @@ import {
   buildLibraryDashboard,
   listLibraryDocuments,
   getLibraryDocumentDetail,
+  buildLibraryRelationshipGraph,
 } from "../services/libraryOperations.js";
 
 const router = express.Router();
@@ -325,6 +326,31 @@ router.get(
       return res.status(500).json({
         success: false,
         message: "Unable to build knowledge library dashboard.",
+      });
+    }
+  }
+);
+
+/**
+ * Corpus relationship graph (documents + themes + typed edges).
+ * Admin ops only — does not change RAG ask retrieval.
+ */
+router.get(
+  "/graph",
+  authenticateToken,
+  requireAdminRole,
+  async (req, res) => {
+    try {
+      const graph = await buildLibraryRelationshipGraph(req.query || {});
+      return res.json({
+        success: true,
+        graph,
+      });
+    } catch (error) {
+      console.error("Knowledge library graph error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Unable to build knowledge relationship graph.",
       });
     }
   }

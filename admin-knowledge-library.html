@@ -336,8 +336,20 @@
       </div>
     </section>
 
+    <section class="panel">
+      <h2>Knowledge Relationships</h2>
+      <p class="meta">Document ↔ theme graph · typed edges (supports / implements / supersedes / references) · ops only</p>
+      <div class="filters" style="margin-bottom:10px;">
+        <input id="graphQ" placeholder="Filter: Hydrogen, Net Zero, UAE…" />
+        <button type="button" id="btnGraphSearch">Search graph</button>
+      </div>
+      <div class="msg" id="corpusGraphMsg">Loading corpus graph…</div>
+      <svg class="rel-svg" id="corpusGraphSvg" viewBox="0 0 720 420" role="img" aria-label="Corpus relationship graph" style="height:420px"></svg>
+      <p class="meta" style="margin-top:12px;">Reasoning paths</p>
+      <div id="corpusPaths" class="msg">—</div>
+    </section>
+
     <div class="two">
-      <!-- Phase 3 + 5 -->
       <section class="panel">
         <h2>Quality Score · Metadata</h2>
         <div class="msg" id="detailMsg">Select a document from the explorer.</div>
@@ -685,6 +697,149 @@
       return s.length > max ? s.slice(0, max - 1) + "…" : s;
     }
 
+    function renderCorpusGraph(graph) {
+      const svg = document.getElementById("corpusGraphSvg");
+      const msg = document.getElementById("corpusGraphMsg");
+      const pathsEl = document.getElementById("corpusPaths");
+      const nodes = (graph && graph.nodes) || [];
+      const edges = (graph && graph.edges) || [];
+      const width = 720;
+      const height = 420;
+      const cx = width / 2;
+      const cy = height / 2;
+
+      if (!nodes.length) {
+        msg.textContent = "No relationship nodes yet.";
+        svg.innerHTML = "";
+        pathsEl.innerHTML = "—";
+        return;
+      }
+
+      const summary = graph.summary || {};
+      msg.textContent =
+        "Live · " +
+        (summary.nodes || nodes.length) +
+        " nodes · " +
+        (summary.edges || edges.length) +
+        " edges · " +
+        (summary.themes || 0) +
+        " themes";
+
+      const docs = nodes.filter((n) => n.kind === "document");
+      const themes = nodes.filter((n) => n.kind === "theme");
+      const positions = {};
+      themes.forEach((node, idx) => {
+        const angle =
+          (Math.PI * 2 * idx) / Math.max(themes.length, 1) - Math.PI / 2;
+        positions[node.id] = {
+          x: cx + Math.cos(angle) * 160,
+          y: cy + Math.sin(angle) * 160,
+        };
+      });
+      docs.forEach((node, idx) => {
+        const angle =
+          (Math.PI * 2 * idx) / Math.max(docs.length, 1) - Math.PI / 2;
+        positions[node.id] = {
+          x: cx + Math.cos(angle) * 90,
+          y: cy + Math.sin(angle) * 90,
+        };
+      });
+
+      const edgeColor = {
+        supersedes: "rgba(59,130,246,.7)",
+        references: "rgba(249,115,22,.7)",
+        similar: "rgba(148,163,184,.4)",
+        supports: "rgba(0,229,176,.65)",
+        implements: "rgba(168,85,247,.65)",
+        mentions: "rgba(100,116,139,.5)",
+      };
+
+      const edgeHtml = edges
+        .map((edge) => {
+          const a = positions[edge.from];
+          const b = positions[edge.to];
+          if (!a || !b) return "";
+          return (
+            '<line x1="' +
+            a.x +
+            '" y1="' +
+            a.y +
+            '" x2="' +
+            b.x +
+            '" y2="' +
+            b.y +
+            '" stroke="' +
+            (edgeColor[edge.type] || "rgba(148,163,184,.4)") +
+            '" stroke-width="1.3"><title>' +
+            escapeHtml(edge.type) +
+            "</title></line>"
+          );
+        })
+        .join("");
+
+      const nodeHtml = nodes
+        .map((node) => {
+          const p = positions[node.id];
+          if (!p) return "";
+          const isTheme = node.kind === "theme";
+          return (
+            '<circle cx="' +
+            p.x +
+            '" cy="' +
+            p.y +
+            '" r="' +
+            (isTheme ? 11 : 8) +
+            '" fill="' +
+            (isTheme ? "#00e5b0" : "#3b82f6") +
+            '" stroke="rgba(255,255,255,.25)" /><text x="' +
+            (p.x + 12) +
+            '" y="' +
+            (p.y + 4) +
+            '" fill="#e8f7f2" font-size="10">' +
+            escapeHtml(truncateLabel(node.label || node.title, 24)) +
+            "</text>"
+          );
+        })
+        .join("");
+
+      svg.innerHTML = edgeHtml + nodeHtml;
+
+      pathsEl.innerHTML = (graph.paths || [])
+        .map((path) => {
+          const labels = path.labels || [];
+          return (
+            '<div class="chain" style="margin-bottom:10px">' +
+            labels
+              .map(
+                (label, idx) =>
+                  (idx ? '<span class="arrow">↓</span>' : "") +
+                  '<div class="node"><strong>' +
+                  escapeHtml(label) +
+                  "</strong></div>"
+              )
+              .join("") +
+            "</div>"
+          );
+        })
+        .join("") || "No multi-hop paths yet.";
+    }
+
+    async function loadCorpusGraph(q) {
+      const msg = document.getElementById("corpusGraphMsg");
+      msg.textContent = "Loading corpus graph…";
+      const params = new URLSearchParams();
+      if (q) params.set("q", q);
+      params.set("limit", "50");
+      const res = await fetch(LIBRARY + "/graph?" + params.toString(), {
+        headers: authHeaders(),
+      });
+      const data = await readJson(res);
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Graph failed");
+      }
+      renderCorpusGraph(data.graph || {});
+    }
+
     function renderRelGraphSvg(graph) {
       const svg = document.getElementById("relGraphSvg");
       const nodes = (graph && graph.nodes) || [];
@@ -964,6 +1119,11 @@
         renderTimeline(d.timeline || []);
         renderAuthorityRank((d.authorities && d.authorities.top) || []);
         renderExplorer(d.documents || []);
+        if (d.libraryGraph && d.libraryGraph.nodes) {
+          renderCorpusGraph(d.libraryGraph);
+        } else {
+          await loadCorpusGraph("");
+        }
         bootMsg.className = "msg ok";
         bootMsg.textContent =
           "Live Mongo dashboard · " +
@@ -975,12 +1135,23 @@
         bootMsg.textContent = String(err.message || err);
         document.getElementById("explorerBody").innerHTML =
           "<tr><td colspan='8'>Could not load documents.</td></tr>";
+        document.getElementById("corpusGraphMsg").textContent = String(
+          err.message || err
+        );
       }
     }
 
     document.getElementById("btnSearch").addEventListener("click", () => {
       loadExplorer().catch((err) => {
         document.getElementById("explorerMsg").textContent = String(
+          err.message || err
+        );
+      });
+    });
+    document.getElementById("btnGraphSearch").addEventListener("click", () => {
+      const q = document.getElementById("graphQ").value.trim();
+      loadCorpusGraph(q).catch((err) => {
+        document.getElementById("corpusGraphMsg").textContent = String(
           err.message || err
         );
       });
