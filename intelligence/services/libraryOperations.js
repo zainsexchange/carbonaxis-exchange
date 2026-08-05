@@ -769,22 +769,7 @@ export async function buildLibraryDashboard() {
       status: doc.status,
     }));
 
-  const libraryGraph = {
-    nodes: documents.slice(0, 40).map((doc) => ({
-      id: String(doc._id),
-      title: doc.title,
-      country: normalizeCountry(doc.country),
-      status: doc.status,
-      sourceClass: doc.sourceClass,
-    })),
-    edges: documents
-      .filter((doc) => doc.supersedesDocumentId)
-      .map((doc) => ({
-        from: String(doc._id),
-        to: String(doc.supersedesDocumentId),
-        type: "supersedes",
-      })),
-  };
+  const libraryGraph = await buildLibraryRelationshipGraph({ limit: 50 });
 
   const serialized = documents.map((doc) => serializeDocument(doc));
 
@@ -910,6 +895,242 @@ async function enrichSuggestionsWithAi({
   } catch {
     return ruleSuggestions;
   }
+}
+
+/**
+ * Corpus relationship graph for admin / Intelligence Center.
+ * Derived from Mongo KnowledgeDocument only — does not alter RAG ask.
+ *
+ * Edge types:
+ * - supersedes | references | similar | supports | implements | mentions
+ */
+export async function buildLibraryRelationshipGraph(query = {}) {
+  const limit = Math.min(80, Math.max(10, Number(query.limit) || 50));
+  const countryFilter = String(query.country || "").trim();
+  const seed = String(query.q || query.seed || "").trim().toLowerCase();
+
+  let documents = await KnowledgeDocument.find({})
+    .select(
+      "title country status issuingAuthority documentType sourceClass topics tags sectors technologies supersedesDocumentId metadata description"
+    )
+    .sort({ updatedAt: -1 })
+    .lean();
+
+  if (countryFilter) {
+    const re = new RegExp(
+      countryFilter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+      "i"
+    );
+    documents = documents.filter((doc) => re.test(String(doc.country || "")));
+  }
+
+  if (seed) {
+    documents = documents.filter((doc) => {
+      const blob = `${doc.title || ""} ${(doc.topics || []).join(" ")} ${(doc.tags || []).join(" ")} ${doc.issuingAuthority || ""}`.toLowerCase();
+      return blob.includes(seed);
+    });
+  }
+
+  documents = documents.slice(0, limit);
+
+  const byId = new Map(documents.map((doc) => [String(doc._id), doc]));
+  const nodes = [];
+  const edges = [];
+  const nodeIds = new Set();
+
+  const addDocNode = (doc) => {
+    const id = `doc:${doc._id}`;
+    if (nodeIds.has(id)) return id;
+    nodeIds.add(id);
+    nodes.push({
+      id,
+      kind: "document",
+      label: doc.title || "Untitled",
+      title: doc.title || "Untitled",
+      country: normalizeCountry(doc.country),
+      status: doc.status,
+      authority: doc.issuingAuthority || "",
+      documentType: doc.documentType || "other",
+    });
+    return id;
+  };
+
+  const addThemeNode = (theme) => {
+    const id = `theme:${theme}`;
+    if (nodeIds.has(id)) return id;
+    nodeIds.add(id);
+    nodes.push({
+      id,
+      kind: "theme",
+      label: theme,
+      title: theme,
+    });
+    return id;
+  };
+
+  const addEdge = (from, to, type, derived = true) => {
+    if (!from || !to || from === to) return;
+    const key = `${from}|${to}|${type}`;
+    if (edges.some((e) => `${e.from}|${e.to}|${e.type}` === key)) return;
+    edges.push({ from, to, type, derived });
+  };
+
+  const themesOf = (doc) => {
+    const blob = `${doc.title || ""} ${(doc.topics || []).join(" ")} ${(doc.tags || []).join(" ")} ${(doc.sectors || []).join(" ")} ${(doc.technologies || []).join(" ")}`;
+    const fromKeywords = Object.entries(THEME_KEYWORDS)
+      .filter(([, patterns]) => patterns.some((re) => re.test(blob)))
+      .map(([theme]) => theme);
+    const fromTopics = (doc.topics || [])
+      .map((t) => String(t || "").trim())
+      .filter((t) => t.length >= 3 && t.length <= 40)
+      .slice(0, 4);
+    return [...new Set([...fromKeywords, ...fromTopics])];
+  };
+
+  const relationVerb = (doc) => {
+    const type = String(doc.documentType || "").toLowerCase();
+    if (/law|regulation|decree/.test(type)) return "implements";
+    if (/strategy|roadmap|policy|plan/.test(type)) return "supports";
+    return "mentions";
+  };
+
+  for (const doc of documents) {
+    const docId = addDocNode(doc);
+
+    if (doc.supersedesDocumentId) {
+      const older = byId.get(String(doc.supersedesDocumentId));
+      if (older) {
+        addEdge(docId, addDocNode(older), "supersedes", false);
+      }
+    }
+
+    const related = [
+      ...(Array.isArray(doc.metadata?.relatedDocuments)
+        ? doc.metadata.relatedDocuments
+        : []),
+      ...(Array.isArray(doc.relatedDocuments) ? doc.relatedDocuments : []),
+    ];
+    for (const rel of related.slice(0, 6)) {
+      const targetId = String(rel.documentId || rel.id || rel || "").trim();
+      const target = byId.get(targetId);
+      if (!target) continue;
+      const type = String(rel.relation || rel.type || "references")
+        .toLowerCase()
+        .replace(/\s+/g, "_");
+      const allowed = new Set([
+        "references",
+        "supports",
+        "implements",
+        "supersedes",
+        "amends",
+        "related",
+      ]);
+      addEdge(
+        docId,
+        addDocNode(target),
+        allowed.has(type) ? type : "references",
+        !rel.relation && !rel.type
+      );
+    }
+
+    const themes = themesOf(doc);
+    const verb = relationVerb(doc);
+    for (const theme of themes.slice(0, 5)) {
+      addEdge(docId, addThemeNode(theme), verb, true);
+    }
+  }
+
+  // Limited similar edges between docs sharing country + ≥2 topics.
+  for (let i = 0; i < documents.length; i += 1) {
+    for (let j = i + 1; j < documents.length; j += 1) {
+      const a = documents[i];
+      const b = documents[j];
+      if (a.country && b.country && a.country !== b.country) continue;
+      const shared = (a.topics || []).filter((t) =>
+        (b.topics || []).includes(t)
+      );
+      if (shared.length < 2) continue;
+      addEdge(addDocNode(a), addDocNode(b), "similar", true);
+      if (edges.filter((e) => e.type === "similar").length >= 24) break;
+    }
+    if (edges.filter((e) => e.type === "similar").length >= 24) break;
+  }
+
+  // Sample reasoning paths: document → theme → document (same theme).
+  const paths = [];
+  const themeToDocs = new Map();
+  for (const edge of edges) {
+    if (!edge.from.startsWith("doc:") || !edge.to.startsWith("theme:")) continue;
+    const list = themeToDocs.get(edge.to) || [];
+    list.push(edge.from);
+    themeToDocs.set(edge.to, list);
+  }
+
+  for (const [themeId, docIds] of themeToDocs.entries()) {
+    if (docIds.length < 2) continue;
+    const themeLabel =
+      nodes.find((n) => n.id === themeId)?.label || themeId.replace("theme:", "");
+    const a = nodes.find((n) => n.id === docIds[0]);
+    const b = nodes.find((n) => n.id === docIds[1]);
+    if (!a || !b) continue;
+    paths.push({
+      labels: [a.label, themeLabel, b.label],
+      nodeIds: [a.id, themeId, b.id],
+      edgeTypes: [
+        edges.find((e) => e.from === a.id && e.to === themeId)?.type ||
+          "mentions",
+        edges.find((e) => e.from === b.id && e.to === themeId)?.type ||
+          "mentions",
+      ],
+    });
+    if (paths.length >= 8) break;
+  }
+
+  // Prefer a Hydrogen → Net Zero style path when present.
+  const preferred = ["Hydrogen", "Net Zero", "Carbon Markets", "ESG"];
+  const preferredPath = [];
+  for (const theme of preferred) {
+    const id = `theme:${theme}`;
+    if (nodeIds.has(id)) preferredPath.push(id);
+  }
+  if (preferredPath.length >= 2) {
+    const labels = preferredPath.map(
+      (id) => nodes.find((n) => n.id === id)?.label || id
+    );
+    // Attach a seed document if one links to the first theme.
+    const firstTheme = preferredPath[0];
+    const seedDocEdge = edges.find(
+      (e) => e.to === firstTheme && e.from.startsWith("doc:")
+    );
+    if (seedDocEdge) {
+      const seedNode = nodes.find((n) => n.id === seedDocEdge.from);
+      paths.unshift({
+        labels: [seedNode?.label, ...labels].filter(Boolean),
+        nodeIds: [seedDocEdge.from, ...preferredPath],
+        edgeTypes: preferredPath.map(() => "supports"),
+      });
+    } else {
+      paths.unshift({
+        labels,
+        nodeIds: preferredPath,
+        edgeTypes: preferredPath.slice(1).map(() => "related"),
+      });
+    }
+  }
+
+  return {
+    updatedAt: new Date().toISOString(),
+    summary: {
+      documents: documents.length,
+      nodes: nodes.length,
+      edges: edges.length,
+      themes: nodes.filter((n) => n.kind === "theme").length,
+      paths: paths.length,
+    },
+    nodes,
+    edges,
+    paths: paths.slice(0, 8),
+  };
 }
 
 export { serializeDocument, GCC_TARGETS };
