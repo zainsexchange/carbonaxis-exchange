@@ -23,6 +23,7 @@ import {
   listLibraryDocuments,
   getLibraryDocumentDetail,
   buildLibraryRelationshipGraph,
+  buildProcessingQueue,
 } from "../services/libraryOperations.js";
 
 const router = express.Router();
@@ -351,6 +352,31 @@ router.get(
       return res.status(500).json({
         success: false,
         message: "Unable to build knowledge relationship graph.",
+      });
+    }
+  }
+);
+
+/**
+ * Live processing queue for bulk ingest monitoring.
+ * Admin ops only — does not change RAG ask retrieval.
+ */
+router.get(
+  "/queue",
+  authenticateToken,
+  requireAdminRole,
+  async (req, res) => {
+    try {
+      const queue = await buildProcessingQueue(req.query || {});
+      return res.json({
+        success: true,
+        queue,
+      });
+    } catch (error) {
+      console.error("Knowledge library queue error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Unable to load processing queue.",
       });
     }
   }

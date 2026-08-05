@@ -186,6 +186,38 @@
       padding: 1px 6px;
     }
     .sug-source.ai { color: var(--accent); border-color: rgba(0,229,176,.35); }
+    .queue-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .queue-summary .card { padding: 10px; }
+    .queue-summary .value { font-size: 1.25rem; }
+    .queue-item {
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(0,0,0,.18);
+      margin-bottom: 10px;
+    }
+    .queue-item.failed { border-color: rgba(255,143,143,.35); }
+    .queue-item.active { border-color: rgba(0,229,176,.35); }
+    .queue-stages {
+      display: grid;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .queue-stage-row {
+      display: grid;
+      grid-template-columns: 92px 1fr 40px;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+    }
+    .queue-stage-row .bar { margin-top: 0; }
+    .queue-stage-row.active-stage { color: var(--accent); font-weight: 600; }
+    .queue-stage-row.done-stage { color: rgba(233,255,249,.75); }
     .timeline {
       display: flex;
       gap: 12px;
@@ -263,6 +295,18 @@
 
     <!-- Phase 1 -->
     <section class="grid" id="actionCards"></section>
+
+    <section class="panel">
+      <h2>Live Processing Queue</h2>
+      <p class="meta">Bulk ingest monitor · Uploading → OCR → Chunking → Embedding → Publishing · auto-refreshes while active</p>
+      <div class="split" style="margin-bottom:10px;">
+        <button type="button" id="btnQueueRefresh">Refresh queue</button>
+        <button type="button" class="secondary" id="btnQueueToggle">Pause auto-refresh</button>
+      </div>
+      <div class="queue-summary" id="queueSummary"></div>
+      <div class="msg" id="queueMsg">Loading queue…</div>
+      <div id="queueList"></div>
+    </section>
 
     <div class="two">
       <section class="panel">
@@ -690,6 +734,116 @@
             "</span></li>"
         )
         .join("") || "<li>No suggestions right now.</li>";
+    }
+
+    let queueTimer = null;
+    let queueAuto = true;
+
+    function renderQueue(queue) {
+      const counts = (queue && queue.counts) || {};
+      const items = (queue && queue.items) || [];
+      document.getElementById("queueSummary").innerHTML = [
+        ["Active", counts.active || 0],
+        ["Uploading", counts.uploading || 0],
+        ["OCR", counts.ocr || 0],
+        ["Chunking", counts.chunking || 0],
+        ["Embedding", counts.embedding || 0],
+        ["Publishing", counts.publishing || 0],
+        ["Failed", counts.failed || 0],
+      ]
+        .map(
+          ([t, v]) =>
+            '<article class="card"><h3>' +
+            t +
+            '</h3><div class="value">' +
+            v +
+            "</div></article>"
+        )
+        .join("");
+
+      document.getElementById("queueMsg").textContent =
+        items.length +
+        " item(s) · updated " +
+        fmtDate(queue.updatedAt) +
+        (queueAuto ? " · auto-refresh on" : " · auto-refresh paused");
+
+      if (!items.length) {
+        document.getElementById("queueList").innerHTML =
+          '<div class="msg">Queue idle — upload/process documents to see live bars.</div>';
+        return;
+      }
+
+      document.getElementById("queueList").innerHTML = items
+        .map((item) => {
+          const bars = (item.bars || [])
+            .map((bar) => {
+              const cls = bar.active
+                ? "queue-stage-row active-stage"
+                : bar.done
+                  ? "queue-stage-row done-stage"
+                  : "queue-stage-row";
+              return (
+                '<div class="' +
+                cls +
+                '"><span>' +
+                escapeHtml(bar.label) +
+                '</span><div class="bar"><i style="width:' +
+                (bar.fill || 0) +
+                '%"></i></div><span>' +
+                (bar.fill || 0) +
+                "%</span></div>"
+              );
+            })
+            .join("");
+          return (
+            '<div class="queue-item' +
+            (item.failed ? " failed" : item.active ? " active" : "") +
+            '"><strong>' +
+            escapeHtml(item.title) +
+            '</strong><div class="sub">' +
+            escapeHtml(item.country || "—") +
+            " · " +
+            escapeHtml(item.stageLabel || item.stage) +
+            " · doc " +
+            escapeHtml(item.documentStatus || "—") +
+            (item.jobStatus ? " · job " + escapeHtml(item.jobStatus) : "") +
+            " · chunks " +
+            (item.chunkCount || 0) +
+            " · embeddings " +
+            (item.embeddingCount || 0) +
+            "</div>" +
+            (item.error
+              ? '<div class="msg err">' + escapeHtml(item.error) + "</div>"
+              : item.message
+                ? '<div class="msg">' + escapeHtml(item.message) + "</div>"
+                : "") +
+            '<div class="queue-stages">' +
+            bars +
+            "</div></div>"
+          );
+        })
+        .join("");
+    }
+
+    async function loadQueue() {
+      const res = await fetch(LIBRARY + "/queue?limit=40&active=1", {
+        headers: authHeaders(),
+      });
+      const data = await readJson(res);
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Queue failed");
+      }
+      renderQueue(data.queue || {});
+      const active = Number(data.queue?.counts?.active || 0);
+      if (queueAuto) {
+        clearTimeout(queueTimer);
+        queueTimer = setTimeout(
+          () => {
+            loadQueue().catch(() => {});
+          },
+          active > 0 ? 3000 : 12000
+        );
+      }
     }
 
     function truncateLabel(text, max) {
@@ -1124,6 +1278,11 @@
         } else {
           await loadCorpusGraph("");
         }
+        await loadQueue().catch((err) => {
+          document.getElementById("queueMsg").textContent = String(
+            err.message || err
+          );
+        });
         bootMsg.className = "msg ok";
         bootMsg.textContent =
           "Live Mongo dashboard · " +
@@ -1138,8 +1297,30 @@
         document.getElementById("corpusGraphMsg").textContent = String(
           err.message || err
         );
+        document.getElementById("queueMsg").textContent = String(
+          err.message || err
+        );
       }
     }
+
+    document.getElementById("btnQueueRefresh").addEventListener("click", () => {
+      loadQueue().catch((err) => {
+        document.getElementById("queueMsg").textContent = String(
+          err.message || err
+        );
+      });
+    });
+    document.getElementById("btnQueueToggle").addEventListener("click", () => {
+      queueAuto = !queueAuto;
+      document.getElementById("btnQueueToggle").textContent = queueAuto
+        ? "Pause auto-refresh"
+        : "Resume auto-refresh";
+      if (queueAuto) {
+        loadQueue().catch(() => {});
+      } else {
+        clearTimeout(queueTimer);
+      }
+    });
 
     document.getElementById("btnSearch").addEventListener("click", () => {
       loadExplorer().catch((err) => {

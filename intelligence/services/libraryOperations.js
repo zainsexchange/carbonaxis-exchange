@@ -4,6 +4,7 @@
  */
 
 import KnowledgeDocument from "../models/KnowledgeDocument.js";
+import KnowledgeJob from "../models/KnowledgeJob.js";
 import {
   resolveSourceAuthorityScore,
   resolveCurationTier,
@@ -1130,6 +1131,246 @@ export async function buildLibraryRelationshipGraph(query = {}) {
     nodes,
     edges,
     paths: paths.slice(0, 8),
+  };
+}
+
+/**
+ * Live processing queue for bulk ingest monitoring.
+ * Reads KnowledgeJob + KnowledgeDocument processing fields only.
+ * Does not start/stop jobs or alter RAG.
+ */
+const QUEUE_STAGES = Object.freeze([
+  { key: "uploading", label: "Uploading", match: ["not_started", "uploaded", "queued"] },
+  { key: "ocr", label: "OCR", match: ["extracting", "extracting_text", "metadata", "extracting_metadata"] },
+  { key: "chunking", label: "Chunking", match: ["chunking", "creating_chunks"] },
+  { key: "embedding", label: "Embedding", match: ["embedding", "generating_embeddings"] },
+  { key: "publishing", label: "Publishing", match: ["indexing", "finalizing", "completed"] },
+]);
+
+function mapQueueStage(stage = "", status = "", docStatus = "") {
+  const raw = String(stage || status || "").toLowerCase();
+  if (raw === "failed" || docStatus === "failed") {
+    return { key: "failed", label: "Failed" };
+  }
+  if (docStatus === "published" || docStatus === "verified") {
+    return { key: "publishing", label: "Published" };
+  }
+  for (const stageDef of QUEUE_STAGES) {
+    if (stageDef.match.includes(raw)) return { key: stageDef.key, label: stageDef.label };
+  }
+  if (["pending_review", "draft"].includes(docStatus)) {
+    return { key: "publishing", label: "Awaiting publish" };
+  }
+  if (docStatus === "processing" || status === "processing") {
+    return { key: "ocr", label: "OCR" };
+  }
+  return { key: "uploading", label: "Uploading" };
+}
+
+function stageBars(currentKey, progress = 0, failed = false) {
+  const order = QUEUE_STAGES.map((s) => s.key);
+  const idx = order.indexOf(currentKey === "failed" ? "ocr" : currentKey);
+  return QUEUE_STAGES.map((stage, i) => {
+    let fill = 0;
+    if (failed) {
+      fill = i < idx ? 100 : i === idx ? Math.max(5, Number(progress) || 0) : 0;
+    } else if (i < idx) {
+      fill = 100;
+    } else if (i === idx) {
+      fill = Math.max(8, Math.min(100, Number(progress) || 0));
+    }
+    return {
+      key: stage.key,
+      label: stage.label,
+      fill,
+      active: !failed && i === idx,
+      done: !failed && i < idx,
+    };
+  });
+}
+
+export async function buildProcessingQueue(query = {}) {
+  const limit = Math.min(100, Math.max(1, Number(query.limit) || 40));
+  const activeOnly = String(query.active || "1") !== "0";
+
+  const jobs = await KnowledgeJob.find({})
+    .sort({ updatedAt: -1 })
+    .limit(limit * 2)
+    .lean();
+
+  const docIds = [...new Set(jobs.map((job) => String(job.documentId)))];
+  const recentDocs = await KnowledgeDocument.find({
+    $or: [
+      { _id: { $in: docIds } },
+      {
+        status: { $in: ["processing", "draft", "failed", "pending_review"] },
+      },
+      {
+        processingStage: {
+          $in: [
+            "uploaded",
+            "extracting",
+            "metadata",
+            "chunking",
+            "embedding",
+            "indexing",
+            "failed",
+          ],
+        },
+      },
+    ],
+  })
+    .select(
+      "title country status visibility processingStage processingProgress processingMessage processingError processingStartedAt processingCompletedAt chunkCount embeddingCount updatedAt createdAt"
+    )
+    .sort({ updatedAt: -1 })
+    .limit(limit)
+    .lean();
+
+  const docsById = new Map(recentDocs.map((doc) => [String(doc._id), doc]));
+  // Include docs referenced by jobs even if not in recentDocs filter slice.
+  const missingIds = docIds.filter((id) => !docsById.has(id)).slice(0, limit);
+  if (missingIds.length) {
+    const extra = await KnowledgeDocument.find({ _id: { $in: missingIds } })
+      .select(
+        "title country status visibility processingStage processingProgress processingMessage processingError processingStartedAt processingCompletedAt chunkCount embeddingCount updatedAt createdAt"
+      )
+      .lean();
+    for (const doc of extra) docsById.set(String(doc._id), doc);
+  }
+
+  const latestJobByDoc = new Map();
+  for (const job of jobs) {
+    const id = String(job.documentId);
+    if (!latestJobByDoc.has(id)) latestJobByDoc.set(id, job);
+  }
+
+  const items = [];
+  const seen = new Set();
+
+  for (const [docId, job] of latestJobByDoc.entries()) {
+    const doc = docsById.get(docId);
+    if (!doc) continue;
+    seen.add(docId);
+    const stage = mapQueueStage(
+      job.currentStep || doc.processingStage,
+      job.status,
+      doc.status
+    );
+    const progress = Number(
+      job.progress ?? doc.processingProgress ?? 0
+    );
+    const failed = job.status === "failed" || doc.status === "failed" || stage.key === "failed";
+    const inFlightStage = [
+      "uploaded",
+      "extracting",
+      "metadata",
+      "chunking",
+      "embedding",
+      "indexing",
+    ].includes(doc.processingStage || "");
+    const active =
+      failed ||
+      ["queued", "processing"].includes(job.status) ||
+      ["processing", "draft"].includes(doc.status) ||
+      inFlightStage;
+
+    if (activeOnly && !active && doc.status === "published") continue;
+
+    items.push({
+      id: docId,
+      jobId: String(job._id),
+      title: doc.title || "Untitled",
+      country: doc.country || "",
+      documentStatus: doc.status,
+      jobStatus: job.status,
+      stage: stage.key,
+      stageLabel: stage.label,
+      progress,
+      bars: stageBars(failed ? "failed" : stage.key, progress, failed),
+      message:
+        doc.processingMessage ||
+        job.errorMessage ||
+        doc.processingError ||
+        "",
+      error: job.errorMessage || doc.processingError || "",
+      chunkCount: doc.chunkCount || 0,
+      embeddingCount: doc.embeddingCount || 0,
+      startedAt: job.startedAt || doc.processingStartedAt || job.createdAt,
+      updatedAt: job.updatedAt || doc.updatedAt,
+      active: Boolean(active),
+      failed,
+    });
+  }
+
+  for (const doc of recentDocs) {
+    const id = String(doc._id);
+    if (seen.has(id)) continue;
+    const stage = mapQueueStage(doc.processingStage, "", doc.status);
+    const progress = Number(doc.processingProgress || 0);
+    const failed = doc.status === "failed" || stage.key === "failed";
+    const active =
+      failed ||
+      doc.status === "processing" ||
+      ["uploaded", "extracting", "metadata", "chunking", "embedding", "indexing"].includes(
+        doc.processingStage || ""
+      );
+
+    if (activeOnly && !active) continue;
+
+    items.push({
+      id,
+      jobId: null,
+      title: doc.title || "Untitled",
+      country: doc.country || "",
+      documentStatus: doc.status,
+      jobStatus: null,
+      stage: stage.key,
+      stageLabel: stage.label,
+      progress,
+      bars: stageBars(failed ? "failed" : stage.key, progress, failed),
+      message: doc.processingMessage || doc.processingError || "",
+      error: doc.processingError || "",
+      chunkCount: doc.chunkCount || 0,
+      embeddingCount: doc.embeddingCount || 0,
+      startedAt: doc.processingStartedAt || doc.createdAt,
+      updatedAt: doc.updatedAt,
+      active: Boolean(active),
+      failed,
+    });
+  }
+
+  items.sort((a, b) => {
+    if (a.active !== b.active) return a.active ? -1 : 1;
+    return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
+  });
+
+  const clipped = items.slice(0, limit);
+  const counts = {
+    uploading: 0,
+    ocr: 0,
+    chunking: 0,
+    embedding: 0,
+    publishing: 0,
+    failed: 0,
+    active: 0,
+    completed: 0,
+  };
+
+  for (const item of clipped) {
+    if (item.failed) counts.failed += 1;
+    else if (counts[item.stage] !== undefined) counts[item.stage] += 1;
+    if (item.active) counts.active += 1;
+    if (item.stage === "publishing" && item.progress >= 100 && !item.failed) {
+      counts.completed += 1;
+    }
+  }
+
+  return {
+    updatedAt: new Date().toISOString(),
+    stages: QUEUE_STAGES.map((s) => ({ key: s.key, label: s.label })),
+    counts,
+    items: clipped,
   };
 }
 
