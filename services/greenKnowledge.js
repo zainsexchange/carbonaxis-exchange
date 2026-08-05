@@ -111,6 +111,31 @@ Treat speculative hydrogen claims carefully; separate ambition from contracted d
 
 ---
 
+## Knowledge Pack: Hydrogen color taxonomy (learning / definitions)
+
+When users ask how many types of hydrogen, hydrogen colors, or what white/pink/turquoise hydrogen is,
+do **not** stop at only Grey / Blue / Green. Industry commonly discusses production pathways by color:
+
+| Color | Typical pathway (directional) |
+|-------|-------------------------------|
+| **Grey** | Fossil (often steam methane reforming) without CO₂ capture |
+| **Blue** | Fossil with CCUS / carbon capture |
+| **Green** | Electrolysis powered by renewables (or other low-carbon renewable routes as defined by the source) |
+| **Pink / Purple / Red** | Electrolysis powered by nuclear electricity |
+| **Turquoise** | Methane pyrolysis → hydrogen + solid carbon |
+| **Yellow** | Electrolysis using mixed / grid electricity (definitions vary by source) |
+| **White** | Naturally occurring geologic / subsurface hydrogen (sometimes called gold / natural H₂) |
+| **Brown / Black** | From coal gasification (high-emission pathways) |
+
+Rules for these answers:
+1. Lead with: there is **no single universal legal list** — colors are industry shorthand, not one global statute.
+2. List the **full common palette** above when asked “how many types / colors of hydrogen”.
+3. Always include **White hydrogen** when the question is about types/colors or specifically about white hydrogen.
+4. Note that Grey / Blue / Green are the most cited “main” trio in many strategies, but they are **not** the complete set.
+5. If answering from a cited official document that only names three, say so and still note the wider industry palette as general context (outside that citation).
+
+---
+
 ## Worldwide pack (capable, lighter depth)
 - Voluntary carbon markets: integrity (additionality, permanence, leakage, MRV, retirement)
 - Article 6 awareness (cooperative approaches) — high level only unless user provides texts

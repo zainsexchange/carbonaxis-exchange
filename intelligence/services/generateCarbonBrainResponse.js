@@ -54,6 +54,11 @@ Mandatory rules:
 14. Do not describe a recent publication date as a limitation by itself.
 Only mention date-related limitations when the source is outdated, future-dated,
 superseded, unverified, or its effective applicability is unclear.
+15. When the question asks for types, categories, colors, or enumerations (for example hydrogen types):
+   - List every type/color that appears in the permitted evidence — do not collapse them into “three main types” if the evidence names more.
+   - Do not invent types that are absent from the evidence.
+   - If the evidence only covers a subset, say so clearly (for example: “The cited sources name Grey, Blue, and Green”) and put any incompleteness in limitations.
+16. Do not invent White, Pink, Turquoise, or other hydrogen colors unless they appear in the permitted evidence.
 `,
 
       input: `

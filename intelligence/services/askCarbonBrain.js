@@ -70,6 +70,65 @@ function normalizeConversation(conversation = []) {
     .slice(-6);
 }
 
+/**
+ * Taxonomy / "how many types" hydrogen questions need the full industry palette
+ * (including white hydrogen). Thin library hits that only mention Grey/Blue/Green
+ * should not suppress the complete general answer.
+ */
+function isHydrogenTaxonomyQuestion(question = "") {
+  const q = String(question || "").toLowerCase();
+  if (!/\bhydrogen\b|\bh2\b|هيدروجين|ہائیڈروجن/.test(q)) return false;
+  return (
+    /\b(type|types|color|colours|colors|kind|kinds|categor|classif|grey|gray|blue|green|pink|turquoise|yellow|white|brown|black|purple)\b/.test(
+      q
+    ) ||
+    /\bhow many\b/.test(q) ||
+    /\bwhat (is|are)\b/.test(q)
+  );
+}
+
+function evidenceHydrogenColorCoverage(evidence = []) {
+  const blob = evidence
+    .map(
+      (item) =>
+        `${item?.excerpt || ""} ${item?.content || ""} ${item?.text || ""} ${item?.chunkText || ""} ${item?.title || ""}`
+    )
+    .join(" ")
+    .toLowerCase();
+
+  const colors = [
+    "grey",
+    "gray",
+    "blue",
+    "green",
+    "pink",
+    "purple",
+    "turquoise",
+    "yellow",
+    "white",
+    "brown",
+    "black",
+  ];
+
+  return colors.filter((color) => {
+    const re = new RegExp(`\\b${color}\\s+hydrogen\\b|\\b${color}\\b`, "i");
+    // Require "color hydrogen" pattern where possible; gray/grey/blue/green alone are noisy
+    if (["grey", "gray", "blue", "green"].includes(color)) {
+      return new RegExp(`\\b${color}\\s+hydrogen\\b`, "i").test(blob);
+    }
+    return re.test(blob) || new RegExp(`\\b${color}\\s+hydrogen\\b`, "i").test(blob);
+  });
+}
+
+function shouldPreferGeneralHydrogenAnswer(question, truthPackage) {
+  if (!isHydrogenTaxonomyQuestion(question)) return false;
+  const evidence = truthPackage?.evidence || [];
+  if (!evidence.length) return true;
+  const covered = evidenceHydrogenColorCoverage(evidence);
+  // Prefer general taxonomy unless library evidence already covers a broad palette.
+  return covered.length < 4;
+}
+
 function buildEvidenceContext(
   evidence = [],
   maximumCharacters = DEFAULT_OPTIONS.maximumContextCharacters
@@ -333,7 +392,8 @@ export async function askCarbonBrain({
 
   /*
    * No library evidence → general AI answer (no trust panel).
-   * Library evidence → Carbon Brain evidence-backed answer + confidence UI.
+   * Hydrogen taxonomy with thin library coverage → general AI (full color palette including white).
+   * Strong library evidence → Carbon Brain evidence-backed answer + confidence UI.
    */
   if (
     truthPackage.truthStatus?.code ===
@@ -341,7 +401,11 @@ export async function askCarbonBrain({
     truthPackage.truthStatus?.code === "no_evidence" ||
     truthPackage.truthStatus ===
       "insufficient_evidence" ||
-    truthPackage.evidence.length === 0
+    truthPackage.evidence.length === 0 ||
+    shouldPreferGeneralHydrogenAnswer(
+      cleanedQuestion,
+      truthPackage
+    )
   ) {
     return createGeneralKnowledgeFallback({
       question: cleanedQuestion,

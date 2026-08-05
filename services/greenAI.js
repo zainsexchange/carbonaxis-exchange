@@ -127,6 +127,18 @@ function isGreenEnergyQuestion(question = "", country = "", product = "") {
   );
 }
 
+function isHydrogenTaxonomyQuestion(question = "") {
+  const q = String(question || "").toLowerCase();
+  if (!/\bhydrogen\b|\bh2\b|هيدروجين|ہائیڈروجن/.test(q)) return false;
+  return (
+    /\b(type|types|color|colours|colors|kind|kinds|categor|classif|grey|gray|blue|green|pink|turquoise|yellow|white|brown|black|purple)\b/.test(
+      q
+    ) ||
+    /\bhow many\b/.test(q) ||
+    /\bwhat (is|are)\b/.test(q)
+  );
+}
+
 function isExplainQuestion(question = "") {
   const q = String(question).toLowerCase();
   const raw = String(question || "");
@@ -235,15 +247,23 @@ export async function runGreenIntelligence({
   const explainMode = isExplainQuestion(question);
   const researchMode = isResearchQuestion(question);
   const generalFact = isGeneralFactQuestion(question);
+  const hydrogenTaxonomy = isHydrogenTaxonomyQuestion(question);
   // General facts (population, capital, etc.) stay general even if a country is mentioned
   const greenMode =
-    !generalFact && isGreenEnergyQuestion(question, inferredCountry, product);
+    (!generalFact && isGreenEnergyQuestion(question, inferredCountry, product)) ||
+    hydrogenTaxonomy;
   const languageHint = detectLanguageHint(question);
-  const naturalGreen = greenMode && (explainMode || researchMode) && !decisionMode;
+  const naturalGreen =
+    greenMode &&
+    (explainMode || researchMode || hydrogenTaxonomy) &&
+    !decisionMode;
   const system = buildSystemPrompt(subscription, deepAnalysis, greenMode);
 
   let instruction;
-  if (!greenMode) {
+  if (hydrogenTaxonomy) {
+    instruction =
+      "This is a HYDROGEN TYPES / COLORS taxonomy question. Answer completely: do NOT stop at only Grey, Blue, and Green. Cover the common industry palette including Grey, Blue, Green, Pink/Purple/Red (nuclear), Turquoise (methane pyrolysis), Yellow (mixed/grid electrolysis — note definitions vary), White (natural/geologic hydrogen), and Brown/Black (coal). State that color labels are industry shorthand, not one universal legal list. Always mention White hydrogen when types/colors are asked.";
+  } else if (!greenMode) {
     instruction =
       "This is a GENERAL question. Answer clearly and helpfully like a strong general AI. Give the direct factual answer first when asked for population, capital, definitions, calculations, etc. Do NOT use Verdict/PROCEED templates. Do NOT mention trading or carbon markets unless the user asked.";
   } else if (naturalGreen) {
@@ -285,6 +305,7 @@ export async function runGreenIntelligence({
         tradeMode: decisionMode,
         researchMode,
         generalFact,
+        hydrogenTaxonomy,
         languageHint,
       }),
       deepAnalysis,
@@ -332,6 +353,7 @@ export async function runGreenIntelligence({
           tradeMode: decisionMode,
           researchMode,
           generalFact,
+          hydrogenTaxonomy,
           languageHint,
         }),
         deepAnalysis,
@@ -370,6 +392,7 @@ export async function runGreenIntelligence({
         tradeMode: decisionMode,
         researchMode,
         generalFact,
+        hydrogenTaxonomy,
         languageHint,
       }),
       deepAnalysis,
@@ -673,6 +696,7 @@ function localFallbackAnalysis({
   tradeMode = false,
   researchMode = false,
   generalFact = false,
+  hydrogenTaxonomy = false,
   languageHint = "English",
 }) {
   const q = String(question || "");
@@ -682,6 +706,25 @@ function localFallbackAnalysis({
   const langNote = nonEnglish
     ? `\n\n---\n**Language note:** You asked in **${languageHint}**. Full multilingual replies need OpenAI connected on the server. This offline fallback is in English — connect \`OPENAI_API_KEY\` on Render for native ${languageHint} answers.\n`
     : "";
+
+  if (hydrogenTaxonomy || isHydrogenTaxonomyQuestion(q)) {
+    return `Hydrogen “colors” are **industry shorthand** for production pathways — not one universal legal list. Grey / Blue / Green are the most cited trio, but they are **not** the complete set.
+
+Common types:
+
+1. **Grey** — fossil (often steam methane reforming) without CO₂ capture  
+2. **Blue** — fossil with CCUS / carbon capture  
+3. **Green** — electrolysis powered by renewables  
+4. **Pink / Purple / Red** — electrolysis powered by nuclear electricity  
+5. **Turquoise** — methane pyrolysis (hydrogen + solid carbon)  
+6. **Yellow** — electrolysis using mixed / grid power (definitions vary by source)  
+7. **White** — naturally occurring geologic / subsurface hydrogen  
+8. **Brown / Black** — from coal gasification (high-emission pathways)
+
+**White hydrogen** specifically means natural geologic hydrogen, not a manufactured “color” from renewables.
+
+If you need the list from a particular official strategy PDF, ask with the country/document name and Carbon Brain can cite library evidence separately.${langNote}`;
+  }
 
   // GENERAL MODE — answer facts plainly (no verdict template)
   if (!greenMode || generalFact) {
