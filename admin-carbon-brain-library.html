@@ -152,6 +152,38 @@
       background: rgba(0,0,0,.2);
       font-size: 13px;
     }
+    .preset-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 4px 0 12px;
+    }
+    .preset-row button {
+      margin-top: 0;
+      padding: 7px 12px;
+      font-size: 12px;
+    }
+    .preset-row button.is-active {
+      background: rgba(0,229,176,.18);
+      color: #00e5b0;
+      border: 1px solid rgba(0,229,176,.45);
+    }
+    .hint {
+      font-size: 12px;
+      color: rgba(233,255,249,.55);
+      margin-top: 6px;
+      line-height: 1.45;
+    }
+    .sync-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 4px 0 8px;
+      font-size: 12px;
+      color: rgba(233,255,249,.65);
+    }
+    .sync-row input { width: auto; }
+    .custom-field[hidden] { display: none; }
   </style>
 </head>
 <body>
@@ -159,7 +191,8 @@
     <div>
       <h1>Carbon Brain · Knowledge Upload</h1>
       <p class="meta">
-        Admin only · API <code>/api/intelligence/library/upload</code> + <code>/api/intelligence/library/:id/process</code>
+        Admin only · GCC, international, and global documents ·
+        <code>/api/intelligence/library/upload</code>
         · Signed in as <strong id="who">admin</strong>
       </p>
     </div>
@@ -173,26 +206,81 @@
   <div class="grid">
     <section class="card">
       <h2>Upload document</h2>
+      <p class="hint">Any jurisdiction — GCC countries, major markets, or Global for IRENA / ISO / UN frameworks.</p>
+      <div class="preset-row" id="presetRow">
+        <button type="button" class="secondary" data-preset="uae">🇦🇪 UAE</button>
+        <button type="button" class="secondary" data-preset="oman">🇴🇲 Oman</button>
+        <button type="button" class="secondary" data-preset="saudi">🇸🇦 Saudi</button>
+        <button type="button" class="secondary" data-preset="qatar">🇶🇦 Qatar</button>
+        <button type="button" class="secondary" data-preset="international">🌍 International</button>
+        <button type="button" class="secondary" data-preset="uae-re2">Sample UAE doc</button>
+      </div>
       <form id="uploadForm">
         <label>PDF / DOCX / TXT</label>
         <input id="document" type="file" accept=".pdf,.docx,.txt,application/pdf" required />
 
         <label>Title</label>
-        <input id="title" required placeholder="UAE Energy Strategy 2050" />
+        <input id="title" required placeholder="National Hydrogen Strategy 2030" />
 
-        <div class="row">
-          <div>
-            <label>Country</label>
-            <input id="country" value="United Arab Emirates" />
-          </div>
-          <div>
-            <label>Jurisdiction</label>
-            <input id="jurisdiction" value="United Arab Emirates" />
-          </div>
-        </div>
+        <label>Country / region</label>
+        <select id="country">
+          <option value="">— Select country —</option>
+          <optgroup label="GCC">
+            <option value="United Arab Emirates">United Arab Emirates</option>
+            <option value="Saudi Arabia">Saudi Arabia</option>
+            <option value="Oman">Oman</option>
+            <option value="Qatar">Qatar</option>
+            <option value="Bahrain">Bahrain</option>
+            <option value="Kuwait">Kuwait</option>
+          </optgroup>
+          <optgroup label="Major markets">
+            <option value="Pakistan">Pakistan</option>
+            <option value="India">India</option>
+            <option value="China">China</option>
+            <option value="United Kingdom">United Kingdom</option>
+            <option value="United States">United States</option>
+            <option value="European Union">European Union</option>
+          </optgroup>
+          <optgroup label="International / global">
+            <option value="Global">Global (standards, UN, multilateral)</option>
+          </optgroup>
+          <option value="__custom__">Other — type below</option>
+        </select>
+        <input id="countryCustom" class="custom-field" hidden placeholder="Custom country or region" />
+
+        <label class="sync-row">
+          <input type="checkbox" id="syncJurisdiction" checked />
+          Jurisdiction same as country
+        </label>
+
+        <label>Jurisdiction</label>
+        <select id="jurisdiction">
+          <option value="">— Select jurisdiction —</option>
+          <optgroup label="GCC">
+            <option value="United Arab Emirates">United Arab Emirates</option>
+            <option value="Saudi Arabia">Saudi Arabia</option>
+            <option value="Oman">Oman</option>
+            <option value="Qatar">Qatar</option>
+            <option value="Bahrain">Bahrain</option>
+            <option value="Kuwait">Kuwait</option>
+          </optgroup>
+          <optgroup label="Major markets">
+            <option value="Pakistan">Pakistan</option>
+            <option value="India">India</option>
+            <option value="China">China</option>
+            <option value="United Kingdom">United Kingdom</option>
+            <option value="United States">United States</option>
+            <option value="European Union">European Union</option>
+          </optgroup>
+          <optgroup label="International / global">
+            <option value="Global">Global</option>
+          </optgroup>
+          <option value="__custom__">Other — type below</option>
+        </select>
+        <input id="jurisdictionCustom" class="custom-field" hidden placeholder="Custom jurisdiction" />
 
         <label>Issuing Authority</label>
-        <input id="issuingAuthority" value="Ministry of Energy and Infrastructure" />
+        <input id="issuingAuthority" placeholder="e.g. Ministry of Energy, IRENA, ISO" />
 
         <div class="row">
           <div>
@@ -236,24 +324,23 @@
             </select>
           </div>
         </div>
-        <p class="msg" style="margin-top:8px;">
-          Official UAE.gov PDFs: keep <strong>Source Class = government</strong> and
-          <strong>Visibility = public</strong>. After Process they become
-          <code>published</code> and can appear in answers. Research/other stays
-          <code>pending_review</code> until verified.
+        <p class="hint">
+          Official government sources: <strong>Source Class = government</strong> and
+          <strong>Visibility = public</strong>, then Process → Publish.
+          International bodies: use <strong>international_organization</strong> or
+          <strong>standard_body</strong>. Research stays <code>pending_review</code> until verified.
         </p>
 
         <label>Topics (comma-separated)</label>
-        <input id="topics" value="renewable energy, net zero, hydrogen, energy strategy" />
+        <input id="topics" placeholder="hydrogen, net zero, carbon markets, ESG" />
 
         <label>Sectors</label>
-        <input id="sectors" value="energy" />
+        <input id="sectors" placeholder="energy, finance, transport" />
 
         <label>Tags</label>
-        <input id="tags" value="UAE, Energy Strategy 2050, official" />
+        <input id="tags" placeholder="country, strategy, official" />
 
         <button type="submit" id="uploadBtn">Upload</button>
-        <button type="button" class="secondary" id="fillDoc2">Fill defaults for UAE-RE-000002</button>
         <div class="msg" id="uploadMsg"></div>
       </form>
     </section>
@@ -275,13 +362,14 @@
           <thead>
             <tr>
               <th>Title</th>
+              <th>Country</th>
               <th>Status</th>
               <th>Chunks</th>
               <th></th>
             </tr>
           </thead>
           <tbody id="docsBody">
-            <tr><td colspan="4">Loading…</td></tr>
+            <tr><td colspan="5">Loading…</td></tr>
           </tbody>
         </table>
       </div>
@@ -326,6 +414,266 @@
     }
 
     const LIBRARY_API = API_BASE + "/intelligence/library";
+    const PREFS_KEY = "cbKnowledgeUploadPrefs";
+
+    const UPLOAD_PRESETS = {
+      uae: {
+        country: "United Arab Emirates",
+        jurisdiction: "United Arab Emirates",
+        issuingAuthority: "Ministry of Energy and Infrastructure",
+        documentType: "strategy",
+        sourceClass: "government",
+        visibility: "public",
+        topics: "renewable energy, net zero, hydrogen, energy strategy",
+        sectors: "energy",
+        tags: "UAE, official, strategy",
+      },
+      oman: {
+        country: "Oman",
+        jurisdiction: "Oman",
+        issuingAuthority: "Ministry of Energy and Minerals",
+        documentType: "strategy",
+        sourceClass: "government",
+        visibility: "public",
+        topics: "hydrogen, green hydrogen, net zero, renewable energy",
+        sectors: "energy",
+        tags: "Oman, official, strategy",
+      },
+      saudi: {
+        country: "Saudi Arabia",
+        jurisdiction: "Saudi Arabia",
+        issuingAuthority: "Ministry of Energy",
+        documentType: "strategy",
+        sourceClass: "government",
+        visibility: "public",
+        topics: "hydrogen, net zero, renewable energy, circular carbon",
+        sectors: "energy",
+        tags: "Saudi Arabia, official, strategy",
+      },
+      qatar: {
+        country: "Qatar",
+        jurisdiction: "Qatar",
+        issuingAuthority: "Ministry of Environment and Climate Change",
+        documentType: "strategy",
+        sourceClass: "government",
+        visibility: "public",
+        topics: "climate, net zero, hydrogen, LNG",
+        sectors: "energy",
+        tags: "Qatar, official, strategy",
+      },
+      international: {
+        country: "Global",
+        jurisdiction: "Global",
+        issuingAuthority: "International Renewable Energy Agency",
+        documentType: "report",
+        sourceClass: "international_organization",
+        visibility: "public",
+        topics: "renewable energy, hydrogen, climate finance, energy transition",
+        sectors: "energy",
+        tags: "Global, international, official",
+      },
+      "uae-re2": {
+        title: "Brief of Energy Strategies to Achieve Net Zero",
+        country: "United Arab Emirates",
+        jurisdiction: "United Arab Emirates",
+        issuingAuthority: "Ministry of Energy and Infrastructure",
+        documentType: "report",
+        sourceClass: "government",
+        visibility: "public",
+        topics: "net zero, renewable energy, hydrogen strategy",
+        sectors: "energy",
+        tags: "UAE, Net Zero, official",
+      },
+    };
+
+    function getSelectOrCustom(selectEl, customEl) {
+      const value = selectEl.value;
+      if (value === "__custom__") {
+        return String(customEl.value || "").trim();
+      }
+      return String(value || "").trim();
+    }
+
+    function setSelectOrCustom(selectEl, customEl, value) {
+      const v = String(value || "").trim();
+      const options = [...selectEl.options].map((o) => o.value);
+      if (v && options.includes(v)) {
+        selectEl.value = v;
+        customEl.hidden = true;
+        customEl.value = "";
+      } else if (v) {
+        selectEl.value = "__custom__";
+        customEl.hidden = false;
+        customEl.value = v;
+      } else {
+        selectEl.value = "";
+        customEl.hidden = true;
+        customEl.value = "";
+      }
+    }
+
+    function saveUploadPrefs() {
+      try {
+        localStorage.setItem(
+          PREFS_KEY,
+          JSON.stringify({
+            country: getSelectOrCustom(
+              document.getElementById("country"),
+              document.getElementById("countryCustom")
+            ),
+            jurisdiction: getSelectOrCustom(
+              document.getElementById("jurisdiction"),
+              document.getElementById("jurisdictionCustom")
+            ),
+            issuingAuthority: document.getElementById("issuingAuthority").value.trim(),
+            sourceClass: document.getElementById("sourceClass").value,
+            syncJurisdiction: document.getElementById("syncJurisdiction").checked,
+          })
+        );
+      } catch {
+        /* ignore storage errors */
+      }
+    }
+
+    function loadUploadPrefs() {
+      try {
+        const raw = localStorage.getItem(PREFS_KEY);
+        if (!raw) return;
+        const prefs = JSON.parse(raw);
+        setSelectOrCustom(
+          document.getElementById("country"),
+          document.getElementById("countryCustom"),
+          prefs.country
+        );
+        document.getElementById("syncJurisdiction").checked =
+          prefs.syncJurisdiction !== false;
+        if (prefs.syncJurisdiction !== false && prefs.country) {
+          setSelectOrCustom(
+            document.getElementById("jurisdiction"),
+            document.getElementById("jurisdictionCustom"),
+            prefs.country
+          );
+        } else {
+          setSelectOrCustom(
+            document.getElementById("jurisdiction"),
+            document.getElementById("jurisdictionCustom"),
+            prefs.jurisdiction
+          );
+        }
+        if (prefs.issuingAuthority) {
+          document.getElementById("issuingAuthority").value = prefs.issuingAuthority;
+        }
+        if (prefs.sourceClass) {
+          document.getElementById("sourceClass").value = prefs.sourceClass;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    function applyPreset(key) {
+      const preset = UPLOAD_PRESETS[key];
+      if (!preset) return;
+      if (preset.title) {
+        document.getElementById("title").value = preset.title;
+      }
+      setSelectOrCustom(
+        document.getElementById("country"),
+        document.getElementById("countryCustom"),
+        preset.country
+      );
+      document.getElementById("syncJurisdiction").checked = true;
+      setSelectOrCustom(
+        document.getElementById("jurisdiction"),
+        document.getElementById("jurisdictionCustom"),
+        preset.jurisdiction || preset.country
+      );
+      document.getElementById("issuingAuthority").value =
+        preset.issuingAuthority || "";
+      if (preset.documentType) {
+        document.getElementById("documentType").value = preset.documentType;
+      }
+      if (preset.sourceClass) {
+        document.getElementById("sourceClass").value = preset.sourceClass;
+      }
+      if (preset.visibility) {
+        document.getElementById("visibility").value = preset.visibility;
+      }
+      if (preset.topics) {
+        document.getElementById("topics").value = preset.topics;
+      }
+      if (preset.sectors) {
+        document.getElementById("sectors").value = preset.sectors;
+      }
+      if (preset.tags) {
+        document.getElementById("tags").value = preset.tags;
+      }
+      document.querySelectorAll("#presetRow [data-preset]").forEach((btn) => {
+        btn.classList.toggle("is-active", btn.dataset.preset === key);
+      });
+      saveUploadPrefs();
+      setMsg(
+        document.getElementById("uploadMsg"),
+        "Preset loaded: " + (preset.country || key) + ". Choose file and Upload.",
+        "ok"
+      );
+    }
+
+    function bindCountryFields() {
+      const countrySel = document.getElementById("country");
+      const countryCustom = document.getElementById("countryCustom");
+      const jurisdictionSel = document.getElementById("jurisdiction");
+      const jurisdictionCustom = document.getElementById("jurisdictionCustom");
+      const syncBox = document.getElementById("syncJurisdiction");
+
+      countrySel.addEventListener("change", () => {
+        countryCustom.hidden = countrySel.value !== "__custom__";
+        if (countrySel.value !== "__custom__") countryCustom.value = "";
+        if (syncBox.checked) {
+          jurisdictionSel.value = countrySel.value;
+          jurisdictionCustom.hidden = true;
+          jurisdictionCustom.value = "";
+        }
+        saveUploadPrefs();
+      });
+
+      jurisdictionSel.addEventListener("change", () => {
+        jurisdictionCustom.hidden = jurisdictionSel.value !== "__custom__";
+        if (jurisdictionSel.value !== "__custom__") jurisdictionCustom.value = "";
+        syncBox.checked =
+          getSelectOrCustom(countrySel, countryCustom) ===
+          getSelectOrCustom(jurisdictionSel, jurisdictionCustom);
+        saveUploadPrefs();
+      });
+
+      syncBox.addEventListener("change", () => {
+        if (syncBox.checked) {
+          jurisdictionSel.value = countrySel.value;
+          jurisdictionCustom.hidden = true;
+          jurisdictionCustom.value = "";
+        }
+        saveUploadPrefs();
+      });
+
+      countryCustom.addEventListener("input", () => {
+        if (syncBox.checked) {
+          jurisdictionSel.value = "__custom__";
+          jurisdictionCustom.hidden = false;
+          jurisdictionCustom.value = countryCustom.value;
+        }
+        saveUploadPrefs();
+      });
+
+      jurisdictionCustom.addEventListener("input", saveUploadPrefs);
+      document.getElementById("issuingAuthority").addEventListener("input", saveUploadPrefs);
+      document.getElementById("sourceClass").addEventListener("change", saveUploadPrefs);
+    }
+
+    document.querySelectorAll("#presetRow [data-preset]").forEach((btn) => {
+      btn.addEventListener("click", () => applyPreset(btn.dataset.preset));
+    });
+    bindCountryFields();
+    loadUploadPrefs();
 
     if (isLiveHost) {
       setMsg(
@@ -334,22 +682,6 @@
         "err"
       );
     }
-
-    document.getElementById("fillDoc2").addEventListener("click", () => {
-      document.getElementById("title").value =
-        "Brief of Energy Strategies to Achieve Net Zero";
-      document.getElementById("documentType").value = "report";
-      document.getElementById("sourceClass").value = "government";
-      document.getElementById("topics").value =
-        "net zero, renewable energy, hydrogen strategy";
-      document.getElementById("sectors").value = "energy";
-      document.getElementById("tags").value = "UAE, Net Zero, official";
-      setMsg(
-        document.getElementById("uploadMsg"),
-        "Filled metadata for document 2. Choose UAE-RE-000002.pdf and click Upload.",
-        "ok"
-      );
-    });
 
     async function loadQueue() {
       const msg = document.getElementById("queueMsg");
@@ -424,7 +756,7 @@
         }
         setMsg(listMsg, data.count + " document(s)", "ok");
         if (!data.documents.length) {
-          body.innerHTML = "<tr><td colspan='4'>No documents yet.</td></tr>";
+          body.innerHTML = "<tr><td colspan='5'>No documents yet.</td></tr>";
           return;
         }
         body.innerHTML = data.documents
@@ -447,6 +779,9 @@
               "<br>" +
               escapeHtml(doc.id) +
               "</span></td>" +
+              "<td>" +
+              escapeHtml(doc.country || "—") +
+              "</td>" +
               "<td><span class='pill'>" +
               escapeHtml(doc.status) +
               "</span><br>" +
@@ -480,7 +815,7 @@
           })
           .join("");
       } catch (err) {
-        body.innerHTML = "<tr><td colspan='4'>Could not load list.</td></tr>";
+        body.innerHTML = "<tr><td colspan='5'>Could not load list.</td></tr>";
         setMsg(listMsg, String(err.message || err), "err");
       }
     }
@@ -594,8 +929,20 @@
       const form = new FormData();
       form.append("document", file);
       form.append("title", document.getElementById("title").value.trim());
-      form.append("country", document.getElementById("country").value.trim());
-      form.append("jurisdiction", document.getElementById("jurisdiction").value.trim());
+      const country = getSelectOrCustom(
+        document.getElementById("country"),
+        document.getElementById("countryCustom")
+      );
+      const jurisdiction = getSelectOrCustom(
+        document.getElementById("jurisdiction"),
+        document.getElementById("jurisdictionCustom")
+      );
+      if (!country) {
+        setMsg(msg, "Select a country or region.", "err");
+        return;
+      }
+      form.append("country", country);
+      form.append("jurisdiction", jurisdiction || country);
       form.append(
         "issuingAuthority",
         document.getElementById("issuingAuthority").value.trim()
@@ -622,10 +969,16 @@
         }
         setMsg(
           msg,
-          "Uploaded OK · id " + data.document.id + " · status " + data.document.status,
+          "Uploaded OK · " +
+            country +
+            " · id " +
+            data.document.id +
+            " · status " +
+            data.document.status,
           "ok"
         );
         document.getElementById("document").value = "";
+        saveUploadPrefs();
         await loadDocuments();
         await loadQueue();
       } catch (err) {
